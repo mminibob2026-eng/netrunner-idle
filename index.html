@@ -205,6 +205,7 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
     <div id="prestige-area">
       <p>Netrunner Level: <span class="text-pink" id="pnl">0</span></p>
       <p>Each prestige resets progress but grants <span class="text-green">1.5x</span> multiplier per level.</p>
+      <p>Requirement: <span class="text-red" id="dm-required">10 lifetime DM</span></p>
       <p>Gain: <span class="text-pink" id="pnl-gain">0</span> levels | Lifetime DM: <span class="text-cyan" id="lifetime-dm">0</span></p>
       <button class="prestige-btn" id="prestige-btn">PRESTIGE</button>
     </div>
@@ -233,14 +234,16 @@ const CRAFTS = [
 ];
 
 const UPGRADES = [
-  { id:'miningSpeed', name:'Data Miner v{level}', desc:'+20% data mining speed', cost:{credits:30}, mult:1.8, max:20 },
-  { id:'sniffingSpeed', name:'Packet Sniffer v{level}', desc:'+20% packet sniffing speed', cost:{data:40}, mult:1.8, max:20 },
-  { id:'cryptoSpeed', name:'Crypto Miner v{level}', desc:'+20% crypto mining speed', cost:{credits:60,data:30}, mult:1.8, max:20 },
-  { id:'scoutSpeed', name:'Network Scout v{level}', desc:'+20% network scouting speed', cost:{credits:80,cpu:20}, mult:1.8, max:20 },
-  { id:'dataCap', name:'Data Reservoir v{level}', desc:'+100 max data storage', cost:{data:100}, mult:2, max:20 },
-  { id:'cpuCap', name:'CPU Rack v{level}', desc:'+50 max CPU cores', cost:{credits:150,cpu:10}, mult:2, max:15 },
-  { id:'bwCap', name:'Fiber Link v{level}', desc:'+30 max bandwidth', cost:{data:200,bandwidth:10}, mult:2, max:15 },
-  { id:'combatBoost', name:'ICE Breaker v{level}', desc:'+15% combat damage', cost:{credits:100,bandwidth:10}, mult:2, max:15 },
+  { id:'miningSpeed', name:'Data Miner v{level}', desc:'+20% data mining speed', cost:{credits:30}, mult:1.8, max:15 },
+  { id:'sniffingSpeed', name:'Packet Sniffer v{level}', desc:'+20% packet sniffing speed', cost:{data:40}, mult:1.8, max:15 },
+  { id:'cryptoSpeed', name:'Crypto Miner v{level}', desc:'+20% crypto mining speed', cost:{credits:60,data:30}, mult:1.8, max:15 },
+  { id:'scoutSpeed', name:'Network Scout v{level}', desc:'+20% network scouting speed', cost:{credits:80,cpu:20}, mult:1.8, max:15 },
+  { id:'dataCap', name:'Data Reservoir v{level}', desc:'2x max data storage', cost:{credits:1000}, mult:1.3, max:10 },
+  { id:'cpuCap', name:'CPU Rack v{level}', desc:'2x max CPU cores', cost:{data:300}, mult:1.3, max:10 },
+  { id:'bwCap', name:'Fiber Link v{level}', desc:'2x max bandwidth', cost:{cpu:100}, mult:1.3, max:10 },
+  { id:'combatBoost', name:'ICE Breaker v{level}', desc:'+15% combat damage', cost:{credits:100}, mult:1.8, max:15 },
+  { id:'creditCap', name:'Swiss Account v{level}', desc:'2x max credits', cost:{data:200,cpu:50}, mult:1.3, max:10 },
+  { id:'dmCap', name:'Quantum Vault v{level}', desc:'2x max dark matter', cost:{credits:1500,bandwidth:30}, mult:1.3, max:10 },
 ];
 
 const DROP_LABELS = { dataShard:'Data Shard', fwShard:'FW Shard', iceCore:'ICE Core', aiMod:'AI Module', encKey:'Enc Key', dnToken:'DN Token', coreFrag:'Core Frag' };
@@ -298,10 +301,12 @@ function cmbtPow() {
   a = Math.floor(a * (1 + b.lvl*0.15));
   return { a, d };
 }
-function maxData() { return 500 + (upgSt('dataCap')?.lvl||0)*100; }
-function maxCpu() { return 200 + (upgSt('cpuCap')?.lvl||0)*50; }
-function maxBw() { return 100 + (upgSt('bwCap')?.lvl||0)*30; }
-function resMax(id) { const m={data:maxData,cpu:maxCpu,bandwidth:maxBw}; return (m[id]||(()=>1/0))(); }
+function maxData() { return 500 * Math.pow(2, upgSt('dataCap')?.lvl||0); }
+function maxCpu() { return 200 * Math.pow(2, upgSt('cpuCap')?.lvl||0); }
+function maxBw() { return 100 * Math.pow(2, upgSt('bwCap')?.lvl||0); }
+function maxCredits() { return 2000 * Math.pow(2, upgSt('creditCap')?.lvl||0); }
+function maxDm() { return 10 * Math.pow(2, upgSt('dmCap')?.lvl||0); }
+function resMax(id) { const m={data:maxData,cpu:maxCpu,bandwidth:maxBw,credits:maxCredits,darkMatter:maxDm}; return (m[id]||(()=>1/0))(); }
 
 function addRes(id, amt) {
   if (amt <= 0) return;
@@ -735,6 +740,12 @@ function updateUI() {
   const pg = document.getElementById('pnl-gain'); if (pg) pg.textContent = g;
   const ld = document.getElementById('lifetime-dm'); if (ld) ld.textContent = fmt(G.prest.dm);
   const pb = document.getElementById('prestige-btn'); if (pb) pb.disabled = g < 1;
+  const dr = document.getElementById('dm-required');
+  if (dr) {
+    const nextDm = 10 * (g+1) * (g+1);
+    const have = G.prest.dm || 0;
+    dr.textContent = have >= nextDm ? 'Ready!' : fmt(nextDm) + ' DM needed (have ' + fmt(have) + ')';
+  }
 }
 
 function rebuildUI() { buildUI(); }
