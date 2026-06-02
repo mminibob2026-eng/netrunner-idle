@@ -186,16 +186,20 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 <script>
 // ========== CONFIG ==========
 const SKILLS = [
-  { id:'dataMining', name:'Data Mining', res:'data', yield:1, time:1, xp:10, desc:'Extract raw data from network nodes.', cost:null, costLabel:'' },
-  { id:'packetSniffing', name:'Packet Sniffing', res:'credits', yield:0.8, time:1.2, xp:12, desc:'Intercept traffic for credits.', cost:{data:50}, costLabel:'50 DATA' },
-  { id:'cryptoMining', name:'Crypto Mining', res:'cpu', yield:0.5, time:1.5, xp:15, desc:'Mine cryptocurrency for CPU cores.', cost:{credits:100}, costLabel:'100 CREDITS' },
-  { id:'networkScouting', name:'Network Scouting', res:'bandwidth', yield:0.3, time:2, xp:18, desc:'Map the network for bandwidth.', cost:{data:100,cpu:25}, costLabel:'100 DATA, 25 CPU' },
+  { id:'dataMining', name:'Data Mining', res:'data', yield:1, time:1, xp:10, desc:'Extract raw data from network nodes.', cost:null, costLabel:'', req:null },
+  { id:'packetSniffing', name:'Packet Sniffing', res:'credits', yield:0.8, time:1.2, xp:12, desc:'Intercept traffic for credits.', cost:{data:50}, costLabel:'50 DATA', req:null },
+  { id:'cryptoMining', name:'Crypto Mining', res:'cpu', yield:0.5, time:1.5, xp:15, desc:'Mine cryptocurrency for CPU cores.', cost:{credits:100}, costLabel:'100 CREDITS', req:null },
+  { id:'networkScouting', name:'Network Scouting', res:'bandwidth', yield:0.3, time:2, xp:18, desc:'Map the network for bandwidth.', cost:{data:100,cpu:25}, costLabel:'100 DATA, 25 CPU', req:null },
+  { id:'codeDecompile', name:'Code Decompile', res:'darkMatter', yield:0.04, time:2.5, xp:25, desc:'Reverse-engineer code into Dark Matter.', cost:{credits:500,cpu:200}, costLabel:'500 CREDITS, 200 CPU', req:{dataMining:10,packetSniffing:10}, reqLabel:'Data Mining Lv.10, Packet Sniffing Lv.10' },
+  { id:'networkSynthesis', name:'Network Synthesis', res:'all', yield:0, time:3, xp:35, desc:'Synthesize all network resources at once.', cost:{data:800,credits:800,cpu:400,bandwidth:200}, costLabel:'800 DATA, 800 CREDITS, 400 CPU, 200 BW', req:{dataMining:15,packetSniffing:15,cryptoMining:15,networkScouting:15}, reqLabel:'All skills Lv.15' },
 ];
 
 const CRAFTS = [
   { id:'codeWeave', name:'Code Weave', desc:'Data + CPU -> Programs', result:'program', cost:{data:50,cpu:10} },
   { id:'hardwareAssemble', name:'Hardware Assembly', desc:'Credits + Bandwidth -> Hardware', result:'hardware', cost:{credits:75,bandwidth:15} },
   { id:'exploitKit', name:'Exploit Kit', desc:'3 Programs + 2 Hardware -> Exploit', result:'exploit', cost:{program:3,hardware:2} },
+  { id:'neuralLink', name:'Neural Link', desc:'2 Exploits + Data + BW -> permanent +2% all skill speed', result:'neuralLinks', cost:{exploit:2,data:500,bandwidth:100} },
+  { id:'turboCharger', name:'Turbo Charger', desc:'3 Exploits + Hardware + Credits -> permanent +5 ATK +3 DEF', result:'turboChargers', cost:{exploit:3,hardware:3,credits:200} },
 ];
 
 const UPGRADES = [
@@ -228,7 +232,7 @@ function freshState() {
     res: { data:0, credits:0, cpu:0, bandwidth:0, darkMatter:0 },
     skills: SKILLS.map(s => ({ id:s.id, lvl:1, xp:0, active:false, unlocked:!s.cost, prog:0 })),
     upgs: UPGRADES.map(u => ({ id:u.id, lvl:0 })),
-    inv: { program:0, hardware:0, exploit:0 },
+    inv: { program:0, hardware:0, exploit:0, neuralLinks:0, turboChargers:0 },
     cmbt: { idx:0, hp:50, php:100, mxhp:100, atk:10, def:5, accum:0, unlocked:false },
     prest: { lvl:0, dm:0, times:0 },
     stats: { earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0} },
@@ -250,13 +254,14 @@ function skillMult(id) {
   const map = { dataMining:'miningSpeed', packetSniffing:'sniffingSpeed', cryptoMining:'cryptoSpeed', networkScouting:'scoutSpeed' };
   let m = 1 + (upgSt(map[id])?.lvl || 0) * 0.2;
   m *= Math.pow(1.5, G.prest.lvl);
+  m *= 1 + (G.inv.neuralLinks || 0) * 0.02;
   return m;
 }
 function skillYield(id) { const c=skillCfg(id),s=skillSt(id); return c.yield*(1+(s.lvl-1)*0.08)*skillMult(id); }
 function skillTime(id) { const c=skillCfg(id),s=skillSt(id); return Math.max(0.25, c.time*Math.pow(0.97, s.lvl-1)); }
 function cmbtPow() {
-  let a = G.cmbt.atk + G.inv.exploit*8 + G.inv.program*2;
-  let d = G.cmbt.def + G.inv.hardware*3;
+  let a = G.cmbt.atk + G.inv.exploit*8 + G.inv.program*2 + (G.inv.turboChargers||0)*5;
+  let d = G.cmbt.def + G.inv.hardware*3 + (G.inv.turboChargers||0)*3;
   const b = upgSt('combatBoost');
   a = Math.floor(a * (1 + b.lvl*0.15));
   return { a, d };
@@ -295,6 +300,13 @@ function clickSkill(id) {
   if (!s.unlocked) {
     const c = skillCfg(id);
     if (!c || !c.cost) return;
+    // Check level requirements
+    if (c.req) {
+      for (const [reqId, reqLvl] of Object.entries(c.req)) {
+        const rs = skillSt(reqId);
+        if (!rs || rs.lvl < reqLvl) { toast('Need '+c.reqLabel, 'error'); return; }
+      }
+    }
     if (!canPay(c.cost)) { toast('Need '+c.costLabel, 'error'); return; }
     pay(c.cost); s.unlocked = true; s.active = true;
     toast(c.name+' unlocked!', 'loot');
@@ -361,7 +373,14 @@ function tick(dt) {
     s.prog += sdt / t;
     while (s.prog >= 1) {
       s.prog -= 1;
-      addRes(c.res, skillYield(c.id));
+      if (c.res === 'all') {
+        addRes('data', 2 * (1 + (s.lvl-1)*0.1));
+        addRes('credits', 2 * (1 + (s.lvl-1)*0.1));
+        addRes('cpu', 1 * (1 + (s.lvl-1)*0.1));
+        addRes('bandwidth', 0.5 * (1 + (s.lvl-1)*0.1));
+      } else {
+        addRes(c.res, skillYield(c.id));
+      }
       const xp = c.xp * (1 + (s.lvl-1)*0.04);
       s.xp += xp;
       const req = xpReq(s.lvl);
@@ -396,11 +415,12 @@ function buildSkills() {
   SKILLS.forEach(cfg => {
     const card = document.createElement('div');
     card.className = 'skill-card';
-    card.innerHTML =
+      const reqStr = cfg.req ? ' | Req: '+cfg.reqLabel : '';
+      card.innerHTML =
       '<div class="skill-header"><span class="skill-name">'+cfg.name+'</span><span class="skill-level">Lv.1</span></div>' +
       '<div class="skill-progress"><div class="skill-progress-bar"></div></div>' +
       '<div class="skill-info"><span class="skill-yield">0</span><span class="skill-xp">0 XP</span></div>' +
-      '<div class="skill-desc">'+cfg.desc+'</div>' +
+      '<div class="skill-desc">'+(cfg.cost?'Unlock: '+cfg.costLabel+reqStr:cfg.desc)+'</div>' +
       '<button class="skill-btn" data-id="'+cfg.id+'">START</button>';
     card.querySelector('.skill-btn').addEventListener('click', e => { e.stopPropagation(); clickSkill(cfg.id); });
     c.appendChild(card);
@@ -494,7 +514,8 @@ function updateUI() {
       card.querySelector('.skill-progress-bar').style.width = Math.min(100,pct)+'%';
       card.querySelector('.skill-yield').textContent = fmt(skillYield(cfg.id))+' '+cfg.res+'/s';
       card.querySelector('.skill-xp').textContent = s.lvl>=99?'MAX':fmt(xpReq(s.lvl)-s.xp)+' XP';
-      card.querySelector('.skill-desc').textContent = !s.unlocked ? 'Unlock: '+cfg.costLabel : cfg.desc;
+      const reqStr = cfg.req ? ' | Req: '+cfg.reqLabel : '';
+      card.querySelector('.skill-desc').textContent = !s.unlocked ? 'Unlock: '+cfg.costLabel + reqStr : cfg.desc;
       const btn = card.querySelector('.skill-btn');
       btn.textContent = s.unlocked ? (s.active?'ACTIVE':'START') : 'UNLOCK';
       btn.className = 'skill-btn' + (s.active?' active-btn':'');
@@ -533,7 +554,7 @@ function updateUI() {
   const inv = document.getElementById('inventory-container');
   if (inv) {
     inv.innerHTML = '';
-    [['program','Programs'],['hardware','Hardware'],['exploit','Exploits']].forEach(([id,label])=>{
+    [['program','Programs'],['hardware','Hardware'],['exploit','Exploits'],['neuralLinks','Neural Links'],['turboChargers','Turbo Chargers']].forEach(([id,label])=>{
       const d=document.createElement('div'); d.style.cssText='background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:6px 12px;font-size:12px;';
       d.innerHTML='<span style="color:#0ff">'+label+':</span> <span style="color:#ff0">'+(G.inv[id]||0)+'</span>';
       inv.appendChild(d);
