@@ -802,7 +802,7 @@ function startLogin() {
       }
       err.style.display = 'none';
       G_USER = name;
-      localStorage.setItem('nr_user', G_USER);
+      try { localStorage.setItem('nr_user', G_USER); } catch(e) {}
       loadGame();
       overlay.style.display = 'none';
       game.style.display = 'flex';
@@ -810,6 +810,14 @@ function startLogin() {
       bindEvents();
       startGameLoop();
       toast('Welcome, ' + G_USER + '!', 'info');
+      // Auto-start Data Mining after 1s for immediate feedback
+      setTimeout(() => {
+        const dm = G.skills[0];
+        if (dm && !dm.active) {
+          dm.active = true;
+          toast('Data Mining auto-started!', 'loot');
+        }
+      }, 500);
       // Check combat unlock periodically
       setInterval(() => {
         if (!G.combat.unlocked) {
@@ -831,7 +839,8 @@ function startLogin() {
   input.focus();
 
   // Check for saved user
-  const savedUser = localStorage.getItem('nr_user');
+  let savedUser = null;
+  try { savedUser = localStorage.getItem('nr_user'); } catch(e) {}
   if (savedUser) {
     input.value = savedUser;
     doLogin();
