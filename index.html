@@ -146,6 +146,7 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 <div id="error-bar"></div>
 
 <div id="game" style="display:none">
+<div id="global-log" style="max-height:120px;overflow-y:auto;font-size:11px;color:#888;background:rgba(0,0,0,0.3);border:1px solid rgba(0,255,65,0.08);border-radius:4px;padding:4px 8px;margin-bottom:4px;"></div>
 <div style="display:flex;justify-content:space-between;align-items:center;">
   <div id="resources">
     <div class="res">[DATA] <span id="r-data">0</span></div>
@@ -163,7 +164,6 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
   <button class="tab-btn" data-tab="combat">COMBAT</button>
   <button class="tab-btn" data-tab="upgrades">UPGRADES</button>
   <button class="tab-btn" data-tab="prestige">PRESTIGE</button>
-  <button class="tab-btn" data-tab="log">LOG</button>
 </div>
 
 <div id="content">
@@ -207,10 +207,6 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
       <p>Gain: <span class="text-pink" id="pnl-gain">0</span> levels | Lifetime DM: <span class="text-cyan" id="lifetime-dm">0</span></p>
       <button class="prestige-btn" id="prestige-btn">PRESTIGE</button>
     </div>
-  </div>
-  <div id="tab-log" class="tab-content">
-    <div class="section-title">[ ACTIVITY LOG ]</div>
-    <div id="log-container" style="font-size:11px;color:#888;padding:4px;max-height:400px;overflow-y:auto;"></div>
   </div>
 </div>
 <div id="dev-panel" style="display:none"></div>
@@ -751,9 +747,9 @@ function updateUI() {
   const pb = document.getElementById('prestige-btn'); if (pb) pb.disabled = g < 1;
 
   // Activity log
-  const lc = document.getElementById('log-container');
-  if (lc && G.activityLog) {
-    lc.innerHTML = G.activityLog.slice().reverse().map(m => '<div style="padding:1px 0">'+m+'</div>').join('');
+  const gl = document.getElementById('global-log');
+  if (gl && G.activityLog) {
+    gl.innerHTML = G.activityLog.slice().reverse().map(m => '<div>'+m+'</div>').join('');
   }
 }
 
