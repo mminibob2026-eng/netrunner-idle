@@ -6,204 +6,111 @@
 <title>Netrunner Idle</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  background: #0a0a1a;
-  color: #c0c0c0;
-  font-family: 'Courier New', monospace;
-  overflow: hidden;
-  height: 100vh;
-  user-select: none;
-}
-#game { display: flex; flex-direction: column; height: 100vh; max-width: 1200px; margin: 0 auto; padding: 8px; }
+body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospace; overflow: hidden; height: 100vh; user-select: none; }
 
-/* LOGIN OVERLAY */
-#login-overlay {
-  position: fixed; inset: 0; z-index: 1000;
-  background: #0a0a1a;
-  display: flex; align-items: center; justify-content: center;
-}
-#login-box {
-  background: rgba(0,255,65,0.04);
-  border: 1px solid rgba(0,255,65,0.25);
-  border-radius: 8px;
-  padding: 40px;
-  text-align: center;
-  max-width: 400px;
-  width: 90%;
-}
-#login-box h1 { color: #0f0; font-size: 24px; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 8px; }
-#login-box p { color: #888; font-size: 13px; margin-bottom: 24px; }
-#login-box input {
-  width: 100%; padding: 10px 14px;
-  background: rgba(0,255,65,0.06); border: 1px solid rgba(0,255,65,0.3);
-  color: #0f0; font-family: inherit; font-size: 14px; border-radius: 4px;
-  outline: none; text-align: center; margin-bottom: 12px;
-}
-#login-box input:focus { border-color: #0f0; box-shadow: 0 0 10px rgba(0,255,65,0.2); }
-#login-box button {
-  padding: 10px 32px;
-  background: transparent; border: 1px solid #0f0; color: #0f0;
-  font-family: inherit; font-size: 14px; border-radius: 4px;
-  cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
-  transition: all 0.2s;
-}
-#login-box button:hover { background: rgba(0,255,65,0.15); }
-#login-box button:disabled { opacity: 0.3; cursor: not-allowed; }
-.login-error { color: #f44; font-size: 12px; margin-top: 8px; display: none; }
+#login-overlay { position:fixed;inset:0;z-index:1000;background:#0a0a1a;display:flex;align-items:center;justify-content:center; }
+#login-box { background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.25);border-radius:8px;padding:40px;text-align:center;max-width:400px;width:90%; }
+#login-box h1 { color:#0f0;font-size:24px;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px; }
+#login-box p { color:#888;font-size:13px;margin-bottom:24px; }
+#login-box input { width:100%;padding:10px 14px;background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.3);color:#0f0;font-family:inherit;font-size:14px;border-radius:4px;outline:none;text-align:center;margin-bottom:12px; }
+#login-box input:focus { border-color:#0f0;box-shadow:0 0 10px rgba(0,255,65,0.2); }
+#login-box button { padding:10px 32px;background:transparent;border:1px solid #0f0;color:#0f0;font-family:inherit;font-size:14px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:2px;transition:all 0.2s; }
+#login-box button:hover { background:rgba(0,255,65,0.15); }
+#login-box button:disabled { opacity:0.3;cursor:not-allowed; }
+.login-error { color:#f44;font-size:12px;margin-top:8px;display:none; }
 
-/* TOAST */
-#toast-container {
-  position: fixed; top: 12px; right: 12px; z-index: 999;
-  display: flex; flex-direction: column; gap: 6px;
-}
-.toast {
-  padding: 10px 16px; border-radius: 4px; font-size: 12px;
-  animation: fadeIn 0.2s ease-out;
-  max-width: 320px;
-}
-.toast-info { background: rgba(0,255,65,0.12); border: 1px solid rgba(0,255,65,0.3); color: #0f0; }
-.toast-error { background: rgba(255,0,0,0.12); border: 1px solid rgba(255,0,0,0.3); color: #f44; }
-.toast-loot { background: rgba(255,255,0,0.1); border: 1px solid rgba(255,255,0,0.2); color: #ff0; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+#game { display:flex;flex-direction:column;height:100vh;max-width:1200px;margin:0 auto;padding:8px; }
+#resources { display:flex;gap:4px;padding:8px 12px;background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.15);border-radius:4px;flex-wrap:wrap;justify-content:center; }
+.res { padding:4px 12px;font-size:13px;color:#0f0;text-shadow:0 0 6px rgba(0,255,65,0.4);white-space:nowrap; }
+.res span { color:#8f8; }
 
-/* RESOURCES */
-#resources {
-  display: flex; gap: 4px; padding: 8px 12px;
-  background: rgba(0,255,65,0.04); border: 1px solid rgba(0,255,65,0.15);
-  border-radius: 4px; flex-wrap: wrap; justify-content: center;
-}
-.res {
-  padding: 4px 12px; font-size: 13px;
-  color: #0f0; text-shadow: 0 0 6px rgba(0,255,65,0.4); white-space: nowrap;
-}
-.res span { color: #8f8; }
+#tabs { display:flex;gap:2px;margin:6px 0;flex-shrink:0; }
+.tab-btn { flex:1;padding:8px 4px;background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.2);color:#8f8;font-family:inherit;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all 0.15s; }
+.tab-btn:hover { background:rgba(0,255,65,0.12); }
+.tab-btn.active { background:rgba(0,255,65,0.15);border-color:#0f0;color:#0f0;box-shadow:0 0 8px rgba(0,255,65,0.2); }
 
-/* TABS */
-#tabs { display: flex; gap: 2px; margin: 6px 0; flex-shrink: 0; }
-.tab-btn {
-  flex: 1; padding: 8px 4px;
-  background: rgba(0,255,65,0.06); border: 1px solid rgba(0,255,65,0.2);
-  color: #8f8; font-family: inherit; font-size: 12px;
-  cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-  transition: all 0.15s;
-}
-.tab-btn:hover { background: rgba(0,255,65,0.12); }
-.tab-btn.active { background: rgba(0,255,65,0.15); border-color: #0f0; color: #0f0; box-shadow: 0 0 8px rgba(0,255,65,0.2); }
+#content { flex:1;overflow-y:auto;min-height:0;border:1px solid rgba(0,255,65,0.1);border-radius:4px;background:rgba(0,255,65,0.02); }
+.tab-content { display:none;padding:8px; }
+.tab-content.active { display:block; }
+.section-title { color:#0f0;font-size:13px;text-transform:uppercase;letter-spacing:2px;padding:6px 0;border-bottom:1px solid rgba(0,255,65,0.15);margin-bottom:8px; }
+.section-title span { color:#f0f; }
 
-/* CONTENT */
-#content {
-  flex: 1; overflow-y: auto; min-height: 0;
-  border: 1px solid rgba(0,255,65,0.1); border-radius: 4px;
-  background: rgba(0,255,65,0.02);
-}
-.tab-content { display: none; padding: 8px; }
-.tab-content.active { display: block; }
+.skills-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px; }
+.skill-card { background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:10px 12px;transition:border-color 0.2s; }
+.skill-card:hover { border-color:rgba(0,255,65,0.3); }
+.skill-card.locked { opacity:0.4; }
+.skill-card.active-skill { border-color:#0f0;box-shadow:0 0 10px rgba(0,255,65,0.15); }
+.skill-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:4px; }
+.skill-name { color:#0f0;font-size:14px;font-weight:bold; }
+.skill-level { color:#f0f;font-size:12px; }
+.skill-progress { height:6px;background:rgba(255,255,255,0.06);border-radius:3px;margin:4px 0;overflow:hidden; }
+.skill-progress-bar { height:100%;background:linear-gradient(90deg,#0f0,#0ff);width:0%;border-radius:3px;transition:width 0.15s; }
+.skill-info { font-size:11px;color:#888;display:flex;justify-content:space-between;margin:2px 0; }
+.skill-desc { font-size:11px;color:#666;margin:2px 0; }
+.skill-btn { margin-top:6px;padding:6px 16px;background:transparent;border:1px solid #0f0;color:#0f0;font-family:inherit;font-size:12px;cursor:pointer;border-radius:3px;text-transform:uppercase;letter-spacing:1px;transition:all 0.15s;font-weight:bold; }
+.skill-btn:hover { background:rgba(0,255,65,0.2);box-shadow:0 0 8px rgba(0,255,65,0.2); }
+.skill-btn.active-btn { background:rgba(255,0,255,0.2);border-color:#f0f;color:#f0f; }
 
-.section-title {
-  color: #0f0; font-size: 13px; text-transform: uppercase; letter-spacing: 2px;
-  padding: 6px 0; border-bottom: 1px solid rgba(0,255,65,0.15); margin-bottom: 8px;
-}
-.section-title span { color: #f0f; }
+.upgrades-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px; }
+.upgrade-card { background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:10px 12px;cursor:pointer;transition:border-color 0.2s; }
+.upgrade-card:hover { border-color:rgba(0,255,65,0.3); }
+.upgrade-card.maxed { opacity:0.4; }
+.upgrade-name { color:#0f0;font-size:13px;font-weight:bold; }
+.upgrade-level { color:#f0f;font-size:11px; }
+.upgrade-desc { font-size:11px;color:#888;margin:2px 0; }
+.upgrade-cost { font-size:11px;color:#ff0;margin:2px 0; }
+.upgrade-btn { margin-top:6px;padding:6px 16px;background:transparent;border:1px solid #ff0;color:#ff0;font-family:inherit;font-size:12px;cursor:pointer;border-radius:3px;transition:all 0.15s;font-weight:bold; }
+.upgrade-btn:hover { background:rgba(255,255,0,0.2);box-shadow:0 0 8px rgba(255,255,0,0.2); }
+.upgrade-btn:disabled { opacity:0.3;cursor:not-allowed; }
 
-/* SKILLS */
-.skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; }
-.skill-card {
-  background: rgba(0,255,65,0.04); border: 1px solid rgba(0,255,65,0.12);
-  border-radius: 4px; padding: 10px 12px; transition: border-color 0.2s;
-}
-.skill-card:hover { border-color: rgba(0,255,65,0.3); }
-.skill-card.locked { opacity: 0.4; }
-.skill-card.active-skill { border-color: #0f0; box-shadow: 0 0 10px rgba(0,255,65,0.15); }
-.skill-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.skill-name { color: #0f0; font-size: 14px; font-weight: bold; }
-.skill-level { color: #f0f; font-size: 12px; }
-.skill-progress { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; margin: 4px 0; overflow: hidden; }
-.skill-progress-bar { height: 100%; background: linear-gradient(90deg, #0f0, #0ff); width: 0%; transition: width 0.15s; border-radius: 3px; }
-.skill-info { font-size: 11px; color: #888; display: flex; justify-content: space-between; margin: 2px 0; }
-.skill-desc { font-size: 11px; color: #666; margin: 2px 0; }
-.skill-btn {
-  margin-top: 6px; padding: 5px 12px;
-  background: transparent; border: 1px solid #0f0; color: #0f0;
-  font-family: inherit; font-size: 11px; cursor: pointer; border-radius: 3px;
-  text-transform: uppercase; letter-spacing: 1px; transition: all 0.15s;
-}
-.skill-btn:hover { background: rgba(0,255,65,0.15); }
-.skill-btn.active-btn { background: rgba(255,0,255,0.2); border-color: #f0f; color: #f0f; }
-.skill-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.craft-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px; }
+.craft-card { background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:10px 12px; }
+.craft-card:hover { border-color:rgba(0,255,65,0.3); }
+.craft-name { color:#0ff;font-size:13px;font-weight:bold; }
+.craft-desc { font-size:11px;color:#888;margin:2px 0; }
+.craft-cost { font-size:11px;color:#ff0;margin:2px 0; }
+.craft-btn { margin-top:6px;padding:6px 16px;background:transparent;border:1px solid #0ff;color:#0ff;font-family:inherit;font-size:12px;cursor:pointer;border-radius:3px;transition:all 0.15s;font-weight:bold; }
+.craft-btn:hover { background:rgba(0,255,255,0.2);box-shadow:0 0 8px rgba(0,255,255,0.2); }
+.craft-btn:disabled { opacity:0.3;cursor:not-allowed; }
 
-/* UPGRADES */
-.upgrades-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px; }
-.upgrade-card { background: rgba(0,255,65,0.04); border: 1px solid rgba(0,255,65,0.12); border-radius: 4px; padding: 10px 12px; }
-.upgrade-card:hover { border-color: rgba(0,255,65,0.3); }
-.upgrade-card.maxed { opacity: 0.4; }
-.upgrade-name { color: #0f0; font-size: 13px; font-weight: bold; }
-.upgrade-level { color: #f0f; font-size: 11px; }
-.upgrade-desc { font-size: 11px; color: #888; margin: 2px 0; }
-.upgrade-cost { font-size: 11px; color: #ff0; margin: 2px 0; }
-.upgrade-btn {
-  margin-top: 6px; padding: 4px 12px;
-  background: transparent; border: 1px solid #ff0; color: #ff0;
-  font-family: inherit; font-size: 11px; cursor: pointer; border-radius: 3px; transition: all 0.15s;
-}
-.upgrade-btn:hover { background: rgba(255,255,0,0.15); }
-.upgrade-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+#enemy-display { display:flex;justify-content:space-between;align-items:center;background:rgba(255,0,0,0.05);border:1px solid rgba(255,0,0,0.2);border-radius:4px;padding:12px 16px; }
+.enemy-name { color:#f44;font-size:16px; }
+.enemy-hp-bar { height:8px;background:rgba(255,0,0,0.1);border-radius:4px;margin:4px 0;overflow:hidden;width:200px; }
+.enemy-hp-fill { height:100%;background:linear-gradient(90deg,#f00,#f80);width:100%;border-radius:4px;transition:width 0.2s; }
+#player-stats { display:flex;gap:16px;font-size:12px;color:#0ff; }
+#combat-log { background:rgba(0,0,0,0.3);border:1px solid rgba(0,255,65,0.1);border-radius:4px;padding:8px;height:100px;overflow-y:auto;font-size:11px;margin-top:8px; }
+#combat-log div { margin:1px 0; }
+.log-dmg { color:#f44; } .log-heal { color:#0f0; } .log-loot { color:#ff0; } .log-info { color:#888; }
 
-/* COMBAT */
-#combat-area { display: flex; flex-direction: column; gap: 8px; }
-#enemy-display {
-  display: flex; justify-content: space-between; align-items: center;
-  background: rgba(255,0,0,0.05); border: 1px solid rgba(255,0,0,0.2);
-  border-radius: 4px; padding: 12px 16px;
-}
-.enemy-name { color: #f44; font-size: 16px; }
-.enemy-hp-bar { height: 8px; background: rgba(255,0,0,0.1); border-radius: 4px; margin: 4px 0; overflow: hidden; width: 200px; }
-.enemy-hp-fill { height: 100%; background: linear-gradient(90deg, #f00, #f80); width: 100%; border-radius: 4px; transition: width 0.2s; }
-#player-stats { display: flex; gap: 16px; font-size: 12px; color: #0ff; }
-#combat-log { background: rgba(0,0,0,0.3); border: 1px solid rgba(0,255,65,0.1); border-radius: 4px; padding: 8px; height: 120px; overflow-y: auto; font-size: 11px; }
-#combat-log div { margin: 1px 0; }
-.log-dmg { color: #f44; }
-.log-heal { color: #0f0; }
-.log-loot { color: #ff0; }
-.log-info { color: #888; }
+#prestige-area { text-align:center;padding:20px; }
+#prestige-area p { margin:8px 0;font-size:13px;color:#888; }
+.prestige-btn { padding:12px 32px;background:transparent;border:2px solid #f0f;color:#f0f;font-family:inherit;font-size:16px;cursor:pointer;border-radius:4px;text-transform:uppercase;letter-spacing:3px;transition:all 0.2s; }
+.prestige-btn:hover { background:rgba(255,0,255,0.15);box-shadow:0 0 20px rgba(255,0,255,0.2); }
+.prestige-btn:disabled { opacity:0.3;cursor:not-allowed; }
 
-/* CRAFTING */
-.craft-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px; }
-.craft-card { background: rgba(0,255,65,0.04); border: 1px solid rgba(0,255,65,0.12); border-radius: 4px; padding: 10px 12px; }
-.craft-card:hover { border-color: rgba(0,255,65,0.3); }
-.craft-name { color: #0ff; font-size: 13px; font-weight: bold; }
-.craft-desc { font-size: 11px; color: #888; margin: 2px 0; }
-.craft-cost { font-size: 11px; color: #ff0; margin: 2px 0; }
-.craft-btn {
-  margin-top: 6px; padding: 4px 12px;
-  background: transparent; border: 1px solid #0ff; color: #0ff;
-  font-family: inherit; font-size: 11px; cursor: pointer; border-radius: 3px; transition: all 0.15s;
-}
-.craft-btn:hover { background: rgba(0,255,255,0.15); }
-.craft-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+#user-info { color:#0ff;font-size:12px;text-align:right;padding:4px 8px; }
+#dev-panel { background:rgba(255,0,255,0.06);border:1px solid rgba(255,0,255,0.2);border-radius:4px;padding:12px;margin-top:8px; }
+#dev-panel h3 { color:#f0f;font-size:13px;margin-bottom:8px;text-transform:uppercase;letter-spacing:2px; }
+#dev-panel .dev-row { display:flex;gap:6px;flex-wrap:wrap;margin:4px 0; }
+#dev-panel button { padding:4px 10px;background:rgba(255,0,255,0.1);border:1px solid #f0f;color:#f0f;font-family:inherit;font-size:11px;cursor:pointer;border-radius:3px;transition:all 0.15s; }
+#dev-panel button:hover { background:rgba(255,0,255,0.25);box-shadow:0 0 8px rgba(255,0,255,0.2); }
+#dev-panel input { width:60px;padding:4px 6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,0,255,0.3);color:#f0f;font-family:inherit;font-size:11px;border-radius:3px;text-align:center; }
 
-/* PRESTIGE */
-#prestige-area { text-align: center; padding: 20px; }
-#prestige-area p { margin: 8px 0; font-size: 13px; color: #888; }
-#user-info { color: #0ff; font-size: 12px; text-align: right; padding: 4px 8px; }
-.prestige-btn {
-  padding: 12px 32px; background: transparent; border: 2px solid #f0f; color: #f0f;
-  font-family: inherit; font-size: 16px; cursor: pointer; border-radius: 4px;
-  text-transform: uppercase; letter-spacing: 3px; transition: all 0.2s;
-}
-.prestige-btn:hover { background: rgba(255,0,255,0.15); box-shadow: 0 0 20px rgba(255,0,255,0.2); }
-.prestige-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+#toast-container { position:fixed;top:12px;right:12px;z-index:999;display:flex;flex-direction:column;gap:6px; }
+.toast { padding:10px 16px;border-radius:4px;font-size:12px;animation:fadeIn 0.2s ease-out;max-width:320px; }
+.toast-info { background:rgba(0,255,65,0.12);border:1px solid rgba(0,255,65,0.3);color:#0f0; }
+.toast-error { background:rgba(255,0,0,0.12);border:1px solid rgba(255,0,0,0.3);color:#f44; }
+.toast-loot { background:rgba(255,255,0,0.1);border:1px solid rgba(255,255,0,0.2);color:#ff0; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
 
-#content::-webkit-scrollbar { width: 4px; }
-#content::-webkit-scrollbar-track { background: rgba(0,255,65,0.05); }
-#content::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.3); border-radius: 2px; }
+#error-bar { display:none;position:fixed;bottom:0;left:0;right:0;background:#300;color:#f44;padding:8px;font-size:12px;z-index:999;font-family:monospace;white-space:pre-wrap;max-height:100px;overflow-y:auto; }
 
-.text-green { color: #0f0; }
-.text-pink { color: #f0f; }
-.text-cyan { color: #0ff; }
-.text-yellow { color: #ff0; }
-.text-red { color: #f44; }
-.text-gray { color: #888; }
-.flex-between { display: flex; justify-content: space-between; align-items: center; }
+#content::-webkit-scrollbar { width:4px; }
+#content::-webkit-scrollbar-track { background:rgba(0,255,65,0.05); }
+#content::-webkit-scrollbar-thumb { background:rgba(0,255,65,0.3);border-radius:2px; }
+
+.text-green { color:#0f0; } .text-pink { color:#f0f; } .text-cyan { color:#0ff; } .text-yellow { color:#ff0; } .text-red { color:#f44; } .text-gray { color:#888; }
+.flex-between { display:flex;justify-content:space-between;align-items:center; }
 </style>
 </head>
 <body>
@@ -212,116 +119,92 @@ body {
   <div id="login-box">
     <h1>NETRUNNER IDLE</h1>
     <p>Enter your handle to access the network</p>
-    <input type="text" id="login-input" placeholder="Enter username..." maxlength="20" autocomplete="off">
+    <input type="text" id="login-input" placeholder="Username..." maxlength="20" autocomplete="off">
     <button id="login-btn">ENTER NETWORK</button>
     <div class="login-error" id="login-error">Username must be 2-20 characters</div>
   </div>
 </div>
 
 <div id="toast-container"></div>
-<div id="error-display" style="position:fixed;bottom:0;left:0;right:0;background:#300;color:#f44;padding:8px;font-size:12px;display:none;z-index:999;font-family:monospace;white-space:pre-wrap;"></div>
+<div id="error-bar"></div>
 
-<div id="game" style="display:none;">
-  <div style="display:flex;justify-content:space-between;align-items:center;">
-    <div id="resources">
-      <div class="res">[DATA] <span id="r-data">0</span></div>
-      <div class="res">[CREDITS] <span id="r-credits">0</span></div>
-      <div class="res">[CPU] <span id="r-cpu">0</span></div>
-      <div class="res">[BANDWIDTH] <span id="r-bandwidth">0</span></div>
-      <div class="res">[DARK MATTER] <span id="r-darkMatter">0</span></div>
-    </div>
-    <div id="user-info"></div>
+<div id="game" style="display:none">
+<div style="display:flex;justify-content:space-between;align-items:center;">
+  <div id="resources">
+    <div class="res">[DATA] <span id="r-data">0</span></div>
+    <div class="res">[CREDITS] <span id="r-credits">0</span></div>
+    <div class="res">[CPU] <span id="r-cpu">0</span></div>
+    <div class="res">[BANDWIDTH] <span id="r-bandwidth">0</span></div>
+    <div class="res">[DARK MATTER] <span id="r-darkMatter">0</span></div>
   </div>
+  <div id="user-info"></div>
+</div>
 
-  <div id="tabs">
-    <button class="tab-btn active" data-tab="skills">SKILLS</button>
-    <button class="tab-btn" data-tab="crafting">CRAFT</button>
-    <button class="tab-btn" data-tab="combat">COMBAT</button>
-    <button class="tab-btn" data-tab="upgrades">UPGRADES</button>
-    <button class="tab-btn" data-tab="prestige">PRESTIGE</button>
+<div id="tabs">
+  <button class="tab-btn active" data-tab="skills">SKILLS</button>
+  <button class="tab-btn" data-tab="crafting">CRAFT</button>
+  <button class="tab-btn" data-tab="combat">COMBAT</button>
+  <button class="tab-btn" data-tab="upgrades">UPGRADES</button>
+  <button class="tab-btn" data-tab="prestige">PRESTIGE</button>
+</div>
+
+<div id="content">
+  <div id="tab-skills" class="tab-content active">
+    <div class="section-title">[ SKILLS ] <span>// train to earn resources</span></div>
+    <div id="skills-container" class="skills-grid"></div>
   </div>
-
-  <div id="content">
-    <div id="tab-skills" class="tab-content active">
-      <div class="section-title">[ SKILLS ] <span>// click START to begin</span></div>
-      <div id="skills-container" class="skills-grid"></div>
+  <div id="tab-crafting" class="tab-content">
+    <div class="section-title">[ CRAFTING ] <span>// combine resources into gear</span></div>
+    <div id="craft-container" class="craft-grid"></div>
+    <div style="margin-top:12px"><div class="section-title">[ INVENTORY ]</div><div id="inventory-container" class="flex-between" style="flex-wrap:wrap;gap:4px"></div></div>
+  </div>
+  <div id="tab-combat" class="tab-content">
+    <div class="section-title">[ COMBAT ] <span>// hack network nodes</span></div>
+    <div id="enemy-display">
+      <div><div class="enemy-name" id="enemy-name">ICE Wall</div><div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemy-hp-fill"></div></div><div id="enemy-hp-text" style="font-size:12px;color:#888">HP: 50/50</div></div>
+      <div id="player-stats"><span>ATK: <span id="p-atk">10</span></span><span>DEF: <span id="p-def">5</span></span><span>HP: <span id="p-hp">100</span>/<span id="p-maxhp">100</span></span></div>
     </div>
-    <div id="tab-crafting" class="tab-content">
-      <div class="section-title">[ CRAFTING ] <span>// combine resources into gear</span></div>
-      <div id="craft-container" class="craft-grid"></div>
-      <div id="inventory-section" style="margin-top:12px;">
-        <div class="section-title">[ INVENTORY ]</div>
-        <div id="inventory-container" class="flex-between" style="flex-wrap:wrap;gap:4px;"></div>
-      </div>
-    </div>
-    <div id="tab-combat" class="tab-content">
-      <div class="section-title">[ COMBAT ] <span>// hack network nodes</span></div>
-      <div id="combat-area">
-        <div id="enemy-display">
-          <div>
-            <div class="enemy-name" id="enemy-name">ICE Wall</div>
-            <div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemy-hp-fill"></div></div>
-            <div id="enemy-hp-text" style="font-size:12px;color:#888;">HP: 100/100</div>
-          </div>
-          <div id="player-stats">
-            <span>ATK: <span id="p-atk">10</span></span>
-            <span>DEF: <span id="p-def">5</span></span>
-            <span>HP: <span id="p-hp">100</span>/<span id="p-maxhp">100</span></span>
-          </div>
-        </div>
-        <div id="combat-log"></div>
-      </div>
-    </div>
-    <div id="tab-upgrades" class="tab-content">
-      <div class="section-title">[ UPGRADES ] <span>// permanent improvements</span></div>
-      <div id="upgrades-container" class="upgrades-grid"></div>
-    </div>
-    <div id="tab-prestige" class="tab-content">
-      <div class="section-title">[ PRESTIGE ]</div>
-      <div id="prestige-area">
-        <p>Netrunner Level: <span class="text-pink" id="pnl">0</span></p>
-        <p>Each prestige resets your progress but grants a permanent <span class="text-green">1.5x</span> multiplier per Netrunner Level.</p>
-        <p>You will gain <span class="text-pink" id="pnl-gain">0</span> Netrunner Levels on prestige.</p>
-        <p>Lifetime Dark Matter: <span class="text-cyan" id="lifetime-dm">0</span></p>
-        <button class="prestige-btn" id="prestige-btn">PRESTIGE</button>
-      </div>
+    <div id="combat-log"></div>
+  </div>
+  <div id="tab-upgrades" class="tab-content">
+    <div class="section-title">[ UPGRADES ] <span>// permanent improvements</span></div>
+    <div id="upgrades-container" class="upgrades-grid"></div>
+  </div>
+  <div id="tab-prestige" class="tab-content">
+    <div class="section-title">[ PRESTIGE ]</div>
+    <div id="prestige-area">
+      <p>Netrunner Level: <span class="text-pink" id="pnl">0</span></p>
+      <p>Each prestige resets progress but grants <span class="text-green">1.5x</span> multiplier per level.</p>
+      <p>Gain: <span class="text-pink" id="pnl-gain">0</span> levels | Lifetime DM: <span class="text-cyan" id="lifetime-dm">0</span></p>
+      <button class="prestige-btn" id="prestige-btn">PRESTIGE</button>
     </div>
   </div>
 </div>
+<div id="dev-panel" style="display:none"></div>
+</div>
 
 <script>
-window.onerror = function(msg, url, line, col, err) {
-  const el = document.getElementById('error-display');
-  if (el) { el.style.display = 'block'; el.textContent += '[' + new Date().toLocaleTimeString() + '] ' + msg + ' (line ' + line + ')\n'; }
-  return false;
-};
-window.addEventListener('unhandledrejection', function(e) {
-  const el = document.getElementById('error-display');
-  if (el) { el.style.display = 'block'; el.textContent += '[' + new Date().toLocaleTimeString() + '] PROMISE: ' + e.reason + '\n'; }
-});
-// ============================================================
-// CONFIG
-// ============================================================
-const SKILLS_CONFIG = [
-  { id:'dataMining', name:'Data Mining', desc:'Extract raw data packets from network nodes.', res:'data', baseYield:1, baseTime:1, xpPer:10, cost:null, costLabel:'' },
-  { id:'packetSniffing', name:'Packet Sniffing', desc:'Intercept network traffic for credits.', res:'credits', baseYield:0.8, baseTime:1.2, xpPer:12, cost:{data:50}, costLabel:'50 DATA' },
-  { id:'cryptoMining', name:'Crypto Mining', desc:'Mine cryptocurrency for CPU cores.', res:'cpu', baseYield:0.5, baseTime:1.5, xpPer:15, cost:{credits:100}, costLabel:'100 CREDITS' },
-  { id:'networkScouting', name:'Network Scouting', desc:'Map the network to increase bandwidth.', res:'bandwidth', baseYield:0.3, baseTime:2, xpPer:18, cost:{data:100,cpu:25}, costLabel:'100 DATA, 25 CPU' },
+// ========== CONFIG ==========
+const SKILLS = [
+  { id:'dataMining', name:'Data Mining', res:'data', yield:1, time:1, xp:10, desc:'Extract raw data from network nodes.', cost:null, costLabel:'' },
+  { id:'packetSniffing', name:'Packet Sniffing', res:'credits', yield:0.8, time:1.2, xp:12, desc:'Intercept traffic for credits.', cost:{data:50}, costLabel:'50 DATA' },
+  { id:'cryptoMining', name:'Crypto Mining', res:'cpu', yield:0.5, time:1.5, xp:15, desc:'Mine cryptocurrency for CPU cores.', cost:{credits:100}, costLabel:'100 CREDITS' },
+  { id:'networkScouting', name:'Network Scouting', res:'bandwidth', yield:0.3, time:2, xp:18, desc:'Map the network for bandwidth.', cost:{data:100,cpu:25}, costLabel:'100 DATA, 25 CPU' },
 ];
 
-const CRAFTS_CONFIG = [
-  { id:'codeWeave', name:'Code Weave', desc:'Weave data and CPU into combat programs.', result:'program', cost:{data:50,cpu:10} },
-  { id:'hardwareAssemble', name:'Hardware Assembly', desc:'Build hardware from credits and bandwidth.', result:'hardware', cost:{credits:75,bandwidth:15} },
-  { id:'exploitKit', name:'Exploit Kit', desc:'Craft exploits from programs + hardware.', result:'exploit', cost:{program:3,hardware:2} },
+const CRAFTS = [
+  { id:'codeWeave', name:'Code Weave', desc:'Data + CPU -> Programs', result:'program', cost:{data:50,cpu:10} },
+  { id:'hardwareAssemble', name:'Hardware Assembly', desc:'Credits + Bandwidth -> Hardware', result:'hardware', cost:{credits:75,bandwidth:15} },
+  { id:'exploitKit', name:'Exploit Kit', desc:'3 Programs + 2 Hardware -> Exploit', result:'exploit', cost:{program:3,hardware:2} },
 ];
 
-const UPGRADES_CONFIG = [
-  { id:'miningSpeed', name:'Data Miner v{level}', desc:'+20% data mining speed', baseCost:{credits:30}, costMult:1.8, maxLvl:20 },
-  { id:'sniffingSpeed', name:'Packet Sniffer v{level}', desc:'+20% packet sniffing speed', baseCost:{data:40}, costMult:1.8, maxLvl:20 },
-  { id:'cryptoSpeed', name:'Crypto Miner v{level}', desc:'+20% crypto mining speed', baseCost:{credits:60,data:30}, costMult:1.8, maxLvl:20 },
-  { id:'scoutSpeed', name:'Network Scout v{level}', desc:'+20% network scouting speed', baseCost:{credits:80,cpu:20}, costMult:1.8, maxLvl:20 },
-  { id:'dataCap', name:'Data Reservoir v{level}', desc:'+50 max data, +20 CPU, +10 bandwidth', baseCost:{data:100}, costMult:2, maxLvl:15 },
-  { id:'combatBoost', name:'ICE Breaker v{level}', desc:'+15% combat damage', baseCost:{credits:100,bandwidth:10}, costMult:2, maxLvl:15 },
+const UPGRADES = [
+  { id:'miningSpeed', name:'Data Miner v{level}', desc:'+20% data mining speed', cost:{credits:30}, mult:1.8, max:20 },
+  { id:'sniffingSpeed', name:'Packet Sniffer v{level}', desc:'+20% packet sniffing speed', cost:{data:40}, mult:1.8, max:20 },
+  { id:'cryptoSpeed', name:'Crypto Miner v{level}', desc:'+20% crypto mining speed', cost:{credits:60,data:30}, mult:1.8, max:20 },
+  { id:'scoutSpeed', name:'Network Scout v{level}', desc:'+20% network scouting speed', cost:{credits:80,cpu:20}, mult:1.8, max:20 },
+  { id:'dataCap', name:'Data Reservoir v{level}', desc:'+50 max data, +20 CPU, +10 BW', cost:{data:100}, mult:2, max:15 },
+  { id:'combatBoost', name:'ICE Breaker v{level}', desc:'+15% combat damage', cost:{credits:100,bandwidth:10}, mult:2, max:15 },
 ];
 
 const ENEMIES = [
@@ -334,523 +217,457 @@ const ENEMIES = [
   { name:'Central Core', hp:5000, atk:80, def:45, reward:{credits:1200,darkMatter:50}, lvl:40 },
 ];
 
-// ============================================================
-// TOAST NOTIFICATIONS
-// ============================================================
-function toast(msg, type = 'info') {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
+// ========== STATE ==========
+let G = null;
+let USER = '';
+
+function freshState() {
+  return {
+    res: { data:0, credits:0, cpu:0, bandwidth:0, darkMatter:0 },
+    skills: SKILLS.map(s => ({ id:s.id, lvl:1, xp:0, active:false, unlocked:!s.cost, prog:0 })),
+    upgs: UPGRADES.map(u => ({ id:u.id, lvl:0 })),
+    inv: { program:0, hardware:0, exploit:0 },
+    cmbt: { idx:0, hp:50, php:100, mxhp:100, atk:10, def:5, accum:0, unlocked:false },
+    prest: { lvl:0, dm:0, times:0 },
+    stats: { earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0} },
+    ver: 3,
+  };
+}
+
+// ========== HELPERS ==========
+function skillCfg(id) { return SKILLS.find(s => s.id === id); }
+function skillSt(id) { return G.skills.find(s => s.id === id); }
+function upgSt(id) { return G.upgs.find(u => u.id === id); }
+function upgCfg(id) { return UPGRADES.find(u => u.id === id); }
+
+function fmt(n) { if (!n||isNaN(n)) return '0'; if (n>=1e9) return (n/1e9).toFixed(1)+'B'; if (n>=1e6) return (n/1e6).toFixed(1)+'M'; if (n>=1e3) return (n/1e3).toFixed(1)+'K'; return Math.floor(n)+''; }
+
+function xpReq(lvl) { return Math.floor(lvl * 80 * Math.pow(1.12, lvl - 1)); }
+
+function skillMult(id) {
+  const map = { dataMining:'miningSpeed', packetSniffing:'sniffingSpeed', cryptoMining:'cryptoSpeed', networkScouting:'scoutSpeed' };
+  let m = 1 + (upgSt(map[id])?.lvl || 0) * 0.2;
+  m *= Math.pow(1.5, G.prest.lvl);
+  return m;
+}
+function skillYield(id) { const c=skillCfg(id),s=skillSt(id); return c.yield*(1+(s.lvl-1)*0.08)*skillMult(id); }
+function skillTime(id) { const c=skillCfg(id),s=skillSt(id); return Math.max(0.25, c.time*Math.pow(0.97, s.lvl-1)); }
+function cmbtPow() {
+  let a = G.cmbt.atk + G.inv.exploit*8 + G.inv.program*2;
+  let d = G.cmbt.def + G.inv.hardware*3;
+  const b = upgSt('combatBoost');
+  a = Math.floor(a * (1 + b.lvl*0.15));
+  return { a, d };
+}
+function maxData() { return 500 + (upgSt('dataCap')?.lvl||0)*50; }
+function maxCpu() { return 200 + (upgSt('dataCap')?.lvl||0)*20; }
+function maxBw() { return 100 + (upgSt('dataCap')?.lvl||0)*10; }
+function resMax(id) { const m={data:maxData,cpu:maxCpu,bandwidth:maxBw}; return (m[id]||(()=>1/0))(); }
+
+function addRes(id, amt) {
+  if (amt <= 0) return;
+  const max = resMax(id);
+  G.res[id] = Math.min((G.res[id]||0) + amt, max);
+  G.stats.earned[id] = (G.stats.earned[id]||0) + amt;
+}
+function canPay(cost) { if (!cost) return true; return Object.entries(cost).every(([r,a])=>(G.res[r]||0)>=a); }
+function pay(cost) { if (!cost) return true; if (!canPay(cost)) return false; Object.entries(cost).forEach(([r,a])=>G.res[r]-=a); return true; }
+
+function toast(msg, t='info') {
+  const c = document.getElementById('toast-container');
+  if (!c) return;
   const el = document.createElement('div');
-  el.className = 'toast toast-' + type;
-  el.textContent = msg;
-  container.appendChild(el);
+  el.className = 'toast toast-'+t; el.textContent = msg;
+  c.appendChild(el);
   setTimeout(() => { if (el.parentNode) el.remove(); }, 3000);
 }
 
-// ============================================================
-// STATE
-// ============================================================
-function defaultState() {
-  return {
-    resources: { data:0, credits:0, cpu:0, bandwidth:0, darkMatter:0 },
-    skills: SKILLS_CONFIG.map(s => ({ id:s.id, lvl:1, xp:0, active:false, unlocked:!s.cost, progress:0 })),
-    upgrades: UPGRADES_CONFIG.map(u => ({ id:u.id, lvl:0 })),
-    inventory: { program:0, hardware:0, exploit:0 },
-    combat: { enemyIdx:0, enemyHp:50, playerHp:100, playerMaxHp:100, playerAtk:10, playerDef:5, tickAccum:0, unlocked:false },
-    prestige: { netrunnerLvl:0, lifetimeDM:0, totalPrestiges:0 },
-    stats: { totalEarned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0} },
-    saveVer: 2,
-  };
+function err(msg) {
+  const eb = document.getElementById('error-bar');
+  if (eb) { eb.style.display='block'; eb.textContent += '['+new Date().toLocaleTimeString()+'] '+msg+'\n'; }
 }
 
-let G = defaultState();
-let G_USER = '';
-
-// ============================================================
-// HELPERS
-// ============================================================
-function skillCfg(id) { return SKILLS_CONFIG.find(s => s.id === id); }
-function skillState(id) { return G.skills.find(s => s.id === id); }
-function upState(id) { return G.upgrades.find(u => u.id === id); }
-function upCfg(id) { return UPGRADES_CONFIG.find(u => u.id === id); }
-
-function getSkillMult(skillId) {
-  const map = { dataMining:'miningSpeed', packetSniffing:'sniffingSpeed', cryptoMining:'cryptoSpeed', networkScouting:'scoutSpeed' };
-  let mult = 1 + (upState(map[skillId])?.lvl || 0) * 0.2;
-  mult *= Math.pow(1.5, G.prestige.netrunnerLvl);
-  return mult;
-}
-
-function getSkillYield(skillId) {
-  const cfg = skillCfg(skillId);
-  const s = skillState(skillId);
-  return cfg.baseYield * (1 + (s.lvl - 1) * 0.08) * getSkillMult(skillId);
-}
-
-function getSkillTime(skillId) {
-  const cfg = skillCfg(skillId);
-  const s = skillState(skillId);
-  return Math.max(0.25, cfg.baseTime * Math.pow(0.97, s.lvl - 1));
-}
-
-function xpToNext(lvl) {
-  return Math.floor(lvl * 80 * Math.pow(1.12, lvl - 1));
-}
-
-function getCombatPower() {
-  let atk = G.combat.playerAtk + G.inventory.exploit * 8 + G.inventory.program * 2;
-  let def = G.combat.playerDef + G.inventory.hardware * 3;
-  const b = upState('combatBoost');
-  atk = Math.floor(atk * (1 + b.lvl * 0.15));
-  return { atk, def };
-}
-
-function getMaxData() { return 500 + (upState('dataCap')?.lvl || 0) * 50; }
-function getMaxCpu() { return 200 + (upState('dataCap')?.lvl || 0) * 20; }
-function getMaxBandwidth() { return 100 + (upState('dataCap')?.lvl || 0) * 10; }
-function resourceMax(id) {
-  const m = { data:getMaxData, cpu:getMaxCpu, bandwidth:getMaxBandwidth };
-  return (m[id] || (() => Infinity))();
-}
-
-function fmt(n) {
-  if (!n || isNaN(n)) return '0';
-  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
-  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-  return Math.floor(n).toLocaleString();
-}
-
-// ============================================================
-// GAME LOGIC
-// ============================================================
-function addResource(id, amount) {
-  if (amount <= 0) return;
-  const max = resourceMax(id);
-  G.resources[id] = Math.min((G.resources[id] || 0) + amount, max);
-  G.stats.totalEarned[id] = (G.stats.totalEarned[id] || 0) + amount;
-}
-
-function canAfford(cost) {
-  if (!cost) return true;
-  return Object.entries(cost).every(([r, a]) => (G.resources[r] || 0) >= a);
-}
-
-function spend(cost) {
-  if (!cost) return true;
-  if (!canAfford(cost)) return false;
-  Object.entries(cost).forEach(([r, a]) => { G.resources[r] -= a; });
-  return true;
-}
-
-function toggleSkill(skillId) {
-  const s = skillState(skillId);
-  if (!s) return;
+// ========== GAME ACTIONS ==========
+function clickSkill(id) {
+  const s = skillSt(id); if (!s) return;
   if (!s.unlocked) {
-    const cfg = skillCfg(skillId);
-    if (!cfg || !cfg.cost) return;
-    if (!canAfford(cfg.cost)) {
-      toast('Need ' + cfg.costLabel + ' to unlock', 'error');
-      return;
-    }
-    spend(cfg.cost);
-    s.unlocked = true;
-    s.active = true;
-    toast(cfg.name + ' unlocked!', 'loot');
+    const c = skillCfg(id);
+    if (!c || !c.cost) return;
+    if (!canPay(c.cost)) { toast('Need '+c.costLabel, 'error'); return; }
+    pay(c.cost); s.unlocked = true; s.active = true;
+    toast(c.name+' unlocked!', 'loot');
     return;
   }
   s.active = !s.active;
-  toast(s.active ? skillCfg(skillId).name + ' started' : skillCfg(skillId).name + ' stopped', 'info');
+  if (s.active) toast(skillCfg(id).name+' started', 'info');
 }
 
-function buyUpgrade(upgId) {
-  const u = upState(upgId);
-  const cfg = upCfg(upgId);
-  if (!u || !cfg || u.lvl >= cfg.maxLvl) return;
+function clickUpgrade(id) {
+  const u = upgSt(id), c = upgCfg(id);
+  if (!u||!c||u.lvl>=c.max) return;
   const cost = {};
-  Object.entries(cfg.baseCost).forEach(([r, a]) => { cost[r] = Math.floor(a * Math.pow(cfg.costMult, u.lvl)); });
-  if (!canAfford(cost)) {
-    toast('Cannot afford upgrade', 'error');
-    return;
-  }
-  spend(cost);
-  u.lvl++;
-  toast(cfg.name.replace('{level}', u.lvl) + ' purchased', 'loot');
+  Object.entries(c.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*Math.pow(c.mult, u.lvl)); });
+  if (!canPay(cost)) { toast('Cannot afford', 'error'); return; }
+  pay(cost); u.lvl++;
+  toast(c.name.replace('{level}',u.lvl)+' bought', 'loot');
 }
 
-function craftItem(craftId) {
-  const cfg = CRAFTS_CONFIG.find(c => c.id === craftId);
-  if (!cfg) return;
-  if (!canAfford(cfg.cost)) { toast('Not enough resources', 'error'); return; }
-  spend(cfg.cost);
-  G.inventory[cfg.result] = (G.inventory[cfg.result] || 0) + 1;
+function clickCraft(id) {
+  const c = CRAFTS.find(x=>x.id===id); if (!c) return;
+  if (!canPay(c.cost)) { toast('Not enough resources', 'error'); return; }
+  pay(c.cost);
+  G.inv[c.result] = (G.inv[c.result]||0) + 1;
   G.skills.forEach(s => {
-    if (s.unlocked) {
-      const xp = 5 + Math.floor(s.lvl * 0.5);
-      s.xp += xp;
-      const needed = xpToNext(s.lvl);
-      while (s.xp >= needed && s.lvl < 99) { s.xp -= needed; s.lvl++; }
-    }
+    if (!s.unlocked) return;
+    const xp = 5 + Math.floor(s.lvl*0.5);
+    s.xp += xp;
+    const req = xpReq(s.lvl);
+    while (s.xp >= req && s.lvl < 99) { s.xp -= req; s.lvl++; }
   });
-  toast('Crafted 1x ' + cfg.name, 'loot');
+  toast('Crafted '+c.name, 'loot');
 }
 
-function calcPrestigeGain() {
-  const dm = G.prestige.lifetimeDM || 0;
-  if (dm < 10) return 0;
-  return Math.floor(Math.pow(dm / 10, 0.5));
-}
-
+function prestigeGain() { const d=G.prest.dm||0; return d<10?0:Math.floor(Math.pow(d/10,0.5)); }
 function doPrestige() {
-  const gain = calcPrestigeGain();
-  if (gain < 1) { toast('Need more Dark Matter to prestige', 'error'); return; }
-  G.prestige.netrunnerLvl += gain;
-  G.prestige.totalPrestiges++;
-  const keep = {
-    prestige: G.prestige,
-    stats: { totalEarned: { data:0, credits:0, cpu:0, bandwidth:0, darkMatter:0 } },
-    saveVer: 2,
-  };
-  G = Object.assign(defaultState(), keep);
-  G.combat.enemyHp = ENEMIES[0].hp;
-  saveGame();
-  toast('Prestige complete! Netrunner Level ' + G.prestige.netrunnerLvl, 'loot');
+  const g = prestigeGain();
+  if (g < 1) { toast('Need more Dark Matter', 'error'); return; }
+  G.prest.lvl += g; G.prest.times++;
+  const keep = { prest:G.prest, stats:{earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0}}, ver:3 };
+  G = Object.assign(freshState(), keep);
+  G.cmbt.hp = ENEMIES[0].hp;
+  save(); toast('Prestige! Level '+G.prest.lvl, 'loot');
+  rebuildUI();
 }
 
-// ============================================================
-// CORE TICK
-// ============================================================
-function tick(dtSeconds) {
+// Dev mode
+function isDev() { return USER.toLowerCase() === 'dev'; }
+function devAddRes(id, amt) { addRes(id, amt); toast('Added '+fmt(amt)+' '+id, 'loot'); }
+function devMaxSkills() { G.skills.forEach(s=>{s.lvl=50;s.xp=0;s.unlocked=true;}); toast('Skills maxed', 'loot'); rebuildUI(); }
+function devUnlockAll() { G.skills.forEach(s=>{s.unlocked=true;}); G.cmbt.unlocked=true; toast('All unlocked', 'loot'); rebuildUI(); }
+function devSpeed(v) { G._speed=v||1; toast('Speed x'+(v||1), 'info'); }
+
+// ========== TICK ==========
+function tick(dt) {
+  const speed = G._speed || 1;
+  const sdt = dt * speed;
+
   // Skills
   G.skills.forEach((s, i) => {
     if (!s.unlocked || !s.active) return;
-    const cfg = SKILLS_CONFIG[i];
-    const time = getSkillTime(cfg.id);
-    s.progress += dtSeconds / time;
-    while (s.progress >= 1) {
-      s.progress -= 1;
-      addResource(cfg.res, getSkillYield(cfg.id));
-      const xp = cfg.xpPer * (1 + (s.lvl - 1) * 0.04);
+    const c = SKILLS[i];
+    const t = skillTime(c.id);
+    s.prog += sdt / t;
+    while (s.prog >= 1) {
+      s.prog -= 1;
+      addRes(c.res, skillYield(c.id));
+      const xp = c.xp * (1 + (s.lvl-1)*0.04);
       s.xp += xp;
-      const needed = xpToNext(s.lvl);
-      while (s.xp >= needed && s.lvl < 99) { s.xp -= needed; s.lvl++; }
+      const req = xpReq(s.lvl);
+      while (s.xp >= req && s.lvl < 99) { s.xp -= req; s.lvl++; }
     }
   });
 
   // Combat
-  if (G.combat.unlocked) {
-    G.combat.tickAccum += dtSeconds;
-    if (G.combat.tickAccum >= 2) {
-      G.combat.tickAccum -= 2;
-      const enemy = ENEMIES[G.combat.enemyIdx];
-      const { atk, def } = getCombatPower();
-      const dmgToEnemy = Math.max(1, atk - enemy.def + Math.floor(Math.random() * 5));
-      const dmgToPlayer = Math.max(0, enemy.atk - def + Math.floor(Math.random() * 3));
-      G.combat.enemyHp -= dmgToEnemy;
-      G.combat.playerHp -= dmgToPlayer;
-
-      if (G.combat.enemyHp <= 0) {
-        const rew = enemy.reward;
-        Object.entries(rew).forEach(([r, a]) => {
-          addResource(r, a);
-          if (r === 'darkMatter') G.prestige.lifetimeDM += a;
-        });
-        G.combat.enemyIdx = Math.min(G.combat.enemyIdx + 1, ENEMIES.length - 1);
-        G.combat.enemyHp = ENEMIES[G.combat.enemyIdx].hp;
+  if (G.cmbt.unlocked) {
+    G.cmbt.accum += sdt;
+    if (G.cmbt.accum >= 2) {
+      G.cmbt.accum -= 2;
+      const e = ENEMIES[G.cmbt.idx];
+      const { a, d } = cmbtPow();
+      const de = Math.max(1, a - e.def + Math.floor(Math.random()*5));
+      const dp = Math.max(0, e.atk - d + Math.floor(Math.random()*3));
+      G.cmbt.hp -= de; G.cmbt.php -= dp;
+      if (G.cmbt.hp <= 0) {
+        Object.entries(e.reward).forEach(([r,a])=>{ addRes(r,a); if(r==='darkMatter') G.prest.dm+=a; });
+        G.cmbt.idx = Math.min(G.cmbt.idx+1, ENEMIES.length-1);
+        G.cmbt.hp = ENEMIES[G.cmbt.idx].hp;
       }
-      if (G.combat.playerHp <= 0) {
-        G.combat.playerHp = G.combat.playerMaxHp;
-      }
+      if (G.cmbt.php <= 0) G.cmbt.php = G.cmbt.mxhp;
     }
   }
 }
 
-// ============================================================
-// RENDER
-// ============================================================
-function renderAll() {
+// ========== UI BUILD (once) ==========
+function buildSkills() {
+  const c = document.getElementById('skills-container'); if (!c) return;
+  c.innerHTML = '';
+  SKILLS.forEach(cfg => {
+    const card = document.createElement('div');
+    card.className = 'skill-card';
+    card.innerHTML =
+      '<div class="skill-header"><span class="skill-name">'+cfg.name+'</span><span class="skill-level">Lv.1</span></div>' +
+      '<div class="skill-progress"><div class="skill-progress-bar"></div></div>' +
+      '<div class="skill-info"><span class="skill-yield">0</span><span class="skill-xp">0 XP</span></div>' +
+      '<div class="skill-desc">'+cfg.desc+'</div>' +
+      '<button class="skill-btn" data-id="'+cfg.id+'">START</button>';
+    card.querySelector('.skill-btn').addEventListener('click', e => { e.stopPropagation(); clickSkill(cfg.id); });
+    c.appendChild(card);
+  });
+}
+
+function buildUpgrades() {
+  const c = document.getElementById('upgrades-container'); if (!c) return;
+  c.innerHTML = '';
+  UPGRADES.forEach(cfg => {
+    const card = document.createElement('div');
+    card.className = 'upgrade-card';
+    card.innerHTML =
+      '<div class="flex-between"><span class="upgrade-name">'+cfg.name.replace('{level}',1)+'</span><span class="upgrade-level">Lv.0/'+cfg.max+'</span></div>' +
+      '<div class="upgrade-desc">'+cfg.desc+'</div>' +
+      '<div class="upgrade-cost">Cost: -</div>' +
+      '<button class="upgrade-btn" data-id="'+cfg.id+'">BUY</button>';
+    card.querySelector('.upgrade-btn').addEventListener('click', e => { e.stopPropagation(); clickUpgrade(cfg.id); });
+    c.appendChild(card);
+  });
+}
+
+function buildCrafting() {
+  const c = document.getElementById('craft-container'); if (!c) return;
+  c.innerHTML = '';
+  CRAFTS.forEach(cfg => {
+    const card = document.createElement('div');
+    card.className = 'craft-card';
+    card.innerHTML =
+      '<div class="craft-name">'+cfg.name+'</div>' +
+      '<div class="craft-desc">'+cfg.desc+'</div>' +
+      '<div class="craft-cost">Cost: '+Object.entries(cfg.cost).map(([r,a])=>fmt(a)+' '+r).join(', ')+'</div>' +
+      '<button class="craft-btn" data-id="'+cfg.id+'">CRAFT</button>';
+    card.querySelector('.craft-btn').addEventListener('click', e => { e.stopPropagation(); clickCraft(cfg.id); });
+    c.appendChild(card);
+  });
+}
+
+function buildDevPanel() {
+  const p = document.getElementById('dev-panel'); if (!p) return;
+  p.innerHTML =
+    '<h3>DEV MODE</h3>' +
+    '<div class="dev-row">' +
+      '<button onclick="devAddRes(\'data\',1000)">+1K DATA</button>' +
+      '<button onclick="devAddRes(\'credits\',1000)">+1K CREDITS</button>' +
+      '<button onclick="devAddRes(\'cpu\',500)">+500 CPU</button>' +
+      '<button onclick="devAddRes(\'bandwidth\',200)">+200 BW</button>' +
+      '<button onclick="devAddRes(\'darkMatter\',100)">+100 DM</button>' +
+    '</div>' +
+    '<div class="dev-row">' +
+      '<button onclick="devMaxSkills()">MAX SKILLS</button>' +
+      '<button onclick="devUnlockAll()">UNLOCK ALL</button>' +
+      '<button onclick="devSpeed(10)">x10 SPEED</button>' +
+      '<button onclick="devSpeed(1)">x1 SPEED</button>' +
+      '<button onclick="doPrestige();devAddRes(\'darkMatter\',1000)">PRESTIGE TEST</button>' +
+    '</div>';
+}
+
+function buildUI() {
+  buildSkills();
+  buildUpgrades();
+  buildCrafting();
+  if (isDev()) buildDevPanel();
+}
+
+// ========== UI UPDATE (every frame) ==========
+function updateUI() {
   // Resources
   ['data','credits','cpu','bandwidth','darkMatter'].forEach(id => {
-    const el = document.getElementById('r-' + id);
+    const el = document.getElementById('r-'+id);
     if (!el) return;
-    const amt = G.resources[id] || 0;
-    const max = resourceMax(id);
-    el.textContent = max === Infinity ? fmt(amt) : fmt(amt) + '/' + fmt(max);
+    const amt = G.res[id]||0;
+    const max = resMax(id);
+    el.textContent = max === 1/0 ? fmt(amt) : fmt(amt)+'/'+fmt(max);
   });
+  document.getElementById('user-info').textContent = 'NETRUNNER: '+USER + (isDev() ? ' [DEV]' : '');
 
   // Skills
   const sc = document.getElementById('skills-container');
-  if (sc) {
-    sc.innerHTML = '';
-    SKILLS_CONFIG.forEach((cfg, i) => {
+  if (sc && sc.children.length === SKILLS.length) {
+    SKILLS.forEach((cfg, i) => {
       const s = G.skills[i];
-      const card = document.createElement('div');
-      card.className = 'skill-card' + (s.unlocked ? '' : ' locked') + (s.active ? ' active-skill' : '');
-      const pct = s.lvl >= 99 ? 100 : (xpToNext(s.lvl) > 0 ? (s.xp / xpToNext(s.lvl) * 100) : 0);
-      card.innerHTML =
-        '<div class="skill-header">' +
-          '<span class="skill-name">' + cfg.name + '</span>' +
-          '<span class="skill-level">Lv.' + s.lvl + (s.lvl >= 99 ? ' MAX' : '') + '</span>' +
-        '</div>' +
-        '<div class="skill-progress"><div class="skill-progress-bar" style="width:' + Math.min(100, pct) + '%"></div></div>' +
-        '<div class="skill-info">' +
-          '<span>' + fmt(getSkillYield(cfg.id)) + ' ' + cfg.res + '/s</span>' +
-          '<span>' + (s.lvl >= 99 ? 'MAX' : fmt(xpToNext(s.lvl) - s.xp) + ' XP') + '</span>' +
-        '</div>' +
-        '<div class="skill-desc">' + (!s.unlocked ? 'Unlock: ' + cfg.costLabel : cfg.desc) + '</div>' +
-        '<button class="skill-btn' + (s.active ? ' active-btn' : '') + '" data-skill="' + cfg.id + '">' +
-          (s.unlocked ? (s.active ? 'ACTIVE' : 'START') : 'UNLOCK') +
-        '</button>';
-      sc.appendChild(card);
+      const card = sc.children[i];
+      if (!card) return;
+      card.className = 'skill-card' + (s.unlocked?'':' locked') + (s.active?' active-skill':'');
+      card.querySelector('.skill-level').textContent = 'Lv.'+s.lvl+(s.lvl>=99?' MAX':'');
+      const pct = s.lvl>=99?100:(xpReq(s.lvl)>0?s.xp/xpReq(s.lvl)*100:0);
+      card.querySelector('.skill-progress-bar').style.width = Math.min(100,pct)+'%';
+      card.querySelector('.skill-yield').textContent = fmt(skillYield(cfg.id))+' '+cfg.res+'/s';
+      card.querySelector('.skill-xp').textContent = s.lvl>=99?'MAX':fmt(xpReq(s.lvl)-s.xp)+' XP';
+      card.querySelector('.skill-desc').textContent = !s.unlocked ? 'Unlock: '+cfg.costLabel : cfg.desc;
+      const btn = card.querySelector('.skill-btn');
+      btn.textContent = s.unlocked ? (s.active?'ACTIVE':'START') : 'UNLOCK';
+      btn.className = 'skill-btn' + (s.active?' active-btn':'');
     });
   }
 
   // Upgrades
   const uc = document.getElementById('upgrades-container');
-  if (uc) {
-    uc.innerHTML = '';
-    UPGRADES_CONFIG.forEach(cfg => {
-      const u = upState(cfg.id);
-      const maxed = u.lvl >= cfg.maxLvl;
+  if (uc && uc.children.length === UPGRADES.length) {
+    UPGRADES.forEach((cfg, i) => {
+      const u = G.upgs[i];
+      const card = uc.children[i]; if (!card) return;
+      const maxed = u.lvl >= cfg.max;
+      card.className = 'upgrade-card' + (maxed?' maxed':'');
+      card.querySelector('.upgrade-name').textContent = cfg.name.replace('{level}', u.lvl+1);
+      card.querySelector('.upgrade-level').textContent = maxed?'MAX':'Lv.'+u.lvl+'/'+cfg.max;
       const cost = {};
-      Object.entries(cfg.baseCost).forEach(([r, a]) => { cost[r] = Math.floor(a * Math.pow(cfg.costMult, u.lvl)); });
-      const canBuy = !maxed && canAfford(cost);
-      const card = document.createElement('div');
-      card.className = 'upgrade-card' + (maxed ? ' maxed' : '');
-      card.innerHTML =
-        '<div class="flex-between">' +
-          '<span class="upgrade-name">' + cfg.name.replace('{level}', u.lvl + 1) + '</span>' +
-          '<span class="upgrade-level">' + (maxed ? 'MAX' : 'Lv.' + u.lvl + '/' + cfg.maxLvl) + '</span>' +
-        '</div>' +
-        '<div class="upgrade-desc">' + cfg.desc + '</div>' +
-        '<div class="upgrade-cost">' + (maxed ? 'MAXED' : 'Cost: ' + Object.entries(cost).map(([r,a]) => fmt(a) + ' ' + r).join(', ')) + '</div>' +
-        '<button class="upgrade-btn" data-upgrade="' + cfg.id + '"' + (!canBuy ? ' disabled' : '') + '>BUY</button>';
-      uc.appendChild(card);
+      Object.entries(cfg.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*Math.pow(cfg.mult,u.lvl)); });
+      card.querySelector('.upgrade-cost').textContent = maxed?'MAXED':'Cost: '+Object.entries(cost).map(([r,a])=>fmt(a)+' '+r).join(', ');
+      const btn = card.querySelector('.upgrade-btn');
+      btn.disabled = maxed || !canPay(cost);
     });
   }
 
   // Crafting
   const cc = document.getElementById('craft-container');
-  if (cc) {
-    cc.innerHTML = '';
-    CRAFTS_CONFIG.forEach(cfg => {
-      const canCraft = canAfford(cfg.cost);
-      const card = document.createElement('div');
-      card.className = 'craft-card';
-      card.innerHTML =
-        '<div class="craft-name">' + cfg.name + '</div>' +
-        '<div class="craft-desc">' + cfg.desc + '</div>' +
-        '<div class="craft-cost">Cost: ' + Object.entries(cfg.cost).map(([r,a]) => fmt(a) + ' ' + r).join(', ') + '</div>' +
-        '<button class="craft-btn" data-craft="' + cfg.id + '"' + (!canCraft ? ' disabled' : '') + '>CRAFT</button>';
-      cc.appendChild(card);
+  if (cc && cc.children.length === CRAFTS.length) {
+    CRAFTS.forEach((cfg, i) => {
+      const card = cc.children[i]; if (!card) return;
+      const btn = card.querySelector('.craft-btn');
+      if (btn) btn.disabled = !canPay(cfg.cost);
     });
   }
 
+  // Inventory
   const inv = document.getElementById('inventory-container');
   if (inv) {
     inv.innerHTML = '';
-    [['program','Programs'],['hardware','Hardware'],['exploit','Exploits']].forEach(([id, label]) => {
-      const div = document.createElement('div');
-      div.style.cssText = 'background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:6px 12px;font-size:12px;';
-      div.innerHTML = '<span style="color:#0ff">' + label + ':</span> <span style="color:#ff0">' + (G.inventory[id] || 0) + '</span>';
-      inv.appendChild(div);
+    [['program','Programs'],['hardware','Hardware'],['exploit','Exploits']].forEach(([id,label])=>{
+      const d=document.createElement('div'); d.style.cssText='background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:6px 12px;font-size:12px;';
+      d.innerHTML='<span style="color:#0ff">'+label+':</span> <span style="color:#ff0">'+(G.inv[id]||0)+'</span>';
+      inv.appendChild(d);
     });
   }
 
   // Combat
-  const enemy = ENEMIES[G.combat.enemyIdx];
-  const elName = document.getElementById('enemy-name');
-  const elHpFill = document.getElementById('enemy-hp-fill');
-  const elHpText = document.getElementById('enemy-hp-text');
-  const elAtk = document.getElementById('p-atk');
-  const elDef = document.getElementById('p-def');
-  const elHp = document.getElementById('p-hp');
-  const elMaxHp = document.getElementById('p-maxhp');
-  const { atk, def } = getCombatPower();
-  if (elName) elName.textContent = enemy.name;
-  if (elHpFill) elHpFill.style.width = Math.max(0, (G.combat.enemyHp / enemy.hp) * 100) + '%';
-  if (elHpText) elHpText.textContent = 'HP: ' + Math.max(0, Math.floor(G.combat.enemyHp)) + '/' + enemy.hp;
-  if (elAtk) elAtk.textContent = atk;
-  if (elDef) elDef.textContent = def;
-  if (elHp) elHp.textContent = Math.max(0, Math.floor(G.combat.playerHp));
-  if (elMaxHp) elMaxHp.textContent = G.combat.playerMaxHp;
+  const e = ENEMIES[G.cmbt.idx];
+  const en = document.getElementById('enemy-name');
+  const ef = document.getElementById('enemy-hp-fill');
+  const et = document.getElementById('enemy-hp-text');
+  const { a, d } = cmbtPow();
+  if (en) en.textContent = e.name + (G.cmbt.unlocked?'':' [LOCKED]');
+  if (ef) ef.style.width = Math.max(0, (G.cmbt.hp/e.hp)*100)+'%';
+  if (et) et.textContent = 'HP: '+Math.max(0,Math.floor(G.cmbt.hp))+'/'+e.hp;
+  const pa = document.getElementById('p-atk'); if (pa) pa.textContent = a;
+  const pd = document.getElementById('p-def'); if (pd) pd.textContent = d;
+  const ph = document.getElementById('p-hp'); if (ph) ph.textContent = Math.max(0,Math.floor(G.cmbt.php));
+  const pm = document.getElementById('p-maxhp'); if (pm) pm.textContent = G.cmbt.mxhp;
 
   // Prestige
-  const gain = calcPrestigeGain();
-  const pnl = document.getElementById('pnl');
-  if (pnl) pnl.textContent = G.prestige.netrunnerLvl;
-  const pnlGain = document.getElementById('pnl-gain');
-  if (pnlGain) pnlGain.textContent = gain;
-  const ldm = document.getElementById('lifetime-dm');
-  if (ldm) ldm.textContent = fmt(G.prestige.lifetimeDM);
-  const pbtn = document.getElementById('prestige-btn');
-  if (pbtn) pbtn.disabled = gain < 1;
-
-  // User info
-  const ui = document.getElementById('user-info');
-  if (ui) ui.textContent = 'NETRUNNER: ' + G_USER;
+  const g = prestigeGain();
+  const pnl = document.getElementById('pnl'); if (pnl) pnl.textContent = G.prest.lvl;
+  const pg = document.getElementById('pnl-gain'); if (pg) pg.textContent = g;
+  const ld = document.getElementById('lifetime-dm'); if (ld) ld.textContent = fmt(G.prest.dm);
+  const pb = document.getElementById('prestige-btn'); if (pb) pb.disabled = g < 1;
 }
 
-// ============================================================
-// SAVE / LOAD
-// ============================================================
-function saveGame() {
-  try { localStorage.setItem('nris_' + G_USER, JSON.stringify(G)); } catch(e) {}
-}
+function rebuildUI() { buildUI(); }
 
-function loadGame() {
+// ========== SAVE / LOAD ==========
+function save() {
+  try { localStorage.setItem('nri_'+USER, JSON.stringify(G)); } catch(e) {}
+}
+function load() {
   try {
-    const raw = localStorage.getItem('nris_' + G_USER);
+    const raw = localStorage.getItem('nri_'+USER);
     if (raw) {
-      const data = JSON.parse(raw);
-      if (data && data.saveVer === 2) {
-        G = Object.assign(defaultState(), data);
-        while (G.skills.length < SKILLS_CONFIG.length) {
-          G.skills.push({ id:SKILLS_CONFIG[G.skills.length].id, lvl:1, xp:0, active:false, unlocked:false, progress:0 });
-        }
-        while (G.upgrades.length < UPGRADES_CONFIG.length) {
-          G.upgrades.push({ id:UPGRADES_CONFIG[G.upgrades.length].id, lvl:0 });
-        }
+      const d = JSON.parse(raw);
+      if (d && d.ver === 3) {
+        G = Object.assign(freshState(), d);
+        while (G.skills.length < SKILLS.length) G.skills.push({ id:SKILLS[G.skills.length].id, lvl:1, xp:0, active:false, unlocked:false, prog:0 });
+        while (G.upgs.length < UPGRADES.length) G.upgs.push({ id:UPGRADES[G.upgs.length].id, lvl:0 });
         return true;
       }
     }
-  } catch(e) {}
+  } catch(e) { err('Load error: '+e.message); }
   return false;
 }
 
-// ============================================================
-// GAME LOOP
-// ============================================================
-function startGameLoop() {
-  let prev = performance.now();
-  let saveAccum = 0;
-
+// ========== GAME LOOP ==========
+function startLoop() {
+  let prev = performance.now(), acc = 0;
   function loop(now) {
     try {
-      const dt = Math.min((now - prev) / 1000, 2);
+      const dt = Math.min((now-prev)/1000, 2);
       prev = now;
-
-      if (dt > 0) {
-        tick(dt);
-        renderAll();
-      }
-
-      saveAccum += dt;
-      if (saveAccum >= 15) {
-        saveAccum = 0;
-        saveGame();
-      }
-    } catch(e) {
-      const el = document.getElementById('error-display');
-      if (el) { el.style.display = 'block'; el.textContent += '[LOOP] ' + e.message + '\n' + e.stack + '\n'; }
-    }
+      if (dt > 0) { tick(dt); updateUI(); }
+      acc += dt;
+      if (acc >= 15) { acc = 0; save(); }
+    } catch(e) { err('Loop: '+e.message+'\n'+e.stack); }
     requestAnimationFrame(loop);
   }
-
   requestAnimationFrame(loop);
 }
 
-// ============================================================
-// EVENT BINDING
-// ============================================================
-function bindEvents() {
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      const tab = document.getElementById('tab-' + btn.dataset.tab);
-      if (tab) tab.classList.add('active');
-    });
-  });
-
-  document.addEventListener('click', e => {
-    try {
-      const skillBtn = e.target.closest('.skill-btn');
-      if (skillBtn) { toggleSkill(skillBtn.dataset.skill); return; }
-
-      const upgradeBtn = e.target.closest('.upgrade-btn');
-      if (upgradeBtn) { buyUpgrade(upgradeBtn.dataset.upgrade); return; }
-
-      const craftBtn = e.target.closest('.craft-btn');
-      if (craftBtn) { craftItem(craftBtn.dataset.craft); return; }
-    } catch(e) {
-      const el = document.getElementById('error-display');
-      if (el) { el.style.display = 'block'; el.textContent += '[CLICK] ' + e.message + '\n'; }
-    }
-  });
-
-  document.getElementById('prestige-btn')?.addEventListener('click', doPrestige);
-}
-
-// ============================================================
-// LOGIN
-// ============================================================
-function startLogin() {
+// ========== LOGIN ==========
+function initLogin() {
   const input = document.getElementById('login-input');
-  const btn = document.getElementById('login-btn');
-  const err = document.getElementById('login-error');
+  const loginBtn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
   const overlay = document.getElementById('login-overlay');
   const game = document.getElementById('game');
 
   function doLogin() {
     try {
       const name = input.value.trim();
-      if (name.length < 2 || name.length > 20) {
-        err.style.display = 'block';
-        return;
-      }
-      err.style.display = 'none';
-      G_USER = name;
-      try { localStorage.setItem('nr_user', G_USER); } catch(e) {}
-      loadGame();
-      overlay.style.display = 'none';
-      game.style.display = 'flex';
-      renderAll();
-      bindEvents();
-      startGameLoop();
-      toast('Welcome, ' + G_USER + '!', 'info');
-      // Auto-start Data Mining after 1s for immediate feedback
+      if (name.length < 2 || name.length > 20) { errEl.style.display='block'; return; }
+      errEl.style.display='none';
+      USER = name;
+      try { localStorage.setItem('nr_user', USER); } catch(e) {}
+      const loaded = load();
+      G = G || freshState();
+      overlay.style.display='none';
+      game.style.display='flex';
+      buildUI();
+      updateUI();
+      startLoop();
+      toast('Welcome, '+USER+'!', 'info');
+      if (isDev()) { toast('DEV MODE ACTIVE', 'loot'); }
+
+      // Auto-start data mining after 0.5s
       setTimeout(() => {
         const dm = G.skills[0];
-        if (dm && !dm.active) {
-          dm.active = true;
-          toast('Data Mining auto-started!', 'loot');
-        }
+        if (dm && !dm.active) { dm.active = true; toast('Data Mining started!', 'loot'); }
       }, 500);
-      // Check combat unlock periodically
+
+      // Periodically check combat unlock
       setInterval(() => {
-        if (!G.combat.unlocked) {
-          const ready = G.skills.filter(s => s.unlocked && s.lvl >= 3).length >= 2;
-          if (ready) {
-            G.combat.unlocked = true;
-            toast('Combat unlocked! Hack network nodes.', 'loot');
-          }
+        if (!G.cmbt.unlocked && G.skills.filter(s=>s.unlocked&&s.lvl>=3).length>=2) {
+          G.cmbt.unlocked = true;
+          toast('Combat unlocked!', 'loot');
         }
       }, 3000);
-    } catch(e) {
-      const el = document.getElementById('error-display');
-      if (el) { el.style.display = 'block'; el.textContent += '[LOGIN] ' + e.message + '\n' + e.stack + '\n'; }
-    }
+    } catch(e) { err('Login: '+e.message); }
   }
 
-  btn.addEventListener('click', doLogin);
+  loginBtn.addEventListener('click', doLogin);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   input.focus();
 
-  // Check for saved user
   let savedUser = null;
   try { savedUser = localStorage.getItem('nr_user'); } catch(e) {}
-  if (savedUser) {
-    input.value = savedUser;
-    doLogin();
-  }
+  if (savedUser) { input.value = savedUser; doLogin(); }
 }
 
-// ============================================================
-// INIT
-// ============================================================
-startLogin();
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    this.classList.add('active');
+    const tab = document.getElementById('tab-'+this.dataset.tab);
+    if (tab) tab.classList.add('active');
+    const devPanel = document.getElementById('dev-panel');
+    if (devPanel) {
+      const isSkillsTab = this.dataset.tab === 'skills';
+      devPanel.style.display = isSkillsTab && isDev() ? 'block' : 'none';
+    }
+  });
+});
+
+// Prestige button
+document.getElementById('prestige-btn')?.addEventListener('click', doPrestige);
+
+// Global error handler
+window.onerror = function(msg, url, line) { err(msg+' (line '+line+')'); return false; };
+
+initLogin();
 </script>
 </body>
 </html>
