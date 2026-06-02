@@ -203,7 +203,9 @@ const UPGRADES = [
   { id:'sniffingSpeed', name:'Packet Sniffer v{level}', desc:'+20% packet sniffing speed', cost:{data:40}, mult:1.8, max:20 },
   { id:'cryptoSpeed', name:'Crypto Miner v{level}', desc:'+20% crypto mining speed', cost:{credits:60,data:30}, mult:1.8, max:20 },
   { id:'scoutSpeed', name:'Network Scout v{level}', desc:'+20% network scouting speed', cost:{credits:80,cpu:20}, mult:1.8, max:20 },
-  { id:'dataCap', name:'Data Reservoir v{level}', desc:'+50 max data, +20 CPU, +10 BW', cost:{data:100}, mult:2, max:15 },
+  { id:'dataCap', name:'Data Reservoir v{level}', desc:'+100 max data storage', cost:{data:100}, mult:2, max:20 },
+  { id:'cpuCap', name:'CPU Rack v{level}', desc:'+50 max CPU cores', cost:{credits:150,cpu:10}, mult:2, max:15 },
+  { id:'bwCap', name:'Fiber Link v{level}', desc:'+30 max bandwidth', cost:{data:200,bandwidth:10}, mult:2, max:15 },
   { id:'combatBoost', name:'ICE Breaker v{level}', desc:'+15% combat damage', cost:{credits:100,bandwidth:10}, mult:2, max:15 },
 ];
 
@@ -259,9 +261,9 @@ function cmbtPow() {
   a = Math.floor(a * (1 + b.lvl*0.15));
   return { a, d };
 }
-function maxData() { return 500 + (upgSt('dataCap')?.lvl||0)*50; }
-function maxCpu() { return 200 + (upgSt('dataCap')?.lvl||0)*20; }
-function maxBw() { return 100 + (upgSt('dataCap')?.lvl||0)*10; }
+function maxData() { return 500 + (upgSt('dataCap')?.lvl||0)*100; }
+function maxCpu() { return 200 + (upgSt('cpuCap')?.lvl||0)*50; }
+function maxBw() { return 100 + (upgSt('bwCap')?.lvl||0)*30; }
 function resMax(id) { const m={data:maxData,cpu:maxCpu,bandwidth:maxBw}; return (m[id]||(()=>1/0))(); }
 
 function addRes(id, amt) {
