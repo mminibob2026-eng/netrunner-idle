@@ -163,6 +163,7 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
   <button class="tab-btn" data-tab="combat">COMBAT</button>
   <button class="tab-btn" data-tab="upgrades">UPGRADES</button>
   <button class="tab-btn" data-tab="prestige">PRESTIGE</button>
+  <button class="tab-btn" data-tab="log">LOG</button>
 </div>
 
 <div id="content">
@@ -206,6 +207,10 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
       <p>Gain: <span class="text-pink" id="pnl-gain">0</span> levels | Lifetime DM: <span class="text-cyan" id="lifetime-dm">0</span></p>
       <button class="prestige-btn" id="prestige-btn">PRESTIGE</button>
     </div>
+  </div>
+  <div id="tab-log" class="tab-content">
+    <div class="section-title">[ ACTIVITY LOG ]</div>
+    <div id="log-container" style="font-size:11px;color:#888;padding:4px;max-height:400px;overflow-y:auto;"></div>
   </div>
 </div>
 <div id="dev-panel" style="display:none"></div>
@@ -265,6 +270,7 @@ function freshState() {
     prest: { lvl:0, dm:0, times:0 },
     stats: { earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0} },
     ver: 4,
+    activityLog: [],
   };
 }
 
@@ -317,6 +323,12 @@ function toast(msg, t='info') {
   setTimeout(() => { if (el.parentNode) el.remove(); }, 3000);
 }
 
+function logActivity(msg) {
+  if (!G) return;
+  G.activityLog.push('['+new Date().toLocaleTimeString()+'] '+msg);
+  if (G.activityLog.length > 200) G.activityLog.splice(0, G.activityLog.length-200);
+}
+
 function err(msg) {
   const eb = document.getElementById('error-bar');
   if (eb) { eb.style.display='block'; eb.textContent += '['+new Date().toLocaleTimeString()+'] '+msg+'\n'; }
@@ -329,7 +341,6 @@ function clickSkill(id) {
   if (!s.unlocked) {
     const c = skillCfg(id);
     if (!c || !c.cost) return;
-    // Check level requirements
     if (c.req) {
       for (const [reqId, reqLvl] of Object.entries(c.req)) {
         const rs = skillSt(reqId);
@@ -338,10 +349,12 @@ function clickSkill(id) {
     }
     if (!canPay(c.cost)) { toast('Need '+c.costLabel, 'error'); return; }
     pay(c.cost); s.unlocked = true; s.active = true;
+    logActivity('Unlocked '+c.name);
     toast(c.name+' unlocked!', 'loot');
     return;
   }
   s.active = !s.active;
+  logActivity(skillCfg(id).name+' '+(s.active?'started':'stopped'));
   if (s.active) toast(skillCfg(id).name+' started', 'info');
 }
 
@@ -367,6 +380,7 @@ function clickCraft(id) {
     const req = xpReq(s.lvl);
     while (s.xp >= req && s.lvl < 99) { s.xp -= req; s.lvl++; }
   });
+  logActivity('Crafted '+c.name);
   toast('Crafted '+c.name, 'loot');
 }
 
@@ -374,12 +388,17 @@ function prestigeGain() { const d=G.prest.dm||0; return d<10?0:Math.floor(Math.p
 function doPrestige() {
   const g = prestigeGain();
   if (g < 1) { toast('Need more Dark Matter', 'error'); return; }
+  logActivity('Prestige! +'+g+' Netrunner Levels (Total: '+(G.prest.lvl+g)+')');
   G.prest.lvl += g; G.prest.times++;
   const keep = { prest:G.prest, stats:{earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0}}, ver:4 };
   G = Object.assign(freshState(), keep);
   G.cmbt.hp = ENEMIES[0].hp;
   save(); toast('Prestige! Level '+G.prest.lvl, 'loot');
   rebuildUI();
+  // Auto-start Data Mining after prestige
+  const dm = G.skills[0];
+  if (dm && !dm.active) { dm.active = true; }
+  logActivity('Prestige complete - Data Mining auto-started');
 }
 
 // Dev mode
@@ -400,6 +419,7 @@ function combatEngage(idx) {
   if (G.cmbt.php <= 0) G.cmbt.php = G.cmbt.mxhp;
   G.cmbt.log = [];
   logCombat('Engaged '+ENEMIES[idx].name+' [Lv.'+ENEMIES[idx].lvl+']');
+  logActivity('Started hacking '+ENEMIES[idx].name);
   toast('Hacking '+ENEMIES[idx].name+'!', 'info');
 }
 function combatAttack() {
@@ -424,14 +444,17 @@ function combatUseItem(type) {
   if (type === 'program') {
     G.cmbt._bonus = (G.cmbt._bonus||0) + 5;
     logCombat('Program deployed: +5 ATK bonus');
+    logActivity('Used Program in combat');
     toast('Program deployed!', 'loot');
   } else if (type === 'hardware') {
     G.cmbt.php = Math.min(G.cmbt.mxhp, G.cmbt.php + 20);
     logCombat('Hardware deployed: +20 HP restored');
+    logActivity('Used Hardware in combat');
     toast('Hardware deployed!', 'loot');
   } else if (type === 'exploit') {
     G.cmbt.hp -= 15;
     logCombat('Exploit deployed: -15 HP to target');
+    logActivity('Used Exploit in combat');
     toast('Exploit deployed!', 'loot');
     if (G.cmbt.hp <= 0) combatWin();
   }
@@ -440,6 +463,7 @@ function combatDisconnect() {
   if (!G.cmbt.inCombat) return;
   G.cmbt.inCombat = false;
   G.cmbt._bonus = 0;
+  logActivity('Disconnected from '+ENEMIES[G.cmbt.idx].name);
   logCombat('Disconnected. Skills resumed.');
   G.cmbt.log = [];
   toast('Disconnected', 'info');
@@ -447,6 +471,7 @@ function combatDisconnect() {
 function combatWin() {
   const e = ENEMIES[G.cmbt.idx];
   Object.entries(e.reward).forEach(([r,a])=>{ addRes(r,a); if(r==='darkMatter') G.prest.dm+=a; });
+  logActivity('Breached '+e.name+'! Rewards: '+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', '));
   logCombat('BREACHED '+e.name+'! Rewards: '+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', '));
   toast(e.name+' breached!', 'loot');
   G.cmbt.hp = e.hp;
@@ -454,6 +479,7 @@ function combatWin() {
 }
 function combatLose() {
   logCombat('System crash! Disconnecting...');
+  logActivity('Defeated by '+ENEMIES[G.cmbt.idx].name);
   toast('Defeated!', 'error');
   G.cmbt.php = G.cmbt.mxhp;
   G.cmbt.inCombat = false;
@@ -723,6 +749,12 @@ function updateUI() {
   const pg = document.getElementById('pnl-gain'); if (pg) pg.textContent = g;
   const ld = document.getElementById('lifetime-dm'); if (ld) ld.textContent = fmt(G.prest.dm);
   const pb = document.getElementById('prestige-btn'); if (pb) pb.disabled = g < 1;
+
+  // Activity log
+  const lc = document.getElementById('log-container');
+  if (lc && G.activityLog) {
+    lc.innerHTML = G.activityLog.slice().reverse().map(m => '<div style="padding:1px 0">'+m+'</div>').join('');
+  }
 }
 
 function rebuildUI() { buildUI(); }
@@ -750,9 +782,14 @@ function load() {
 }
 
 // ========== GAME LOOP ==========
+let _loopStarted = false;
 function startLoop() {
+  if (_loopStarted) return;
+  _loopStarted = true;
   let prev = performance.now(), acc = 0;
   function loop(now) {
+    requestAnimationFrame(loop);
+    if (!G) return;
     try {
       const dt = Math.min((now-prev)/1000, 2);
       prev = now;
@@ -760,10 +797,8 @@ function startLoop() {
       acc += dt;
       if (acc >= 5) { acc = 0; save(); }
     } catch(e) { err('Loop: '+e.message+'\n'+e.stack); }
-    requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
-  // Save on page unload
   window.addEventListener('beforeunload', save);
 }
 
@@ -827,6 +862,8 @@ function logout() {
   if (overlay) overlay.style.display = 'flex';
   document.getElementById('login-input').value = '';
   document.getElementById('login-input').focus();
+  G = null;
+  _loopStarted = false;
   toast('Logged out', 'info');
 }
 
