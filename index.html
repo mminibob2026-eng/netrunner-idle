@@ -111,6 +111,23 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 
 .text-green { color:#0f0; } .text-pink { color:#f0f; } .text-cyan { color:#0ff; } .text-yellow { color:#ff0; } .text-red { color:#f44; } .text-gray { color:#888; }
 .flex-between { display:flex;justify-content:space-between;align-items:center; }
+
+#enemy-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:4px;margin-bottom:8px; }
+.enemy-card { background:rgba(255,0,0,0.04);border:1px solid rgba(255,0,0,0.15);border-radius:4px;padding:8px 10px;cursor:pointer;text-align:center;transition:all 0.15s;font-size:12px; }
+.enemy-card:hover { border-color:rgba(255,0,0,0.4);background:rgba(255,0,0,0.08); }
+.enemy-card.active { border-color:#f44;background:rgba(255,0,0,0.12);box-shadow:0 0 8px rgba(255,0,0,0.2); }
+.enemy-card.locked { opacity:0.35;cursor:default; }
+.enemy-card .e-name { color:#f44;font-weight:bold; }
+.enemy-card .e-lvl { color:#888;font-size:10px; }
+.enemy-card .e-reward { color:#ff0;font-size:10px;margin-top:2px; }
+.combat-btn { padding:8px 16px;font-family:inherit;font-size:12px;cursor:pointer;border-radius:3px;text-transform:uppercase;letter-spacing:1px;font-weight:bold;transition:all 0.15s; }
+.attack-btn { background:transparent;border:1px solid #f44;color:#f44; }
+.attack-btn:hover { background:rgba(255,0,0,0.2);box-shadow:0 0 8px rgba(255,0,0,0.2); }
+.item-btn { background:transparent;border:1px solid #0ff;color:#0ff; }
+.item-btn:hover { background:rgba(0,255,255,0.15);box-shadow:0 0 8px rgba(0,255,255,0.15); }
+.item-btn:disabled { opacity:0.3;cursor:not-allowed; }
+.disconnect-btn { background:transparent;border:1px solid #888;color:#888; }
+.disconnect-btn:hover { background:rgba(255,255,255,0.1); }
 </style>
 </head>
 <body>
@@ -151,6 +168,7 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 <div id="content">
   <div id="tab-skills" class="tab-content active">
     <div class="section-title">[ SKILLS ] <span>// train to earn resources</span></div>
+    <div id="combat-pause-warning" style="display:none;background:rgba(255,0,0,0.1);border:1px solid #f44;border-radius:4px;padding:6px 10px;font-size:12px;color:#f44;margin-bottom:6px;">SYSTEM OFFLINE - Skills paused during combat</div>
     <div id="skills-container" class="skills-grid"></div>
   </div>
   <div id="tab-crafting" class="tab-content">
@@ -160,11 +178,21 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
   </div>
   <div id="tab-combat" class="tab-content">
     <div class="section-title">[ COMBAT ] <span>// hack network nodes</span></div>
-    <div id="enemy-display">
-      <div><div class="enemy-name" id="enemy-name">ICE Wall</div><div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemy-hp-fill"></div></div><div id="enemy-hp-text" style="font-size:12px;color:#888">HP: 50/50</div></div>
-      <div id="player-stats"><span>ATK: <span id="p-atk">10</span></span><span>DEF: <span id="p-def">5</span></span><span>HP: <span id="p-hp">100</span>/<span id="p-maxhp">100</span></span></div>
+    <div id="enemy-grid"></div>
+    <div id="battle-area" style="display:none">
+      <div id="enemy-display">
+        <div><div class="enemy-name" id="enemy-name">ICE Wall</div><div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemy-hp-fill"></div></div><div id="enemy-hp-text" style="font-size:12px;color:#888">HP: 50/50</div></div>
+        <div id="player-stats"><span>ATK: <span id="p-atk">10</span></span><span>DEF: <span id="p-def">5</span></span><span>HP: <span id="p-hp">100</span>/<span id="p-maxhp">100</span></span></div>
+      </div>
+      <div id="combat-actions" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+        <button class="combat-btn attack-btn" onclick="combatAttack()">HACK</button>
+        <button class="combat-btn item-btn" onclick="combatUseItem('program')">PROGRAM (<span id="item-program">0</span>)</button>
+        <button class="combat-btn item-btn" onclick="combatUseItem('hardware')">HARDWARE (<span id="item-hardware">0</span>)</button>
+        <button class="combat-btn item-btn" onclick="combatUseItem('exploit')">EXPLOIT (<span id="item-exploit">0</span>)</button>
+        <button class="combat-btn disconnect-btn" onclick="combatDisconnect()">DISCONNECT</button>
+      </div>
+      <div id="combat-log"></div>
     </div>
-    <div id="combat-log"></div>
   </div>
   <div id="tab-upgrades" class="tab-content">
     <div class="section-title">[ UPGRADES ] <span>// permanent improvements</span></div>
@@ -233,10 +261,10 @@ function freshState() {
     skills: SKILLS.map(s => ({ id:s.id, lvl:1, xp:0, active:false, unlocked:!s.cost, prog:0 })),
     upgs: UPGRADES.map(u => ({ id:u.id, lvl:0 })),
     inv: { program:0, hardware:0, exploit:0, neuralLinks:0, turboChargers:0 },
-    cmbt: { idx:0, hp:50, php:100, mxhp:100, atk:10, def:5, accum:0, unlocked:false },
+    cmbt: { idx:0, hp:50, php:100, mxhp:100, atk:10, def:5, accum:0, unlocked:false, inCombat:false, log:[], _bonus:0 },
     prest: { lvl:0, dm:0, times:0 },
     stats: { earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0} },
-    ver: 3,
+    ver: 4,
   };
 }
 
@@ -297,6 +325,7 @@ function err(msg) {
 // ========== GAME ACTIONS ==========
 function clickSkill(id) {
   const s = skillSt(id); if (!s) return;
+  if (G.cmbt.inCombat) { toast('Cannot change skills during combat!', 'error'); return; }
   if (!s.unlocked) {
     const c = skillCfg(id);
     if (!c || !c.cost) return;
@@ -346,7 +375,7 @@ function doPrestige() {
   const g = prestigeGain();
   if (g < 1) { toast('Need more Dark Matter', 'error'); return; }
   G.prest.lvl += g; G.prest.times++;
-  const keep = { prest:G.prest, stats:{earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0}}, ver:3 };
+  const keep = { prest:G.prest, stats:{earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0}}, ver:4 };
   G = Object.assign(freshState(), keep);
   G.cmbt.hp = ENEMIES[0].hp;
   save(); toast('Prestige! Level '+G.prest.lvl, 'loot');
@@ -360,50 +389,118 @@ function devMaxSkills() { G.skills.forEach(s=>{s.lvl=50;s.xp=0;s.unlocked=true;}
 function devUnlockAll() { G.skills.forEach(s=>{s.unlocked=true;}); G.cmbt.unlocked=true; toast('All unlocked', 'loot'); rebuildUI(); }
 function devSpeed(v) { G._speed=v||1; toast('Speed x'+(v||1), 'info'); }
 
+// ========== COMBAT ACTIONS ==========
+function combatEngage(idx) {
+  if (!G.cmbt.unlocked) return;
+  if (G.cmbt.inCombat && G.cmbt.idx === idx) return;
+  G.cmbt.inCombat = true;
+  G.cmbt.idx = idx;
+  G.cmbt.hp = ENEMIES[idx].hp;
+  G.cmbt._bonus = 0;
+  if (G.cmbt.php <= 0) G.cmbt.php = G.cmbt.mxhp;
+  G.cmbt.log = [];
+  logCombat('Engaged '+ENEMIES[idx].name+' [Lv.'+ENEMIES[idx].lvl+']');
+  toast('Hacking '+ENEMIES[idx].name+'!', 'info');
+}
+function combatAttack() {
+  if (!G.cmbt.inCombat) return;
+  const e = ENEMIES[G.cmbt.idx];
+  const { a, d } = cmbtPow();
+  const bonus = G.cmbt._bonus || 0;
+  const de = Math.max(1, a - e.def + Math.floor(Math.random()*5) + bonus);
+  const dp = Math.max(0, e.atk - d + Math.floor(Math.random()*3));
+  G.cmbt.hp -= de;
+  if (bonus > 0) { G.cmbt._bonus = 0; logCombat('Bonus applied! +'+bonus+' damage'); }
+  G.cmbt.php -= dp;
+  logCombat('HACK: -'+de+' HP to '+e.name + (dp>0?' | Counter: -'+dp+' HP':' | No counter'));
+  if (G.cmbt.hp <= 0) combatWin();
+  if (G.cmbt.php <= 0) combatLose();
+}
+function combatUseItem(type) {
+  if (!G.cmbt.inCombat) return;
+  const count = G.inv[type] || 0;
+  if (count < 1) { toast('No '+type+' available', 'error'); return; }
+  G.inv[type]--;
+  if (type === 'program') {
+    G.cmbt._bonus = (G.cmbt._bonus||0) + 5;
+    logCombat('Program deployed: +5 ATK bonus');
+    toast('Program deployed!', 'loot');
+  } else if (type === 'hardware') {
+    G.cmbt.php = Math.min(G.cmbt.mxhp, G.cmbt.php + 20);
+    logCombat('Hardware deployed: +20 HP restored');
+    toast('Hardware deployed!', 'loot');
+  } else if (type === 'exploit') {
+    G.cmbt.hp -= 15;
+    logCombat('Exploit deployed: -15 HP to target');
+    toast('Exploit deployed!', 'loot');
+    if (G.cmbt.hp <= 0) combatWin();
+  }
+}
+function combatDisconnect() {
+  if (!G.cmbt.inCombat) return;
+  G.cmbt.inCombat = false;
+  G.cmbt._bonus = 0;
+  logCombat('Disconnected. Skills resumed.');
+  G.cmbt.log = [];
+  toast('Disconnected', 'info');
+}
+function combatWin() {
+  const e = ENEMIES[G.cmbt.idx];
+  Object.entries(e.reward).forEach(([r,a])=>{ addRes(r,a); if(r==='darkMatter') G.prest.dm+=a; });
+  logCombat('BREACHED '+e.name+'! Rewards: '+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', '));
+  toast(e.name+' breached!', 'loot');
+  G.cmbt.hp = e.hp;
+  G.cmbt._bonus = 0;
+}
+function combatLose() {
+  logCombat('System crash! Disconnecting...');
+  toast('Defeated!', 'error');
+  G.cmbt.php = G.cmbt.mxhp;
+  G.cmbt.inCombat = false;
+  G.cmbt._bonus = 0;
+  G.cmbt.log = [];
+}
+function logCombat(msg) {
+  G.cmbt.log.push(msg);
+  if (G.cmbt.log.length > 50) G.cmbt.log.shift();
+}
+
 // ========== TICK ==========
 function tick(dt) {
   const speed = G._speed || 1;
   const sdt = dt * speed;
 
-  // Skills
-  G.skills.forEach((s, i) => {
-    if (!s.unlocked || !s.active) return;
-    const c = SKILLS[i];
-    const t = skillTime(c.id);
-    s.prog += sdt / t;
-    while (s.prog >= 1) {
-      s.prog -= 1;
-      if (c.res === 'all') {
-        addRes('data', 2 * (1 + (s.lvl-1)*0.1));
-        addRes('credits', 2 * (1 + (s.lvl-1)*0.1));
-        addRes('cpu', 1 * (1 + (s.lvl-1)*0.1));
-        addRes('bandwidth', 0.5 * (1 + (s.lvl-1)*0.1));
-      } else {
-        addRes(c.res, skillYield(c.id));
+  // Skills (paused during combat)
+  if (!G.cmbt.inCombat) {
+    G.skills.forEach((s, i) => {
+      if (!s.unlocked || !s.active) return;
+      const c = SKILLS[i];
+      const t = skillTime(c.id);
+      s.prog += sdt / t;
+      while (s.prog >= 1) {
+        s.prog -= 1;
+        if (c.res === 'all') {
+          addRes('data', 2 * (1 + (s.lvl-1)*0.1));
+          addRes('credits', 2 * (1 + (s.lvl-1)*0.1));
+          addRes('cpu', 1 * (1 + (s.lvl-1)*0.1));
+          addRes('bandwidth', 0.5 * (1 + (s.lvl-1)*0.1));
+        } else {
+          addRes(c.res, skillYield(c.id));
+        }
+        const xp = c.xp * (1 + (s.lvl-1)*0.04);
+        s.xp += xp;
+        const req = xpReq(s.lvl);
+        while (s.xp >= req && s.lvl < 99) { s.xp -= req; s.lvl++; }
       }
-      const xp = c.xp * (1 + (s.lvl-1)*0.04);
-      s.xp += xp;
-      const req = xpReq(s.lvl);
-      while (s.xp >= req && s.lvl < 99) { s.xp -= req; s.lvl++; }
-    }
-  });
+    });
+  }
 
-  // Combat
-  if (G.cmbt.unlocked) {
+  // Combat (auto-attack when in combat)
+  if (G.cmbt.unlocked && G.cmbt.inCombat) {
     G.cmbt.accum += sdt;
     if (G.cmbt.accum >= 2) {
       G.cmbt.accum -= 2;
-      const e = ENEMIES[G.cmbt.idx];
-      const { a, d } = cmbtPow();
-      const de = Math.max(1, a - e.def + Math.floor(Math.random()*5));
-      const dp = Math.max(0, e.atk - d + Math.floor(Math.random()*3));
-      G.cmbt.hp -= de; G.cmbt.php -= dp;
-      if (G.cmbt.hp <= 0) {
-        Object.entries(e.reward).forEach(([r,a])=>{ addRes(r,a); if(r==='darkMatter') G.prest.dm+=a; });
-        G.cmbt.idx = Math.min(G.cmbt.idx+1, ENEMIES.length-1);
-        G.cmbt.hp = ENEMIES[G.cmbt.idx].hp;
-      }
-      if (G.cmbt.php <= 0) G.cmbt.php = G.cmbt.mxhp;
+      combatAttack();
     }
   }
 }
@@ -459,6 +556,21 @@ function buildCrafting() {
   });
 }
 
+function buildCombat() {
+  const grid = document.getElementById('enemy-grid'); if (!grid) return;
+  grid.innerHTML = '';
+  ENEMIES.forEach((e, i) => {
+    const card = document.createElement('div');
+    card.className = 'enemy-card';
+    card.innerHTML =
+      '<div class="e-name">'+e.name+'</div>' +
+      '<div class="e-lvl">Lv.'+e.lvl+' | HP: '+e.hp+'</div>' +
+      '<div class="e-reward">'+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', ')+'</div>';
+    card.addEventListener('click', () => combatEngage(i));
+    grid.appendChild(card);
+  });
+}
+
 function buildDevPanel() {
   const p = document.getElementById('dev-panel'); if (!p) return;
   p.innerHTML =
@@ -483,6 +595,7 @@ function buildUI() {
   buildSkills();
   buildUpgrades();
   buildCrafting();
+  buildCombat();
   if (isDev()) buildDevPanel();
 }
 
@@ -502,6 +615,8 @@ function updateUI() {
   }
 
   // Skills
+  const cw = document.getElementById('combat-pause-warning');
+  if (cw) cw.style.display = G.cmbt.inCombat ? 'block' : 'none';
   const sc = document.getElementById('skills-container');
   if (sc && sc.children.length === SKILLS.length) {
     SKILLS.forEach((cfg, i) => {
@@ -562,18 +677,45 @@ function updateUI() {
   }
 
   // Combat
-  const e = ENEMIES[G.cmbt.idx];
-  const en = document.getElementById('enemy-name');
-  const ef = document.getElementById('enemy-hp-fill');
-  const et = document.getElementById('enemy-hp-text');
-  const { a, d } = cmbtPow();
-  if (en) en.textContent = e.name + (G.cmbt.unlocked?'':' [LOCKED]');
-  if (ef) ef.style.width = Math.max(0, (G.cmbt.hp/e.hp)*100)+'%';
-  if (et) et.textContent = 'HP: '+Math.max(0,Math.floor(G.cmbt.hp))+'/'+e.hp;
-  const pa = document.getElementById('p-atk'); if (pa) pa.textContent = a;
-  const pd = document.getElementById('p-def'); if (pd) pd.textContent = d;
-  const ph = document.getElementById('p-hp'); if (ph) ph.textContent = Math.max(0,Math.floor(G.cmbt.php));
-  const pm = document.getElementById('p-maxhp'); if (pm) pm.textContent = G.cmbt.mxhp;
+  const grid = document.getElementById('enemy-grid');
+  if (grid && grid.children.length === ENEMIES.length) {
+    ENEMIES.forEach((e, i) => {
+      const card = grid.children[i]; if (!card) return;
+      card.className = 'enemy-card' + (G.cmbt.inCombat && G.cmbt.idx === i ? ' active' : '') + (!G.cmbt.unlocked ? ' locked' : '');
+    });
+  }
+
+  const ba = document.getElementById('battle-area');
+  if (ba) {
+    ba.style.display = G.cmbt.unlocked && G.cmbt.inCombat ? 'block' : 'none';
+  }
+  if (G.cmbt.unlocked && G.cmbt.inCombat) {
+    const e = ENEMIES[G.cmbt.idx];
+    const en = document.getElementById('enemy-name');
+    const ef = document.getElementById('enemy-hp-fill');
+    const et = document.getElementById('enemy-hp-text');
+    const { a, d } = cmbtPow();
+    if (en) en.textContent = e.name + ' [Lv.'+e.lvl+']';
+    if (ef) ef.style.width = Math.max(0, (G.cmbt.hp/e.hp)*100)+'%';
+    if (et) et.textContent = 'HP: '+Math.max(0,Math.floor(G.cmbt.hp))+'/'+e.hp;
+    const pa = document.getElementById('p-atk'); if (pa) pa.textContent = a;
+    const pd = document.getElementById('p-def'); if (pd) pd.textContent = d;
+    const ph = document.getElementById('p-hp'); if (ph) ph.textContent = Math.max(0,Math.floor(G.cmbt.php));
+    const pm = document.getElementById('p-maxhp'); if (pm) pm.textContent = G.cmbt.mxhp;
+
+    // Item counts in combat buttons
+    ['program','hardware','exploit'].forEach(id => {
+      const el = document.getElementById('item-'+id);
+      if (el) el.textContent = G.inv[id]||0;
+    });
+
+    // Combat log
+    const cl = document.getElementById('combat-log');
+    if (cl) {
+      cl.innerHTML = G.cmbt.log.map(msg => '<div>'+msg+'</div>').join('');
+      cl.scrollTop = cl.scrollHeight;
+    }
+  }
 
   // Prestige
   const g = prestigeGain();
@@ -596,7 +738,7 @@ function load() {
     const raw = localStorage.getItem('nri_'+USER);
     if (raw) {
       const d = JSON.parse(raw);
-      if (d && d.ver === 3) {
+      if (d && (d.ver === 3 || d.ver === 4)) {
         G = Object.assign(freshState(), d);
         while (G.skills.length < SKILLS.length) G.skills.push({ id:SKILLS[G.skills.length].id, lvl:1, xp:0, active:false, unlocked:false, prog:0 });
         while (G.upgs.length < UPGRADES.length) G.upgs.push({ id:UPGRADES[G.upgs.length].id, lvl:0 });
