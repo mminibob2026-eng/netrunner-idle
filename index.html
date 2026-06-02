@@ -155,7 +155,7 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
     <div class="res">[BANDWIDTH] <span id="r-bandwidth">0</span></div>
     <div class="res">[DARK MATTER] <span id="r-darkMatter">0</span></div>
   </div>
-  <div id="user-info" style="display:flex;align-items:center;gap:8px;"></div>
+  <div id="user-info" style="display:flex;align-items:center;gap:8px;"><span id="user-label" style="color:#0ff"></span><span id="save-indicator" style="color:#666;font-size:10px;"></span><button id="logout-btn" style="background:transparent;border:1px solid #f44;color:#f44;font-family:inherit;font-size:10px;cursor:pointer;border-radius:2px;padding:2px 6px;">LOGOUT</button></div>
 </div>
 
 <div id="tabs">
@@ -242,14 +242,16 @@ const UPGRADES = [
   { id:'combatBoost', name:'ICE Breaker v{level}', desc:'+15% combat damage', cost:{credits:100,bandwidth:10}, mult:2, max:15 },
 ];
 
+const DROP_LABELS = { dataShard:'Data Shard', fwShard:'FW Shard', iceCore:'ICE Core', aiMod:'AI Module', encKey:'Enc Key', dnToken:'DN Token', coreFrag:'Core Frag' };
+
 const ENEMIES = [
-  { name:'ICE Wall', hp:50, atk:3, def:1, reward:{credits:10}, lvl:1 },
-  { name:'Firewall Daemon', hp:120, atk:6, def:3, reward:{credits:30,darkMatter:1}, lvl:5 },
-  { name:'Black ICE', hp:300, atk:12, def:6, reward:{credits:80,darkMatter:3}, lvl:10 },
-  { name:'AI Sentinel', hp:600, atk:20, def:10, reward:{credits:150,darkMatter:6}, lvl:15 },
-  { name:'Corporate Node', hp:1200, atk:35, def:18, reward:{credits:300,darkMatter:12}, lvl:20 },
-  { name:'Darknet Server', hp:2500, atk:55, def:30, reward:{credits:600,darkMatter:25}, lvl:30 },
-  { name:'Central Core', hp:5000, atk:80, def:45, reward:{credits:1200,darkMatter:50}, lvl:40 },
+  { name:'ICE Wall', hp:50, atk:3, def:1, reward:{credits:10}, lvl:1, drop:'dataShard' },
+  { name:'Firewall Daemon', hp:120, atk:6, def:3, reward:{credits:30,darkMatter:1}, lvl:5, drop:'fwShard' },
+  { name:'Black ICE', hp:300, atk:12, def:6, reward:{credits:80,darkMatter:3}, lvl:10, drop:'iceCore' },
+  { name:'AI Sentinel', hp:600, atk:20, def:10, reward:{credits:150,darkMatter:6}, lvl:15, drop:'aiMod' },
+  { name:'Corporate Node', hp:1200, atk:35, def:18, reward:{credits:300,darkMatter:12}, lvl:20, drop:'encKey' },
+  { name:'Darknet Server', hp:2500, atk:55, def:30, reward:{credits:600,darkMatter:25}, lvl:30, drop:'dnToken' },
+  { name:'Central Core', hp:5000, atk:80, def:45, reward:{credits:1200,darkMatter:50}, lvl:40, drop:'coreFrag' },
 ];
 
 // ========== STATE ==========
@@ -261,7 +263,7 @@ function freshState() {
     res: { data:0, credits:0, cpu:0, bandwidth:0, darkMatter:0 },
     skills: SKILLS.map(s => ({ id:s.id, lvl:1, xp:0, active:false, unlocked:!s.cost, prog:0 })),
     upgs: UPGRADES.map(u => ({ id:u.id, lvl:0 })),
-    inv: { program:0, hardware:0, exploit:0, neuralLinks:0, turboChargers:0 },
+    inv: { program:0, hardware:0, exploit:0, neuralLinks:0, turboChargers:0, dataShard:0, fwShard:0, iceCore:0, aiMod:0, encKey:0, dnToken:0, coreFrag:0 },
     cmbt: { idx:0, hp:50, php:100, mxhp:100, atk:10, def:5, accum:0, unlocked:false, inCombat:false, log:[], _bonus:0 },
     prest: { lvl:0, dm:0, times:0 },
     stats: { earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0} },
@@ -333,7 +335,7 @@ function err(msg) {
 // ========== GAME ACTIONS ==========
 function clickSkill(id) {
   const s = skillSt(id); if (!s) return;
-  if (G.cmbt.inCombat) { toast('Cannot change skills during combat!', 'error'); return; }
+  if (G.cmbt.inCombat) combatDisconnect();
   if (!s.unlocked) {
     const c = skillCfg(id);
     if (!c || !c.cost) return;
@@ -467,6 +469,11 @@ function combatDisconnect() {
 function combatWin() {
   const e = ENEMIES[G.cmbt.idx];
   Object.entries(e.reward).forEach(([r,a])=>{ addRes(r,a); if(r==='darkMatter') G.prest.dm+=a; });
+  if (e.drop && Math.random() < 0.3) {
+    G.inv[e.drop] = (G.inv[e.drop]||0) + 1;
+    logActivity('Dropped '+DROP_LABELS[e.drop]+' from '+e.name);
+    logCombat('DROP: '+DROP_LABELS[e.drop]);
+  }
   logActivity('Breached '+e.name+'! Rewards: '+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', '));
   logCombat('BREACHED '+e.name+'! Rewards: '+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', '));
   toast(e.name+' breached!', 'loot');
@@ -587,7 +594,8 @@ function buildCombat() {
     card.innerHTML =
       '<div class="e-name">'+e.name+'</div>' +
       '<div class="e-lvl">Lv.'+e.lvl+' | HP: '+e.hp+'</div>' +
-      '<div class="e-reward">'+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', ')+'</div>';
+      '<div class="e-reward">'+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', ')+'</div>' +
+      '<div class="e-drop" style="font-size:9px;color:#0ff;margin-top:2px">Drop: '+DROP_LABELS[e.drop]+' (30%)</div>';
     card.addEventListener('click', () => combatEngage(i));
     grid.appendChild(card);
   });
@@ -631,10 +639,8 @@ function updateUI() {
     const max = resMax(id);
     el.textContent = max === 1/0 ? fmt(amt) : fmt(amt)+'/'+fmt(max);
   });
-  const ui = document.getElementById('user-info');
-  if (ui) {
-    ui.innerHTML = '<span style="color:#0ff">'+USER+(isDev()?' [DEV]':'')+'</span><span id="save-indicator" style="color:#666;font-size:10px;"></span><button onclick="logout()" style="background:transparent;border:1px solid #f44;color:#f44;font-family:inherit;font-size:10px;cursor:pointer;border-radius:2px;padding:2px 6px;">LOGOUT</button>';
-  }
+  const ul = document.getElementById('user-label');
+  if (ul) ul.textContent = USER+(isDev()?' [DEV]':'');
 
   // Skills
   const cw = document.getElementById('combat-pause-warning');
@@ -691,7 +697,9 @@ function updateUI() {
   const inv = document.getElementById('inventory-container');
   if (inv) {
     inv.innerHTML = '';
-    [['program','Programs'],['hardware','Hardware'],['exploit','Exploits'],['neuralLinks','Neural Links'],['turboChargers','Turbo Chargers']].forEach(([id,label])=>{
+    const items = [['program','Programs'],['hardware','Hardware'],['exploit','Exploits'],['neuralLinks','Neural Links'],['turboChargers','Turbo Chargers']];
+    Object.keys(DROP_LABELS).forEach(k => items.push([k, DROP_LABELS[k]]));
+    items.forEach(([id,label])=>{
       const d=document.createElement('div'); d.style.cssText='background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:6px 12px;font-size:12px;';
       d.innerHTML='<span style="color:#0ff">'+label+':</span> <span style="color:#ff0">'+(G.inv[id]||0)+'</span>';
       inv.appendChild(d);
@@ -842,6 +850,7 @@ function initLogin() {
   loginBtn.addEventListener('click', doLogin);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   input.focus();
+  document.getElementById('logout-btn')?.addEventListener('click', logout);
 
   let savedUser = null;
   try { savedUser = localStorage.getItem('nr_user'); } catch(e) {}
