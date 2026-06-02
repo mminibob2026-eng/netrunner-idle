@@ -219,6 +219,7 @@ body {
 </div>
 
 <div id="toast-container"></div>
+<div id="error-display" style="position:fixed;bottom:0;left:0;right:0;background:#300;color:#f44;padding:8px;font-size:12px;display:none;z-index:999;font-family:monospace;white-space:pre-wrap;"></div>
 
 <div id="game" style="display:none;">
   <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -289,6 +290,15 @@ body {
 </div>
 
 <script>
+window.onerror = function(msg, url, line, col, err) {
+  const el = document.getElementById('error-display');
+  if (el) { el.style.display = 'block'; el.textContent += '[' + new Date().toLocaleTimeString() + '] ' + msg + ' (line ' + line + ')\n'; }
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+  const el = document.getElementById('error-display');
+  if (el) { el.style.display = 'block'; el.textContent += '[' + new Date().toLocaleTimeString() + '] PROMISE: ' + e.reason + '\n'; }
+});
 // ============================================================
 // CONFIG
 // ============================================================
@@ -716,20 +726,24 @@ function startGameLoop() {
   let saveAccum = 0;
 
   function loop(now) {
-    const dt = Math.min((now - prev) / 1000, 2);
-    prev = now;
+    try {
+      const dt = Math.min((now - prev) / 1000, 2);
+      prev = now;
 
-    if (dt > 0) {
-      tick(dt);
-      renderAll();
+      if (dt > 0) {
+        tick(dt);
+        renderAll();
+      }
+
+      saveAccum += dt;
+      if (saveAccum >= 15) {
+        saveAccum = 0;
+        saveGame();
+      }
+    } catch(e) {
+      const el = document.getElementById('error-display');
+      if (el) { el.style.display = 'block'; el.textContent += '[LOOP] ' + e.message + '\n' + e.stack + '\n'; }
     }
-
-    saveAccum += dt;
-    if (saveAccum >= 15) {
-      saveAccum = 0;
-      saveGame();
-    }
-
     requestAnimationFrame(loop);
   }
 
@@ -751,14 +765,19 @@ function bindEvents() {
   });
 
   document.addEventListener('click', e => {
-    const skillBtn = e.target.closest('.skill-btn');
-    if (skillBtn) { toggleSkill(skillBtn.dataset.skill); return; }
+    try {
+      const skillBtn = e.target.closest('.skill-btn');
+      if (skillBtn) { toggleSkill(skillBtn.dataset.skill); return; }
 
-    const upgradeBtn = e.target.closest('.upgrade-btn');
-    if (upgradeBtn) { buyUpgrade(upgradeBtn.dataset.upgrade); return; }
+      const upgradeBtn = e.target.closest('.upgrade-btn');
+      if (upgradeBtn) { buyUpgrade(upgradeBtn.dataset.upgrade); return; }
 
-    const craftBtn = e.target.closest('.craft-btn');
-    if (craftBtn) { craftItem(craftBtn.dataset.craft); return; }
+      const craftBtn = e.target.closest('.craft-btn');
+      if (craftBtn) { craftItem(craftBtn.dataset.craft); return; }
+    } catch(e) {
+      const el = document.getElementById('error-display');
+      if (el) { el.style.display = 'block'; el.textContent += '[CLICK] ' + e.message + '\n'; }
+    }
   });
 
   document.getElementById('prestige-btn')?.addEventListener('click', doPrestige);
@@ -775,31 +794,36 @@ function startLogin() {
   const game = document.getElementById('game');
 
   function doLogin() {
-    const name = input.value.trim();
-    if (name.length < 2 || name.length > 20) {
-      err.style.display = 'block';
-      return;
-    }
-    err.style.display = 'none';
-    G_USER = name;
-    localStorage.setItem('nr_user', G_USER);
-    loadGame();
-    overlay.style.display = 'none';
-    game.style.display = 'flex';
-    renderAll();
-    bindEvents();
-    startGameLoop();
-    toast('Welcome back, ' + G_USER, 'info');
-    // Check combat unlock periodically
-    setInterval(() => {
-      if (!G.combat.unlocked) {
-        const ready = G.skills.filter(s => s.unlocked && s.lvl >= 3).length >= 2;
-        if (ready) {
-          G.combat.unlocked = true;
-          toast('Combat unlocked! Hack network nodes.', 'loot');
-        }
+    try {
+      const name = input.value.trim();
+      if (name.length < 2 || name.length > 20) {
+        err.style.display = 'block';
+        return;
       }
-    }, 3000);
+      err.style.display = 'none';
+      G_USER = name;
+      localStorage.setItem('nr_user', G_USER);
+      loadGame();
+      overlay.style.display = 'none';
+      game.style.display = 'flex';
+      renderAll();
+      bindEvents();
+      startGameLoop();
+      toast('Welcome, ' + G_USER + '!', 'info');
+      // Check combat unlock periodically
+      setInterval(() => {
+        if (!G.combat.unlocked) {
+          const ready = G.skills.filter(s => s.unlocked && s.lvl >= 3).length >= 2;
+          if (ready) {
+            G.combat.unlocked = true;
+            toast('Combat unlocked! Hack network nodes.', 'loot');
+          }
+        }
+      }, 3000);
+    } catch(e) {
+      const el = document.getElementById('error-display');
+      if (el) { el.style.display = 'block'; el.textContent += '[LOGIN] ' + e.message + '\n' + e.stack + '\n'; }
+    }
   }
 
   btn.addEventListener('click', doLogin);
