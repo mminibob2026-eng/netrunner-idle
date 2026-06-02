@@ -97,7 +97,7 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 #dev-panel button:hover { background:rgba(255,0,255,0.25);box-shadow:0 0 8px rgba(255,0,255,0.2); }
 #dev-panel input { width:60px;padding:4px 6px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,0,255,0.3);color:#f0f;font-family:inherit;font-size:11px;border-radius:3px;text-align:center; }
 
-#toast-container { position:fixed;top:12px;right:12px;z-index:999;display:flex;flex-direction:column;gap:6px; }
+#toast-container { position:fixed;top:12px;left:12px;z-index:999;display:flex;flex-direction:column;gap:6px; }
 .toast { padding:10px 16px;border-radius:4px;font-size:12px;animation:fadeIn 0.2s ease-out;max-width:320px; }
 .toast-info { background:rgba(0,255,65,0.12);border:1px solid rgba(0,255,65,0.3);color:#0f0; }
 .toast-error { background:rgba(255,0,0,0.12);border:1px solid rgba(255,0,0,0.3);color:#f44; }
@@ -148,7 +148,7 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 <div id="error-bar"></div>
 
 <div id="game" style="display:none">
-<div id="global-log" style="max-height:120px;overflow-y:auto;font-size:11px;color:#888;background:rgba(0,0,0,0.3);border:1px solid rgba(0,255,65,0.08);border-radius:4px;padding:4px 8px;margin-bottom:4px;"></div>
+<div id="combat-pause-warning" style="display:none;position:fixed;top:0;left:0;right:0;z-index:998;background:rgba(255,0,0,0.15);border-bottom:1px solid #f44;padding:4px 12px;font-size:11px;color:#f44;text-align:center;">SYSTEM OFFLINE - Skills paused during combat</div>
 <div style="display:flex;justify-content:space-between;align-items:center;">
   <div id="resources">
     <div class="res">[DATA] <span id="r-data">0</span></div>
@@ -171,7 +171,6 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 <div id="content">
   <div id="tab-skills" class="tab-content active">
     <div class="section-title">[ SKILLS ] <span>// train to earn resources</span></div>
-    <div id="combat-pause-warning" style="display:none;background:rgba(255,0,0,0.1);border:1px solid #f44;border-radius:4px;padding:6px 10px;font-size:12px;color:#f44;margin-bottom:6px;">SYSTEM OFFLINE - Skills paused during combat</div>
     <div id="skills-container" class="skills-grid"></div>
   </div>
   <div id="tab-crafting" class="tab-content">
@@ -270,7 +269,6 @@ function freshState() {
     prest: { lvl:0, dm:0, times:0 },
     stats: { earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0} },
     ver: 4,
-    activityLog: [],
   };
 }
 
@@ -320,14 +318,9 @@ function toast(msg, t='info') {
   const el = document.createElement('div');
   el.className = 'toast toast-'+t; el.textContent = msg;
   c.appendChild(el);
-  setTimeout(() => { if (el.parentNode) el.remove(); }, 3000);
+  setTimeout(() => { try { if (el.parentNode) el.remove(); } catch(e) {} }, 3000);
 }
 
-function logActivity(msg) {
-  if (!G) return;
-  G.activityLog.push('['+new Date().toLocaleTimeString()+'] '+msg);
-  if (G.activityLog.length > 200) G.activityLog.splice(0, G.activityLog.length-200);
-}
 
 function err(msg) {
   const eb = document.getElementById('error-bar');
@@ -349,12 +342,10 @@ function clickSkill(id) {
     }
     if (!canPay(c.cost)) { toast('Need '+c.costLabel, 'error'); return; }
     pay(c.cost); s.unlocked = true; s.active = true;
-    logActivity('Unlocked '+c.name);
     toast(c.name+' unlocked!', 'loot');
     return;
   }
   s.active = !s.active;
-  logActivity(skillCfg(id).name+' '+(s.active?'started':'stopped'));
   if (s.active) toast(skillCfg(id).name+' started', 'info');
 }
 
@@ -380,7 +371,6 @@ function clickCraft(id) {
     const req = xpReq(s.lvl);
     while (s.xp >= req && s.lvl < 99) { s.xp -= req; s.lvl++; }
   });
-  logActivity('Crafted '+c.name);
   toast('Crafted '+c.name, 'loot');
 }
 
@@ -388,7 +378,6 @@ function prestigeGain() { const d=G.prest.dm||0; return d<10?0:Math.floor(Math.p
 function doPrestige() {
   const g = prestigeGain();
   if (g < 1) { toast('Need more Dark Matter', 'error'); return; }
-  logActivity('Prestige! +'+g+' Netrunner Levels (Total: '+(G.prest.lvl+g)+')');
   G.prest.lvl += g; G.prest.times++;
   const keep = { prest:G.prest, stats:{earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0}}, ver:4 };
   G = Object.assign(freshState(), keep);
@@ -398,7 +387,6 @@ function doPrestige() {
   // Auto-start Data Mining after prestige
   const dm = G.skills[0];
   if (dm && !dm.active) { dm.active = true; }
-  logActivity('Prestige complete - Data Mining auto-started');
 }
 
 // Dev mode
@@ -419,7 +407,6 @@ function combatEngage(idx) {
   if (G.cmbt.php <= 0) G.cmbt.php = G.cmbt.mxhp;
   G.cmbt.log = [];
   logCombat('Engaged '+ENEMIES[idx].name+' [Lv.'+ENEMIES[idx].lvl+']');
-  logActivity('Started hacking '+ENEMIES[idx].name);
   toast('Hacking '+ENEMIES[idx].name+'!', 'info');
 }
 function combatAttack() {
@@ -444,17 +431,14 @@ function combatUseItem(type) {
   if (type === 'program') {
     G.cmbt._bonus = (G.cmbt._bonus||0) + 5;
     logCombat('Program deployed: +5 ATK bonus');
-    logActivity('Used Program in combat');
     toast('Program deployed!', 'loot');
   } else if (type === 'hardware') {
     G.cmbt.php = Math.min(G.cmbt.mxhp, G.cmbt.php + 20);
     logCombat('Hardware deployed: +20 HP restored');
-    logActivity('Used Hardware in combat');
     toast('Hardware deployed!', 'loot');
   } else if (type === 'exploit') {
     G.cmbt.hp -= 15;
     logCombat('Exploit deployed: -15 HP to target');
-    logActivity('Used Exploit in combat');
     toast('Exploit deployed!', 'loot');
     if (G.cmbt.hp <= 0) combatWin();
   }
@@ -463,7 +447,6 @@ function combatDisconnect() {
   if (!G.cmbt.inCombat) return;
   G.cmbt.inCombat = false;
   G.cmbt._bonus = 0;
-  logActivity('Disconnected from '+ENEMIES[G.cmbt.idx].name);
   logCombat('Disconnected. Skills resumed.');
   G.cmbt.log = [];
   toast('Disconnected', 'info');
@@ -473,10 +456,8 @@ function combatWin() {
   Object.entries(e.reward).forEach(([r,a])=>{ addRes(r,a); if(r==='darkMatter') G.prest.dm+=a; });
   if (e.drop && Math.random() < 0.3) {
     G.inv[e.drop] = (G.inv[e.drop]||0) + 1;
-    logActivity('Dropped '+DROP_LABELS[e.drop]+' from '+e.name);
     logCombat('DROP: '+DROP_LABELS[e.drop]);
   }
-  logActivity('Breached '+e.name+'! Rewards: '+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', '));
   logCombat('BREACHED '+e.name+'! Rewards: '+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', '));
   toast(e.name+' breached!', 'loot');
   G.cmbt.hp = e.hp;
@@ -484,7 +465,6 @@ function combatWin() {
 }
 function combatLose() {
   logCombat('System crash! Disconnecting...');
-  logActivity('Defeated by '+ENEMIES[G.cmbt.idx].name);
   toast('Defeated!', 'error');
   G.cmbt.php = G.cmbt.mxhp;
   G.cmbt.inCombat = false;
@@ -755,12 +735,6 @@ function updateUI() {
   const pg = document.getElementById('pnl-gain'); if (pg) pg.textContent = g;
   const ld = document.getElementById('lifetime-dm'); if (ld) ld.textContent = fmt(G.prest.dm);
   const pb = document.getElementById('prestige-btn'); if (pb) pb.disabled = g < 1;
-
-  // Activity log
-  const gl = document.getElementById('global-log');
-  if (gl && G.activityLog) {
-    gl.innerHTML = G.activityLog.slice().reverse().map(m => '<div>'+m+'</div>').join('');
-  }
 }
 
 function rebuildUI() { buildUI(); }
@@ -849,12 +823,12 @@ function initLogin() {
       if (isDev()) toast('DEV MODE ACTIVE', 'loot');
       save();
 
-      setTimeout(() => {
-        const dm = G.skills[0];
-        if (dm && !dm.active) { dm.active = true; toast('Data Mining started!', 'loot'); }
+      const _startDm = setTimeout(() => {
+        if (G) { const dm = G.skills[0]; if (dm && !dm.active) { dm.active = true; toast('Data Mining started!', 'loot'); } }
       }, 500);
 
-      setInterval(() => {
+      const _unlockCheck = setInterval(() => {
+        if (!G) return;
         if (!G.cmbt.unlocked && G.skills.filter(s=>s.unlocked&&s.lvl>=3).length>=2) {
           G.cmbt.unlocked = true;
           toast('Combat unlocked!', 'loot');
