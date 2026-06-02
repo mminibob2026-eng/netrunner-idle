@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Netrunner Idle</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+@font-face { font-family: 'Cyber'; src: local('Courier New'), local('monospace'); }
+body {
+  background: #0a0a1a;
+  color: #c0c0c0;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  height: 100vh;
+  user-select: none;
+}
+#game {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8px;
+}
+/* HEADER / RESOURCES */
+#resources {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background: rgba(0,255,65,0.04);
+  border: 1px solid rgba(0,255,65,0.15);
+  border-radius: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.res {
+  padding: 4px 12px;
+  font-size: 13px;
+  color: #0f0;
+  text-shadow: 0 0 6px rgba(0,255,65,0.4);
+  white-space: nowrap;
+}
+.res span { color: #8f8; }
+/* TABS */
+#tabs {
+  display: flex;
+  gap: 2px;
+  margin: 6px 0;
+  flex-shrink: 0;
+}
+.tab-btn {
+  flex: 1;
+  padding: 8px 4px;
+  background: rgba(0,255,65,0.06);
+  border: 1px solid rgba(0,255,65,0.2);
+  color: #8f8;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+.tab-btn:hover { background: rgba(0,255,65,0.12); }
+.tab-btn.active {
+  background: rgba(0,255,65,0.15);
+  border-color: #0f0;
+  color: #0f0;
+  box-shadow: 0 0 8px rgba(0,255,65,0.2);
+}
+/* CONTENT */
+#content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  border: 1px solid rgba(0,255,65,0.1);
+  border-radius: 4px;
+  background: rgba(0,255,65,0.02);
+}
+.tab-content { display: none; padding: 8px; }
+.tab-content.active { display: block; }
+/* SECTION TITLE */
+.section-title {
+  color: #0f0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0,255,65,0.15);
+  margin-bottom: 8px;
+}
+.section-title span { color: #f0f; }
+/* SKILL CARDS */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 6px;
+}
+.skill-card {
+  background: rgba(0,255,65,0.04);
+  border: 1px solid rgba(0,255,65,0.12);
+  border-radius: 4px;
+  padding: 10px 12px;
+  transition: border-color 0.2s;
+}
+.skill-card:hover { border-color: rgba(0,255,65,0.3); }
+.skill-card.locked { opacity: 0.35; }
+.skill-card.active-skill { border-color: #0f0; box-shadow: 0 0 10px rgba(0,255,65,0.15); }
+.skill-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.skill-name { color: #0f0; font-size: 14px; font-weight: bold; }
+.skill-level { color: #f0f; font-size: 12px; }
+.skill-progress {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  margin: 4px 0;
+  overflow: hidden;
+}
+.skill-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #0f0, #0ff);
+  width: 0%;
+  transition: width 0.1s;
+  border-radius: 3px;
+}
+.skill-info {
+  font-size: 11px;
+  color: #888;
+  display: flex;
+  justify-content: space-between;
+  margin: 2px 0;
+}
+.skill-desc { font-size: 11px; color: #666; margin: 2px 0; }
+.skill-btn {
+  margin-top: 6px;
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid #0f0;
+  color: #0f0;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+.skill-btn:hover { background: rgba(0,255,65,0.15); }
+.skill-btn.active-btn { background: rgba(255,0,255,0.2); border-color: #f0f; color: #f0f; }
+.skill-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+/* UPGRADES */
+.upgrades-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
+}
+.upgrade-card {
+  background: rgba(0,255,65,0.04);
+  border: 1px solid rgba(0,255,65,0.12);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.upgrade-card:hover { border-color: rgba(0,255,65,0.3); }
+.upgrade-card.maxed { opacity: 0.4; }
+.upgrade-name { color: #0f0; font-size: 13px; font-weight: bold; }
+.upgrade-level { color: #f0f; font-size: 11px; }
+.upgrade-desc { font-size: 11px; color: #888; margin: 2px 0; }
+.upgrade-cost { font-size: 11px; color: #ff0; margin: 2px 0; }
+.upgrade-btn {
+  margin-top: 6px;
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid #ff0;
+  color: #ff0;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.upgrade-btn:hover { background: rgba(255,255,0,0.15); }
+.upgrade-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+/* COMBAT */
+#combat-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#enemy-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,0,0,0.05);
+  border: 1px solid rgba(255,0,0,0.2);
+  border-radius: 4px;
+  padding: 12px 16px;
+}
+.enemy-name { color: #f44; font-size: 16px; }
+.enemy-hp-bar {
+  height: 8px;
+  background: rgba(255,0,0,0.1);
+  border-radius: 4px;
+  margin: 4px 0;
+  overflow: hidden;
+  width: 200px;
+}
+.enemy-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f00, #f80);
+  width: 100%;
+  border-radius: 4px;
+  transition: width 0.2s;
+}
+#player-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #0ff;
+}
+#combat-log {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,255,65,0.1);
+  border-radius: 4px;
+  padding: 8px;
+  height: 120px;
+  overflow-y: auto;
+  font-size: 11px;
+}
+#combat-log div { margin: 1px 0; }
+.log-dmg { color: #f44; }
+.log-heal { color: #0f0; }
+.log-loot { color: #ff0; }
+.log-info { color: #888; }
+/* CRAFTING */
+.craft-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
+}
+.craft-card {
+  background: rgba(0,255,65,0.04);
+  border: 1px solid rgba(0,255,65,0.12);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.craft-card:hover { border-color: rgba(0,255,65,0.3); }
+.craft-name { color: #0ff; font-size: 13px; font-weight: bold; }
+.craft-desc { font-size: 11px; color: #888; margin: 2px 0; }
+.craft-cost { font-size: 11px; color: #ff0; margin: 2px 0; }
+.craft-btn {
+  margin-top: 6px;
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid #0ff;
+  color: #0ff;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.craft-btn:hover { background: rgba(0,255,255,0.15); }
+.craft-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+/* PRESTIGE */
+#prestige-area {
+  text-align: center;
+  padding: 20px;
+}
+#prestige-area p { margin: 8px 0; font-size: 13px; color: #888; }
+.prestige-btn {
+  padding: 12px 32px;
+  background: transparent;
+  border: 2px solid #f0f;
+  color: #f0f;
+  font-family: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  transition: all 0.2s;
+}
+.prestige-btn:hover {
+  background: rgba(255,0,255,0.15);
+  box-shadow: 0 0 20px rgba(255,0,255,0.2);
+}
+.prestige-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+/* SCROLLBAR */
+#content::-webkit-scrollbar { width: 4px; }
+#content::-webkit-scrollbar-track { background: rgba(0,255,65,0.05); }
+#content::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.3); border-radius: 2px; }
+/* UTILITY */
+.text-green { color: #0f0; }
+.text-pink { color: #f0f; }
+.text-cyan { color: #0ff; }
+.text-yellow { color: #ff0; }
+.text-red { color: #f44; }
+.text-gray { color: #888; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.mt-1 { margin-top: 4px; }
+.mb-1 { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="resources">
+    <div class="res">[DATA] <span id="r-data">0</span></div>
+    <div class="res">[CREDITS] <span id="r-credits">0</span></div>
+    <div class="res">[CPU] <span id="r-cpu">0</span></div>
+    <div class="res">[BANDWIDTH] <span id="r-bandwidth">0</span></div>
+    <div class="res">[DARK MATTER] <span id="r-darkMatter">0</span></div>
+  </div>
+
+  <div id="tabs">
+    <button class="tab-btn active" data-tab="skills">SKILLS</button>
+    <button class="tab-btn" data-tab="crafting">CRAFT</button>
+    <button class="tab-btn" data-tab="combat">COMBAT</button>
+    <button class="tab-btn" data-tab="upgrades">UPGRADES</button>
+    <button class="tab-btn" data-tab="prestige">PRESTIGE</button>
+  </div>
+
+  <div id="content">
+    <!-- SKILLS TAB -->
+    <div id="tab-skills" class="tab-content active">
+      <div class="section-title">[ SKILLS ] <span>// train to gain resources</span></div>
+      <div id="skills-container" class="skills-grid"></div>
+    </div>
+
+    <!-- CRAFTING TAB -->
+    <div id="tab-crafting" class="tab-content">
+      <div class="section-title">[ CRAFTING ] <span>// combine resources into gear</span></div>
+      <div id="craft-container" class="craft-grid"></div>
+      <div id="inventory-section" style="margin-top:12px;">
+        <div class="section-title">[ INVENTORY ] <span>// your crafted items</span></div>
+        <div id="inventory-container" class="flex-between" style="flex-wrap:wrap;gap:4px;"></div>
+      </div>
+    </div>
+
+    <!-- COMBAT TAB -->
+    <div id="tab-combat" class="tab-content">
+      <div class="section-title">[ COMBAT ] <span>// hack network nodes</span></div>
+      <div id="combat-area">
+        <div id="enemy-display">
+          <div>
+            <div class="enemy-name" id="enemy-name">ICE Wall</div>
+            <div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemy-hp-fill"></div></div>
+            <div id="enemy-hp-text" style="font-size:12px;color:#888;">HP: 100/100</div>
+          </div>
+          <div id="player-stats">
+            <span>ATK: <span id="p-atk">10</span></span>
+            <span>DEF: <span id="p-def">5</span></span>
+            <span>HP: <span id="p-hp">100</span>/<span id="p-maxhp">100</span></span>
+          </div>
+        </div>
+        <div id="combat-log"></div>
+      </div>
+    </div>
+
+    <!-- UPGRADES TAB -->
+    <div id="tab-upgrades" class="tab-content">
+      <div class="section-title">[ UPGRADES ] <span>// permanent improvements</span></div>
+      <div id="upgrades-container" class="upgrades-grid"></div>
+    </div>
+
+    <!-- PRESTIGE TAB -->
+    <div id="tab-prestige" class="tab-content">
+      <div class="section-title">[ PRESTIGE ] <span>// transcend the network</span></div>
+      <div id="prestige-area">
+        <p>Netrunner Level: <span class="text-pink" id="pnl">0</span></p>
+        <p>Each prestige resets your progress but grants a permanent <span class="text-green">1.5x</span> multiplier to all resource generation per Netrunner Level.</p>
+        <p>You will gain <span class="text-pink" id="pnl-gain">0</span> Netrunner Levels on prestige.</p>
+        <p>Lifetime Dark Matter: <span class="text-cyan" id="lifetime-dm">0</span></p>
+        <button class="prestige-btn" id="prestige-btn">PRESTIGE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const SKILLS_CONFIG = [
+  { id:'dataMining', name:'Data Mining', desc:'Extract raw data packets from network nodes.', res:'data', baseYield:1, baseTime:1, xpPer:10, cost:null, costLabel:'' },
+  { id:'packetSniffing', name:'Packet Sniffing', desc:'Intercept network traffic for credits.', res:'credits', baseYield:0.8, baseTime:1.2, xpPer:12, cost:{data:50}, costLabel:'50 DATA' },
+  { id:'cryptoMining', name:'Crypto Mining', desc:'Mine cryptocurrency for CPU cores.', res:'cpu', baseYield:0.5, baseTime:1.5, xpPer:15, cost:{credits:100}, costLabel:'100 CREDITS' },
+  { id:'networkScouting', name:'Network Scouting', desc:'Map the network to increase bandwidth.', res:'bandwidth', baseYield:0.3, baseTime:2, xpPer:18, cost:{data:100,cpu:25}, costLabel:'100 DATA, 25 CPU' },
+];
+
+const CRAFTS_CONFIG = [
+  { id:'codeWeave', name:'Code Weave', desc:'Weave data and CPU into combat programs.', result:'program', cost:{data:50,cpu:10} },
+  { id:'hardwareAssemble', name:'Hardware Assembly', desc:'Build hardware from credits and bandwidth.', result:'hardware', cost:{credits:75,bandwidth:15} },
+  { id:'exploitKit', name:'Exploit Kit', desc:'Craft advanced exploits from programs and hardware.', result:'exploit', cost:{program:3,hardware:2} },
+];
+
+const UPGRADES_CONFIG = [
+  { id:'miningSpeed', name:'Data Miner v{level}', baseDesc:'+20% data mining speed', baseCost:{credits:30}, costMult:1.8, maxLvl:20 },
+  { id:'sniffingSpeed', name:'Packet Sniffer v{level}', baseDesc:'+20% packet sniffing speed', baseCost:{data:40}, costMult:1.8, maxLvl:20 },
+  { id:'cryptoSpeed', name:'Crypto Miner v{level}', baseDesc:'+20% crypto mining speed', baseCost:{credits:60,data:30}, costMult:1.8, maxLvl:20 },
+  { id:'scoutSpeed', name:'Network Scout v{level}', baseDesc:'+20% network scouting speed', baseCost:{credits:80,cpu:20}, costMult:1.8, maxLvl:20 },
+  { id:'dataCap', name:'Data Reservoir v{level}', baseDesc:'+50 max data storage', baseCost:{data:100}, costMult:2, maxLvl:15 },
+  { id:'combatBoost', name:'ICE Breaker v{level}', baseDesc:'+15% combat damage', baseCost:{credits:100,bandwidth:10}, costMult:2, maxLvl:15 },
+];
+
+const ENEMIES = [
+  { name:'ICE Wall', hp:50, atk:3, def:1, reward:{credits:10}, lvl:1 },
+  { name:'Firewall Daemon', hp:120, atk:6, def:3, reward:{credits:30,darkMatter:1}, lvl:5 },
+  { name:'Black ICE', hp:300, atk:12, def:6, reward:{credits:80,darkMatter:3}, lvl:10 },
+  { name:'AI Sentinel', hp:600, atk:20, def:10, reward:{credits:150,darkMatter:6}, lvl:15 },
+  { name:'Corporate Node', hp:1200, atk:35, def:18, reward:{credits:300,darkMatter:12}, lvl:20 },
+  { name:'Darknet Server', hp:2500, atk:55, def:30, reward:{credits:600,darkMatter:25}, lvl:30 },
+  { name:'Central Core', hp:5000, atk:80, def:45, reward:{credits:1200,darkMatter:50}, lvl:40 },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+function defaultState() {
+  return {
+    resources: { data:0, credits:0, cpu:0, bandwidth:0, darkMatter:0 },
+    skills: SKILLS_CONFIG.map(s => ({ id:s.id, lvl:1, xp:0, active:false, unlocked:!s.cost, progress:0 })),
+    upgrades: UPGRADES_CONFIG.map(u => ({ id:u.id, lvl:0 })),
+    crafts: CRAFTS_CONFIG.map(c => ({ id:c.id })),
+    inventory: { program:0, hardware:0, exploit:0 },
+    combat: {
+      enemyIdx:0,
+      enemyHp:0,
+      playerHp:100,
+      playerMaxHp:100,
+      playerAtk:10,
+      playerDef:5,
+      combatCounter:0,
+      unlocked:false,
+    },
+    prestige: { netrunnerLvl:0, lifetimeDM:0, totalPrestiges:0 },
+    stats: { totalEarned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0} },
+    settings: { tickRate:100, saveVersion:1 },
+    lastTick: Date.now(),
+  };
+}
+
+let G = defaultState();
+
+// ============================================================
+// COMPUTED HELPERS
+// ============================================================
+function skillCfg(id) { return SKILLS_CONFIG.find(s => s.id === id); }
+function skillState(id) { return G.skills.find(s => s.id === id); }
+function upgradeState(id) { return G.upgrades.find(u => u.id === id); }
+function upgradeCfg(id) { return UPGRADES_CONFIG.find(u => u.id === id); }
+function enemyForLevel(lvl) {
+  let idx = 0;
+  for (let i = ENEMIES.length-1; i >= 0; i--) {
+    if (lvl >= ENEMIES[i].lvl) { idx = i; break; }
+  }
+  return idx;
+}
+
+function getSkillMult(skillId) {
+  let mult = 1;
+  const upgradeMap = {
+    dataMining:'miningSpeed',
+    packetSniffing:'sniffingSpeed',
+    cryptoMining:'cryptoSpeed',
+    networkScouting:'scoutSpeed',
+  };
+  const uid = upgradeMap[skillId];
+  if (uid) {
+    const u = upgradeState(uid);
+    mult += u.lvl * 0.2;
+  }
+  mult *= Math.pow(1.5, G.prestige.netrunnerLvl);
+  return mult;
+}
+
+function getSkillYield(skillId) {
+  const cfg = skillCfg(skillId);
+  const s = skillState(skillId);
+  const base = cfg.baseYield * (1 + (s.lvl - 1) * 0.08);
+  return base * getSkillMult(skillId);
+}
+
+function getSkillTime(skillId) {
+  const cfg = skillCfg(skillId);
+  const s = skillState(skillId);
+  return Math.max(0.25, cfg.baseTime * Math.pow(0.97, s.lvl - 1));
+}
+
+function xpToNext(lvl) {
+  return Math.floor(lvl * 80 * Math.pow(1.12, lvl - 1));
+}
+
+function getCombatPower() {
+  let atk = G.combat.playerAtk;
+  let def = G.combat.playerDef;
+  atk += G.inventory.exploit * 8;
+  def += G.inventory.hardware * 3;
+  atk += G.inventory.program * 2;
+  const boostUpg = upgradeState('combatBoost');
+  const boostMult = 1 + boostUpg.lvl * 0.15;
+  atk = Math.floor(atk * boostMult);
+  return { atk, def };
+}
+
+function getMaxData() {
+  const capUpg = upgradeState('dataCap');
+  return 500 + capUpg.lvl * 50;
+}
+
+function getMaxCredits() { return Infinity; }
+function getMaxCpu() { return 200 + (upgradeState('dataCap')?.lvl || 0) * 20; }
+function getMaxBandwidth() { return 100 + (upgradeState('dataCap')?.lvl || 0) * 10; }
+function getMaxDarkMatter() { return Infinity; }
+
+function resourceMax(resId) {
+  const m = { data:getMaxData, credits:getMaxCredits, cpu:getMaxCpu, bandwidth:getMaxBandwidth, darkMatter:getMaxDarkMatter };
+  return (m[resId] || (() => Infinity))();
+}
+
+// ============================================================
+// GAME LOGIC
+// ============================================================
+function addResource(id, amount) {
+  if (amount <= 0) return;
+  const max = resourceMax(id);
+  G.resources[id] = Math.min(G.resources[id] + amount, max);
+  G.stats.totalEarned[id] = (G.stats.totalEarned[id] || 0) + amount;
+}
+
+function canAfford(cost) {
+  if (!cost) return true;
+  return Object.entries(cost).every(([res, amt]) => (G.resources[res] || 0) >= amt);
+}
+
+function spend(cost) {
+  if (!cost) return true;
+  if (!canAfford(cost)) return false;
+  Object.entries(cost).forEach(([res, amt]) => { G.resources[res] -= amt; });
+  return true;
+}
+
+function skillTick(skillId, dt) {
+  const cfg = skillCfg(skillId);
+  const s = skillState(skillId);
+  if (!s.unlocked || !s.active) return;
+
+  const time = getSkillTime(skillId);
+  s.progress += dt / (time * 1000);
+  if (s.progress >= 1) {
+    s.progress -= 1;
+    const yield_ = getSkillYield(skillId);
+    addResource(cfg.res, yield_);
+    const xpGain = cfg.xpPer * (1 + (s.lvl - 1) * 0.04);
+    s.xp += xpGain;
+    const needed = xpToNext(s.lvl);
+    while (s.xp >= needed && s.lvl < 99) {
+      s.xp -= needed;
+      s.lvl++;
+    }
+    if (s.lvl >= 99) s.xp = 0;
+  }
+}
+
+function gainSkillXp(skillId, amount) {
+  const s = skillState(skillId);
+  if (!s) return;
+  s.xp += amount;
+  const needed = xpToNext(s.lvl);
+  while (s.xp >= needed && s.lvl < 99) {
+    s.xp -= needed;
+    s.lvl++;
+  }
+  if (s.lvl >= 99) s.xp = 0;
+}
+
+function unlockSkill(skillId) {
+  const cfg = skillCfg(skillId);
+  const s = skillState(skillId);
+  if (s.unlocked) return true;
+  if (spend(cfg.cost)) {
+    s.unlocked = true;
+    return true;
+  }
+  return false;
+}
+
+function upgradeCost(upgId) {
+  const u = upgradeState(upgId);
+  const cfg = upgradeCfg(upgId);
+  const cost = {};
+  Object.entries(cfg.baseCost).forEach(([res, amt]) => {
+    cost[res] = Math.floor(amt * Math.pow(cfg.costMult, u.lvl));
+  });
+  return cost;
+}
+
+function buyUpgrade(upgId) {
+  const u = upgradeState(upgId);
+  const cfg = upgradeCfg(upgId);
+  if (u.lvl >= cfg.maxLvl) return false;
+  const cost = upgradeCost(upgId);
+  if (spend(cost)) {
+    u.lvl++;
+    return true;
+  }
+  return false;
+}
+
+function craftItem(craftId) {
+  const cfg = CRAFTS_CONFIG.find(c => c.id === craftId);
+  if (!cfg) return false;
+  if (!canAfford(cfg.cost)) return false;
+
+  let totalLvl = 0;
+  let count = 0;
+  if (craftId === 'codeWeave') {
+    SKILLS_CONFIG.forEach((sc, i) => { const s = G.skills[i]; if (s.unlocked) { totalLvl += s.lvl; count++; } });
+  } else if (craftId === 'hardwareAssemble') {
+    SKILLS_CONFIG.forEach((sc, i) => { const s = G.skills[i]; if (s.unlocked) { totalLvl += s.lvl; count++; } });
+  } else {
+    SKILLS_CONFIG.forEach((sc, i) => { const s = G.skills[i]; if (s.unlocked) { totalLvl += s.lvl; count++; } });
+  }
+
+  if (!spend(cfg.cost)) return false;
+  G.inventory[cfg.result] = (G.inventory[cfg.result] || 0) + 1;
+
+  SKILLS_CONFIG.forEach((sc, i) => {
+    const s = G.skills[i];
+    if (s.unlocked) gainSkillXp(s.id, 5 + Math.floor(s.lvl * 0.5));
+  });
+  return true;
+}
+
+function combatTick() {
+  if (!G.combat.unlocked) return;
+  G.combat.combatCounter++;
+  if (G.combat.combatCounter < 50) return;
+  G.combat.combatCounter = 0;
+
+  const enemy = ENEMIES[G.combat.enemyIdx];
+  const { atk, def } = getCombatPower();
+
+  const dmgToEnemy = Math.max(1, atk - enemy.def + Math.floor(Math.random() * 5));
+  const dmgToPlayer = Math.max(0, enemy.atk - def + Math.floor(Math.random() * 3));
+
+  G.combat.enemyHp -= dmgToEnemy;
+  G.combat.playerHp -= dmgToPlayer;
+
+  addLog(`${dmgToEnemy} damage to ${enemy.name}`, 'log-dmg');
+  if (dmgToPlayer > 0) addLog(`${enemy.name} deals ${dmgToPlayer} damage`, 'log-info');
+
+  if (G.combat.enemyHp <= 0) {
+    const rew = enemy.reward;
+    Object.entries(rew).forEach(([r, a]) => {
+      addResource(r, a);
+      if (r === 'darkMatter') {
+        G.prestige.lifetimeDM += a;
+      }
+    });
+    addLog(`Defeated ${enemy.name}! Gained ${Object.entries(rew).map(([r,a]) => `${a} ${r}`).join(', ')}`, 'log-loot');
+    G.combat.enemyIdx = Math.min(G.combat.enemyIdx + 1, ENEMIES.length - 1);
+    const newEnemy = ENEMIES[G.combat.enemyIdx];
+    G.combat.enemyHp = newEnemy.hp;
+    G.stats.totalEarned.darkMatter = (G.stats.totalEarned.darkMatter || 0) + (rew.darkMatter || 0);
+  }
+
+  if (G.combat.playerHp <= 0) {
+    G.combat.playerHp = G.combat.playerMaxHp;
+    addLog('Player recovered after system crash.', 'log-info');
+  }
+}
+
+function addLog(msg, cls = '') {
+  const log = document.getElementById('combat-log');
+  if (!log) return;
+  const div = document.createElement('div');
+  div.textContent = msg;
+  if (cls) div.className = cls;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  if (log.children.length > 100) log.removeChild(log.firstChild);
+}
+
+function tick(dt) {
+  // skills
+  SKILLS_CONFIG.forEach((cfg, i) => skillTick(cfg.id, dt));
+  // combat
+  combatTick();
+}
+
+function toggleSkill(skillId) {
+  const s = skillState(skillId);
+  if (!s.unlocked) {
+    unlockSkill(skillId);
+    return;
+  }
+  s.active = !s.active;
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function fmt(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return Math.floor(n).toLocaleString();
+}
+
+function renderResources() {
+  ['data','credits','cpu','bandwidth','darkMatter'].forEach(id => {
+    const el = document.getElementById('r-' + id);
+    if (el) {
+      const amt = G.resources[id] || 0;
+      const max = resourceMax(id);
+      el.textContent = max === Infinity ? fmt(amt) : fmt(amt) + '/' + fmt(max);
+    }
+  });
+}
+
+function renderSkills() {
+  const container = document.getElementById('skills-container');
+  if (!container) return;
+  container.innerHTML = '';
+  SKILLS_CONFIG.forEach((cfg, i) => {
+    const s = G.skills[i];
+    const card = document.createElement('div');
+    card.className = 'skill-card' + (s.unlocked ? '' : ' locked') + (s.active ? ' active-skill' : '');
+
+    const yield_ = getSkillYield(cfg.id);
+    const time = getSkillTime(cfg.id);
+    const pct = s.lvl >= 99 ? 100 : (s.xp / xpToNext(s.lvl) * 100);
+
+    card.innerHTML = `
+      <div class="skill-header">
+        <span class="skill-name">${cfg.name}</span>
+        <span class="skill-level">Lv.${s.lvl}${s.lvl >= 99 ? ' MAX' : ''}</span>
+      </div>
+      <div class="skill-progress"><div class="skill-progress-bar" style="width:${Math.min(100,pct)}%"></div></div>
+      <div class="skill-info">
+        <span>${fmt(yield_)} ${cfg.res}/s</span>
+        <span>${s.lvl >= 99 ? 'MAX' : fmt(xpToNext(s.lvl) - s.xp) + ' XP'}</span>
+      </div>
+      <div class="skill-desc">${!s.unlocked ? 'Unlock: ' + cfg.costLabel : cfg.desc}</div>
+      <button class="skill-btn${s.active ? ' active-btn' : ''}" data-skill="${cfg.id}">
+        ${s.unlocked ? (s.active ? 'ACTIVE' : 'START') : 'UNLOCK'}
+      </button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderUpgrades() {
+  const container = document.getElementById('upgrades-container');
+  if (!container) return;
+  container.innerHTML = '';
+  UPGRADES_CONFIG.forEach(cfg => {
+    const u = upgradeState(cfg.id);
+    const maxed = u.lvl >= cfg.maxLvl;
+    const cost = maxed ? {} : upgradeCost(cfg.id);
+    const canBuy = !maxed && canAfford(cost);
+    const card = document.createElement('div');
+    card.className = 'upgrade-card' + (maxed ? ' maxed' : '');
+    const name = cfg.name.replace('{level}', u.lvl + 1);
+    const desc = cfg.baseDesc.replace('{level}', u.lvl + 1);
+    const costStr = Object.entries(cost).map(([r,a]) => `${fmt(a)} ${r}`).join(', ');
+    card.innerHTML = `
+      <div class="flex-between">
+        <span class="upgrade-name">${name}</span>
+        <span class="upgrade-level">${maxed ? 'MAX' : 'Lv.' + u.lvl + '/' + cfg.maxLvl}</span>
+      </div>
+      <div class="upgrade-desc">${desc}</div>
+      <div class="upgrade-cost">${maxed ? 'MAXED' : 'Cost: ' + costStr}</div>
+      <button class="upgrade-btn" data-upgrade="${cfg.id}" ${!canBuy ? 'disabled' : ''}>BUY</button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderCrafting() {
+  const container = document.getElementById('craft-container');
+  if (!container) return;
+  container.innerHTML = '';
+  CRAFTS_CONFIG.forEach(cfg => {
+    const costStr = Object.entries(cfg.cost).map(([r,a]) => `${fmt(a)} ${r}`).join(', ');
+    const canCraft = canAfford(cfg.cost);
+    const card = document.createElement('div');
+    card.className = 'craft-card';
+    card.innerHTML = `
+      <div class="craft-name">${cfg.name}</div>
+      <div class="craft-desc">${cfg.desc}</div>
+      <div class="craft-cost">Cost: ${costStr}</div>
+      <button class="craft-btn" data-craft="${cfg.id}" ${!canCraft ? 'disabled' : ''}>CRAFT</button>
+    `;
+    container.appendChild(card);
+  });
+
+  // Inventory
+  const inv = document.getElementById('inventory-container');
+  if (inv) {
+    inv.innerHTML = '';
+    const items = [
+      { id:'program', label:'Programs' },
+      { id:'hardware', label:'Hardware' },
+      { id:'exploit', label:'Exploits' },
+    ];
+    items.forEach(item => {
+      const count = G.inventory[item.id] || 0;
+      const div = document.createElement('div');
+      div.style.cssText = 'background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:6px 12px;font-size:12px;';
+      div.innerHTML = `<span class="text-cyan">${item.label}:</span> <span class="text-yellow">${count}</span>`;
+      inv.appendChild(div);
+    });
+  }
+}
+
+function renderCombat() {
+  const enemy = ENEMIES[G.combat.enemyIdx];
+  const elName = document.getElementById('enemy-name');
+  const elHpFill = document.getElementById('enemy-hp-fill');
+  const elHpText = document.getElementById('enemy-hp-text');
+  const elAtk = document.getElementById('p-atk');
+  const elDef = document.getElementById('p-def');
+  const elHp = document.getElementById('p-hp');
+  const elMaxHp = document.getElementById('p-maxhp');
+  const { atk, def } = getCombatPower();
+
+  if (elName) elName.textContent = enemy.name;
+  if (elHpFill) elHpFill.style.width = Math.max(0, (G.combat.enemyHp / enemy.hp) * 100) + '%';
+  if (elHpText) elHpText.textContent = `HP: ${Math.max(0, Math.floor(G.combat.enemyHp))}/${enemy.hp}`;
+  if (elAtk) elAtk.textContent = atk;
+  if (elDef) elDef.textContent = def;
+  if (elHp) elHp.textContent = Math.max(0, Math.floor(G.combat.playerHp));
+  if (elMaxHp) elMaxHp.textContent = G.combat.playerMaxHp;
+}
+
+function renderPrestige() {
+  const gain = calcPrestigeGain();
+  document.getElementById('pnl').textContent = G.prestige.netrunnerLvl;
+  document.getElementById('pnl-gain').textContent = gain;
+  document.getElementById('lifetime-dm').textContent = fmt(G.prestige.lifetimeDM);
+  const btn = document.getElementById('prestige-btn');
+  if (btn) btn.disabled = gain < 1;
+}
+
+function calcPrestigeGain() {
+  const dm = G.prestige.lifetimeDM || 0;
+  if (dm < 10) return 0;
+  return Math.floor(Math.pow(dm / 10, 0.5));
+}
+
+function doPrestige() {
+  const gain = calcPrestigeGain();
+  if (gain < 1) return;
+  G.prestige.netrunnerLvl += gain;
+  G.prestige.totalPrestiges++;
+  // Reset resources, skills, upgrades, combat, inventory
+  const keepPrestige = {
+    prestige: G.prestige,
+    stats: { totalEarned: { data:0, credits:0, cpu:0, bandwidth:0, darkMatter:0 } },
+    settings: G.settings,
+    lastTick: Date.now(),
+  };
+  G = Object.assign(defaultState(), keepPrestige);
+  G.combat.enemyHp = ENEMIES[0].hp;
+  saveGame();
+  renderAll();
+  addLog('System rebooted. Netrunner level increased!', 'log-loot');
+}
+
+function renderAll() {
+  renderResources();
+  renderSkills();
+  renderUpgrades();
+  renderCrafting();
+  renderCombat();
+  renderPrestige();
+}
+
+// ============================================================
+// SAVE / LOAD
+// ============================================================
+function saveGame() {
+  try {
+    const data = JSON.stringify(G);
+    localStorage.setItem('netrunnerIdleSave', data);
+  } catch(e) {}
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem('netrunnerIdleSave');
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data.settings && data.settings.saveVersion) {
+        G = Object.assign(defaultState(), data);
+        // ensure arrays match config
+        while (G.skills.length < SKILLS_CONFIG.length) {
+          G.skills.push({ id:SKILLS_CONFIG[G.skills.length].id, lvl:1, xp:0, active:false, unlocked:false, progress:0 });
+        }
+        while (G.upgrades.length < UPGRADES_CONFIG.length) {
+          G.upgrades.push({ id:UPGRADES_CONFIG[G.upgrades.length].id, lvl:0 });
+        }
+        return true;
+      }
+    }
+  } catch(e) {}
+  return false;
+}
+
+function resetGame() {
+  if (confirm('Reset all progress? This cannot be undone!')) {
+    localStorage.removeItem('netrunnerIdleSave');
+    G = defaultState();
+    G.combat.enemyHp = ENEMIES[0].hp;
+    renderAll();
+  }
+}
+
+// ============================================================
+// GAME LOOP
+// ============================================================
+let lastTime = 0;
+let saveCounter = 0;
+
+function gameLoop(timestamp) {
+  if (!lastTime) lastTime = timestamp;
+  const dt = timestamp - lastTime;
+  lastTime = timestamp;
+
+  // cap dt to prevent huge jumps
+  const cappedDt = Math.min(dt, 1000);
+
+  if (cappedDt > 0) {
+    tick(cappedDt);
+    renderAll();
+  }
+
+  saveCounter += cappedDt;
+  if (saveCounter >= 10000) { // save every 10s
+    saveCounter = 0;
+    saveGame();
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+// EVENT BINDING
+// ============================================================
+function bindEvents() {
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = document.getElementById('tab-' + btn.dataset.tab);
+      if (tab) tab.classList.add('active');
+    });
+  });
+
+  // Skill buttons (delegated)
+  document.getElementById('skills-container').addEventListener('click', e => {
+    const btn = e.target.closest('.skill-btn');
+    if (btn) toggleSkill(btn.dataset.skill);
+  });
+
+  // Upgrade buttons (delegated)
+  document.getElementById('upgrades-container').addEventListener('click', e => {
+    const btn = e.target.closest('.upgrade-btn');
+    if (btn) { buyUpgrade(btn.dataset.upgrade); renderAll(); }
+  });
+
+  // Craft buttons (delegated)
+  document.getElementById('craft-container').addEventListener('click', e => {
+    const btn = e.target.closest('.craft-btn');
+    if (btn) { craftItem(btn.dataset.craft); renderAll(); }
+  });
+
+  // Prestige button
+  document.getElementById('prestige-btn').addEventListener('click', doPrestige);
+
+  // Keyboard shortcut: R for reset
+  document.addEventListener('keydown', e => {
+    if (e.key === 'r' && e.ctrlKey && e.shiftKey) resetGame();
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  const loaded = loadGame();
+  if (!loaded) {
+    G.combat.enemyHp = ENEMIES[0].hp;
+  }
+  // ensure enemy HP is set
+  if (!G.combat.enemyHp || G.combat.enemyHp <= 0) {
+    G.combat.enemyHp = ENEMIES[G.combat.enemyIdx].hp;
+  }
+
+  // Check if combat should be unlocked (has 2+ skills at lvl 3+)
+  const unlockedSkills = G.skills.filter(s => s.unlocked).length;
+  if (unlockedSkills >= 2) {
+    let highEnough = G.skills.filter(s => s.unlocked && s.lvl >= 3).length >= 2;
+    if (highEnough) G.combat.unlocked = true;
+  }
+
+  renderAll();
+  bindEvents();
+  lastTime = 0;
+  saveCounter = 0;
+  requestAnimationFrame(gameLoop);
+
+  // Combat unlock check loop
+  setInterval(() => {
+    const unlockedSkills = G.skills.filter(s => s.unlocked).length;
+    if (!G.combat.unlocked && unlockedSkills >= 2) {
+      let highEnough = G.skills.filter(s => s.unlocked && s.lvl >= 3).length >= 2;
+      if (highEnough) {
+        G.combat.unlocked = true;
+        addLog('Combat system unlocked! Hack network nodes for rewards.', 'log-loot');
+      }
+    }
+    // unlock crafting tab based on skill levels
+  }, 2000);
+}
+
+init();
+</script>
+</body>
+</html>
