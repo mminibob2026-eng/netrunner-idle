@@ -67,11 +67,11 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 .craft-btn:hover { background:rgba(0,255,255,0.2);box-shadow:0 0 8px rgba(0,255,255,0.2); }
 .craft-btn:disabled { opacity:0.3;cursor:not-allowed; }
 
-#enemy-display { display:flex;justify-content:space-between;align-items:center;background:rgba(255,0,0,0.05);border:1px solid rgba(255,0,0,0.2);border-radius:4px;padding:12px 16px; }
+#enemy-display { display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;background:rgba(255,0,0,0.05);border:1px solid rgba(255,0,0,0.2);border-radius:4px;padding:12px 16px; }
 .enemy-name { color:#f44;font-size:16px; }
-.enemy-hp-bar { height:8px;background:rgba(255,0,0,0.1);border-radius:4px;margin:4px 0;overflow:hidden;width:200px; }
+.enemy-hp-bar { height:8px;background:rgba(255,0,0,0.1);border-radius:4px;margin:4px 0;overflow:hidden;width:200px;max-width:100%; }
 .enemy-hp-fill { height:100%;background:linear-gradient(90deg,#f00,#f80);width:100%;border-radius:4px;transition:width 0.2s; }
-#player-stats { display:flex;gap:16px;font-size:12px;color:#0ff; }
+#player-stats { display:flex;gap:16px;font-size:12px;color:#0ff;flex-wrap:wrap; }
 #combat-log { background:rgba(0,0,0,0.3);border:1px solid rgba(0,255,65,0.1);border-radius:4px;padding:8px;height:100px;overflow-y:auto;font-size:11px;margin-top:8px; }
 #combat-log div { margin:1px 0; }
 
@@ -170,3 +170,48 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 .theme-neon { --accent:#f0f; }
 .theme-amber { --accent:#ff0; }
 .theme-cyan { --accent:#0ff; }
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  #login-box { padding:24px; }
+  #login-box h1 { font-size:20px;letter-spacing:2px; }
+  .tab-btn { font-size:9px;padding:6px 2px;letter-spacing:0; }
+  #resources { gap:2px;padding:6px 8px; }
+  .res { font-size:11px;padding:2px 8px; }
+  #user-info { font-size:10px; }
+  #user-info button { font-size:8px;padding:1px 4px; }
+  #combat-pause-warning { font-size:11px;padding:4px 8px; }
+  .skills-grid { grid-template-columns:1fr; }
+  .upgrades-grid { grid-template-columns:1fr; }
+  .craft-grid { grid-template-columns:1fr; }
+  #enemy-grid { grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); }
+  .prestige-btn { padding:10px 24px;font-size:14px; }
+  .transcend-btn { padding:10px 24px;font-size:12px;margin-left:0;margin-top:8px;display:block;width:100%; }
+  #prestige-area { padding:12px; }
+  #prestige-area p { font-size:12px; }
+  #game { padding:4px;padding-bottom:48px; }
+  .zones-grid { grid-template-columns:1fr; }
+  .achievements-grid { grid-template-columns:1fr; }
+}
+
+@media (max-width: 400px) {
+  #login-box { padding:16px; }
+  #login-box h1 { font-size:18px; }
+  #login-box input { font-size:12px;padding:8px 10px; }
+  #login-box button { font-size:12px;padding:8px 20px; }
+  .tab-btn { font-size:8px;padding:4px 1px; }
+  .res { font-size:10px;padding:2px 4px; }
+  .skill-card { padding:8px; }
+  .enemy-card { font-size:10px;padding:6px; }
+  .combat-btn { padding:6px 10px;font-size:10px; }
+  #combat-actions { gap:4px; }
+  .spec-item { font-size:9px; }
+  .spec-btn { font-size:8px;padding:1px 6px; }
+}
+
+/* Better touch targets on mobile */
+@media (hover: none) and (pointer: coarse) {
+  .skill-btn, .upgrade-btn, .craft-btn, .combat-btn, .prestige-btn, .transcend-btn, .sub-cta-btn { min-height:44px; }
+  .tab-btn { min-height:44px; }
+  .enemy-card, .upgrade-card { min-height:44px; }
+}
