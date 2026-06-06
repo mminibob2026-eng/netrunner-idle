@@ -7,14 +7,14 @@
 // 5. Set CLOUD_CONFIG below
 
 const CLOUD_CONFIG = {
-  enabled: false,
+  enabled: true,
   firebaseConfig: {
-    apiKey: 'YOUR_API_KEY',
-    authDomain: 'YOUR_PROJECT.firebaseapp.com',
-    projectId: 'YOUR_PROJECT',
-    storageBucket: 'YOUR_PROJECT.appspot.com',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    appId: 'YOUR_APP_ID',
+    apiKey: 'AIzaSyApYfL8qb3vidqZpPn9znxybuLUR35rz-c',
+    authDomain: 'netrunner-idle-2b131.firebaseapp.com',
+    projectId: 'netrunner-idle-2b131',
+    storageBucket: 'netrunner-idle-2b131.firebasestorage.app',
+    messagingSenderId: '436367736115',
+    appId: '1:436367736115:web:06d6a555c9f10fc1131246',
   },
   collectionName: 'saves',
 };
