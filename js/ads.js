@@ -6,8 +6,8 @@
 // 4. Create ad units in AdSense dashboard and replace the slot IDs
 
 const ADS_CONFIG = {
-  enabled: false,
-  clientId: 'pub-0000000000000000',
+  enabled: true,
+  clientId: 'ca-pub-1908159369479300',
 };
 
 function initAds() {
