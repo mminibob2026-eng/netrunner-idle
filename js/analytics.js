@@ -5,8 +5,8 @@
 // 3. Set ANALYTICS_ID below
 
 const ANALYTICS_CONFIG = {
-  enabled: false,
-  measurementId: 'G-XXXXXXXXXX',
+  enabled: true,
+  measurementId: 'G-50WNL699N0',
 };
 
 function initAnalytics() {
