@@ -145,6 +145,7 @@ function combatWin() {
   G.cmbt.hp = ENEMIES[G.cmbt.idx].hp;
   G.cmbt._bonus = 0;
   G.cmbt._tierDrops = false;
+  G._pendingMiniGameEvent = true;
   checkZoneProgress();
   checkAchievements();
 }
@@ -266,15 +267,6 @@ function combatAutoAttack() {
   if (!G.cmbt.inCombat) return;
   if (!isSubActive()) return;
   combatAttack();
-}
-
-// Mini-game event check
-function checkMiniGameEvent() {
-  const elapsed = Date.now() - G._lastMiniGameEvent;
-  const dayMs = 24 * 60 * 60 * 1000;
-  if (elapsed < dayMs) return;
-  if (document.getElementById('minigame-event-modal')?.classList.contains('visible')) return;
-  if (Math.random() < 0.03) launchMiniGameEvent();
 }
 
 // ===== DAILY QUESTS =====

@@ -20,6 +20,8 @@ function freshState() {
     _subActive: false,
     _pw: '',
     _lastMiniGameEvent: 0,
+    _nextMiniGameCooldown: 0,
+    _pendingMiniGameEvent: false,
     _quests: [], _questDate: '', _questProgress: {}, _questCompleted: [],
     _questWeekly: 0, _questWeeklyDate: '',
     _zoneTiers: {},
@@ -71,6 +73,8 @@ function migrateState(d) {
     if (!d._enhance) d._enhance = { program:0, hardware:0, exploit:0 };
     if (!d._enhanceSlot) d._enhanceSlot = 'program';
     if (!d._enemyAbilityCd) d._enemyAbilityCd = 0;
+    if (!d._pendingMiniGameEvent) d._pendingMiniGameEvent = false;
+    if (!d._nextMiniGameCooldown) d._nextMiniGameCooldown = 0;
   }
   d.ver = SAVE_VERSION;
   return d;

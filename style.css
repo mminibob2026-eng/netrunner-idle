@@ -81,7 +81,13 @@ body::after {
 .res-bandwidth { color:#f0f;text-shadow:0 0 6px rgba(255,0,255,0.4);animation:glowPulsePink 3s ease-in-out infinite; }
 .res-darkmatter { color:#fff;text-shadow:0 0 6px rgba(255,255,255,0.4);animation:glowPulseWhite 3s ease-in-out infinite; }
 .res-np { color:#f0f;text-shadow:0 0 6px rgba(255,0,255,0.4);animation:glowPulsePink 3s ease-in-out infinite; }
-.res-icon { font-size:14px;opacity:0.8; }
+.res-icon { font-size:16px;opacity:1;color:inherit; }
+.res-icon[data-res="data"] { color:#0f0; }
+.res-icon[data-res="credits"] { color:#ff0; }
+.res-icon[data-res="cpu"] { color:#0ff; }
+.res-icon[data-res="bandwidth"] { color:#f0f; }
+.res-icon[data-res="darkMatter"] { color:#fff; }
+.res-icon[data-res="np"] { color:#f0f; }
 .res span:last-child { color:inherit; }
 
 @keyframes glowPulseGreen { 0%,100% { text-shadow:0 0 6px rgba(0,255,0,0.4); } 50% { text-shadow:0 0 12px rgba(0,255,0,0.7),0 0 20px rgba(0,255,0,0.2); } }

@@ -1,5 +1,4 @@
 let _loopStarted = false;
-let _eventCheckAcc = 0;
 
 function tick(dt) {
   const speed = getEffectiveSpeed();
@@ -34,11 +33,6 @@ function tick(dt) {
   if (dataGained > 0) trackQuestProgress('data', dataGained);
   if (creditsGained > 0) trackQuestProgress('credits', creditsGained);
 
-  // Track quest progress for data/credits earned
-  const prevData = G.res.data || 0;
-  const prevCredits = G.res.credits || 0;
-  // (Added at end of tick to capture delta)
-
   // Auto-combat (sub feature)
   if (G.cmbt.unlocked && G.cmbt.inCombat && isSubActive()) {
     G.cmbt.accum += sdt;
@@ -67,11 +61,9 @@ function tick(dt) {
     }
   }
 
-  // Mini-game event check (once per 30s, only after 24h cooldown)
-  _eventCheckAcc += dt;
-  if (_eventCheckAcc >= 30) {
-    _eventCheckAcc = 0;
-    checkMiniGameEvent();
+  // Mini-game event trigger (after combat win, with random 5-96h cooldown)
+  if (G._pendingMiniGameEvent && !document.getElementById('minigame-event-modal')?.classList.contains('visible')) {
+    triggerMiniGameAfterCombat();
   }
 }
 

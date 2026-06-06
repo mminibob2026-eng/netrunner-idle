@@ -6,6 +6,7 @@ function tttInit() {
   ttt.turn = 'X';
   ttt.over = false;
   ttt.winner = null;
+  if (!ttt.grid) return;
   tttDraw();
 }
 
@@ -194,14 +195,37 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ===== MINI-GAME EVENT SYSTEM =====
+let _miniGamePlayedThisWindow = false;
+
 function getMiniGameEventMult() {
   return 1 + (G.prest.lvl || 0) * 0.3 + (G.prest.transcendLvl || 0) * 0.5;
 }
 
-function launchMiniGameEvent() {
+function canTriggerMiniGameEvent() {
+  const elapsed = Date.now() - G._lastMiniGameEvent;
+  const minCooldown = 5 * 60 * 60 * 1000;  // 5 hours
+  const maxCooldown = 96 * 60 * 60 * 1000; // 96 hours
+  const cooldown = G._nextMiniGameCooldown || maxCooldown;
+  return elapsed >= cooldown;
+}
+
+function triggerMiniGameAfterCombat() {
+  if (!canTriggerMiniGameEvent()) return;
+  if (_miniGamePlayedThisWindow) return;
   const games = ['ttt', 'snake'];
   const pick = games[Math.floor(Math.random() * games.length)];
-  showMiniGameEventModal(pick);
+  G._pendingMiniGameEvent = false;
+  launchMiniGameEvent(pick);
+}
+
+function launchMiniGameEvent(type) {
+  showMiniGameEventModal(type);
+}
+
+function calcNextMiniGameCooldown() {
+  const minH = 5, maxH = 96;
+  const hours = minH + Math.random() * (maxH - minH);
+  return Math.floor(hours * 60 * 60 * 1000);
 }
 
 function showMiniGameEventModal(type) {
@@ -217,6 +241,8 @@ function showMiniGameEventModal(type) {
   const onEnd = (result) => {
     modal.classList.remove('visible');
     G._lastMiniGameEvent = Date.now();
+    G._nextMiniGameCooldown = calcNextMiniGameCooldown();
+    _miniGamePlayedThisWindow = true;
     if (type === 'snake') {
       if (snake.timer) { clearInterval(snake.timer); snake.timer = null; }
     }
@@ -263,5 +289,9 @@ function closeMiniGameEvent() {
   const modal = document.getElementById('minigame-event-modal');
   if (modal) modal.classList.remove('visible');
   if (snake.timer) { clearInterval(snake.timer); snake.timer = null; }
-  G._lastMiniGameEvent = Date.now();
+  if (!_miniGamePlayedThisWindow) {
+    G._lastMiniGameEvent = Date.now();
+    G._nextMiniGameCooldown = calcNextMiniGameCooldown();
+    _miniGamePlayedThisWindow = true;
+  }
 }

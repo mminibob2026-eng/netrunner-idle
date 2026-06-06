@@ -34,13 +34,18 @@ function buildBranchTree() {
           return '';
         }).join(', ');
       }
-      const reqStr = req ? '<div class="node-req" style="color:#ff0">Requires: ' + req.node + ' Lv.' + req.level + '</div>' : '';
+      let reqStr = '';
+      if (req) {
+        const reqNodeName = branchNodeCfg(b.id, req.node)?.name || req.node;
+        const reqHave = branchLevel(b.id, req.node);
+        reqStr = '<div class="node-req" style="color:' + (reqHave >= req.level ? '#0f0' : '#ff0') + '">Requires: ' + reqNodeName + ' Lv.' + req.level + ' (have Lv.' + reqHave + ')</div>';
+      }
       const isCapped = n.id === 'costReduction' && lvl >= 20;
       html += '<div class="branch-node' + (viable ? '' : ' node-locked') + '" data-branch="' + b.id + '" data-node="' + n.id + '">';
       html += '<div class="node-header"><span class="node-name">' + n.name + '</span><span class="node-lvl">Lv.' + lvl + (lvl >= 30 ? ' MAX' : '') + '</span></div>';
       html += '<div class="node-desc">' + n.desc + '</div>';
       html += '<div class="node-effect" style="color:' + b.color + '">' + effectStr + '</div>';
-      if (reqStr && !viable) html += reqStr;
+      if (reqStr && (!unlocked || lvl === 0)) html += reqStr;
       html += '<div class="node-cost">' + (lvl >= 30 ? 'MAXED' : isCapped ? 'Cost: ' + cost + ' NP (cap reached)' : 'Cost: ' + cost + ' NP') + '</div>';
       html += '</div>';
     });
@@ -362,6 +367,18 @@ function updateUI() {
         const cost = branchCost(b.id, n.id);
         const isCapped = n.id === 'costReduction' && lvl >= 20;
         el.querySelector('.node-cost').textContent = lvl >= 30 ? 'MAXED' : isCapped ? 'Cost: ' + cost + ' NP (cap reached)' : 'Cost: ' + cost + ' NP';
+        // Update requirement display
+        const req = nodeRequirement(b.id, n.id);
+        const reqEl = el.querySelector('.node-req');
+        if (req) {
+          const reqNodeName = branchNodeCfg(b.id, req.node)?.name || req.node;
+          const reqHave = branchLevel(b.id, req.node);
+          const reqText = 'Requires: ' + reqNodeName + ' Lv.' + req.level + ' (have Lv.' + reqHave + ')';
+          if (reqEl) {
+            reqEl.textContent = reqText;
+            reqEl.style.color = reqHave >= req.level ? '#0f0' : '#ff0';
+          }
+        }
       });
     });
   }
@@ -554,7 +571,28 @@ function initLogin() {
 
       const raw = localStorage.getItem('nri_'+name);
       if (raw) {
-        const d = JSON.parse(raw);
+        let d;
+        try { d = JSON.parse(raw); } catch(e) { d = null; }
+        if (!d || typeof d !== 'object') {
+          localStorage.removeItem('nri_'+name);
+          G = freshState();
+          G._pw = pass;
+          G.neuralPoints = 2;
+          USER = name;
+          localStorage.setItem('nr_user', USER);
+          overlay.style.display='none';
+          game.style.display='flex';
+          buildUI();
+          calcOfflineProgress();
+          initCloud();
+          syncCloud();
+          updateUI();
+          startLoop();
+          toast('Welcome, '+USER+'! (corrupted save reset)', 'info');
+          if (isDev()) toast('DEV MODE ACTIVE', 'loot');
+          save();
+          return;
+        }
         if (d._pw && d._pw !== pass) { errEl.textContent='Wrong password'; errEl.style.display='block'; return; }
         if (!d._pw) { d._pw = pass; toast('Password set for '+name, 'info'); }
         G = Object.assign(freshState(), d);
