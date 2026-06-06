@@ -47,13 +47,13 @@ function buildBranchTree() {
     c.appendChild(col);
   });
 
-  // Click handlers
-  c.querySelectorAll('.branch-node:not(.node-locked)').forEach(el => {
-    el.addEventListener('click', function() {
-      const bid = this.dataset.branch;
-      const nid = this.dataset.node;
-      clickBranchNode(bid, nid);
-    });
+  // Click handlers via event delegation
+  c.addEventListener('click', function(e) {
+    const node = e.target.closest('.branch-node');
+    if (!node || node.classList.contains('node-locked')) return;
+    const bid = node.dataset.branch;
+    const nid = node.dataset.node;
+    clickBranchNode(bid, nid);
   });
 }
 

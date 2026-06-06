@@ -14,7 +14,7 @@ function nodeRequirement(branchId, nodeId) {
   const b = branchCfg(branchId); if (!b) return null;
   const idx = b.nodes.findIndex(n => n.id === nodeId);
   if (idx <= 0) return null;
-  return { node: b.nodes[idx-1].id, level: b.nodes[idx-1].reqLvl };
+  return { node: b.nodes[idx-1].id, level: b.nodes[idx].reqLvl };
 }
 function branchNodeUnlocked(branchId, nodeId) {
   const req = nodeRequirement(branchId, nodeId);

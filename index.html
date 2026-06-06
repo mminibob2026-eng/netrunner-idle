@@ -29,12 +29,12 @@
 <div id="combat-pause-warning" style="display:none;position:fixed;top:0;left:0;right:0;z-index:998;background:rgba(180,0,0,0.85);border-bottom:2px solid #f44;padding:6px 12px;font-size:13px;color:#fff;text-align:center;font-weight:bold;">SYSTEM OFFLINE - Skills paused during combat</div>
   <div style="display:flex;justify-content:space-between;align-items:center;">
   <div id="resources">
-    <div class="res">[DATA] <span id="r-data">0</span></div>
-    <div class="res">[CREDITS] <span id="r-credits">0</span></div>
-    <div class="res">[CPU] <span id="r-cpu">0</span></div>
-    <div class="res">[BANDWIDTH] <span id="r-bandwidth">0</span></div>
-    <div class="res">[DARK MATTER] <span id="r-darkMatter">0</span></div>
-    <div class="res" style="color:#f0f">[NP] <span id="np-display">0</span></div>
+    <div class="res res-data"><span class="res-icon">■</span> <span id="r-data">0</span></div>
+    <div class="res res-credits"><span class="res-icon">●</span> <span id="r-credits">0</span></div>
+    <div class="res res-cpu"><span class="res-icon">▲</span> <span id="r-cpu">0</span></div>
+    <div class="res res-bandwidth"><span class="res-icon">▼</span> <span id="r-bandwidth">0</span></div>
+    <div class="res res-darkmatter"><span class="res-icon">◆</span> <span id="r-darkMatter">0</span></div>
+    <div class="res res-np"><span class="res-icon">⚡</span> <span id="np-display">0</span></div>
   </div>
   <div id="user-info" style="display:flex;align-items:center;gap:8px;"><span id="user-label" style="color:#0ff"></span><span id="save-indicator" style="color:#666;font-size:10px;"></span><span id="cloud-indicator" style="color:#0ff;font-size:10px;"></span><button id="logout-btn" style="background:transparent;border:1px solid #f44;color:#f44;font-family:inherit;font-size:10px;cursor:pointer;border-radius:2px;padding:2px 6px;">LOGOUT</button></div>
 </div>
