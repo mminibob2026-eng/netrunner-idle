@@ -9,10 +9,14 @@ function tick(dt) {
   const npRate = 0.5 * branchNpRate() * (isSubActive() ? 1.5 : 1) * speed;
   G.neuralPoints += npRate * dt;
 
+  // Track resource earnings for quests
+  const dataBefore = G.res.data || 0;
+  const creditsBefore = G.res.credits || 0;
+
   // Process Data Stream branch - resource generation
   const dataBranch = BRANCHES.find(b => b.id === 'data');
   if (dataBranch) {
-    const prodMult = branchProdMult();
+    const prodMult = branchProdMult() * getProdMult();
     dataBranch.nodes.forEach(n => {
       const lvl = branchLevel('data', n.id);
       if (lvl < 1) return;
@@ -23,6 +27,17 @@ function tick(dt) {
       });
     });
   }
+
+  // Track quest progress for resources earned this tick
+  const dataGained = (G.res.data || 0) - dataBefore;
+  const creditsGained = (G.res.credits || 0) - creditsBefore;
+  if (dataGained > 0) trackQuestProgress('data', dataGained);
+  if (creditsGained > 0) trackQuestProgress('credits', creditsGained);
+
+  // Track quest progress for data/credits earned
+  const prevData = G.res.data || 0;
+  const prevCredits = G.res.credits || 0;
+  // (Added at end of tick to capture delta)
 
   // Auto-combat (sub feature)
   if (G.cmbt.unlocked && G.cmbt.inCombat && isSubActive()) {
@@ -37,6 +52,11 @@ function tick(dt) {
       G.cmbt.accum -= 3;
       combatAttack();
     }
+  }
+
+  // Enemy ability proc
+  if (G.cmbt.inCombat) {
+    procEnemyAbility();
   }
 
   // Auto-craft (sub feature)

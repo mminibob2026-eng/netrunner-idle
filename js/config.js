@@ -139,4 +139,47 @@ const SUBSCRIPTION = {
   }
 };
 
-const SAVE_VERSION = 6;
+const SAVE_VERSION = 7;
+
+// ===== DAILY QUESTS =====
+const QUEST_POOL = [
+  { id:'qEarnData', desc:'Earn DATA', check:g=>g._questProgress?.data||0, target:5000, rewardNP:5, reward:{data:1000} },
+  { id:'qEarnCredits', desc:'Earn CREDITS', check:g=>g._questProgress?.credits||0, target:2000, rewardNP:5, reward:{credits:500} },
+  { id:'qDefeat', desc:'Defeat enemies', check:g=>g._questProgress?.defeated||0, target:5, rewardNP:5, reward:{darkMatter:2} },
+  { id:'qCraft', desc:'Craft items', check:g=>g._questProgress?.crafted||0, target:3, rewardNP:5, reward:{cpu:200} },
+  { id:'qSpendNp', desc:'Spend NP on branches', check:g=>g._questProgress?.spentNp||0, target:20, rewardNP:5, reward:{bandwidth:100} },
+  { id:'qBurst', desc:'Use burst attacks', check:g=>g._questProgress?.burst||0, target:3, rewardNP:5, reward:{credits:500} },
+  { id:'qPrestigeDm', desc:'Earn Dark Matter', check:g=>g._questProgress?.dmEarned||0, target:10, rewardNP:8, reward:{darkMatter:3} },
+];
+
+// ===== TIER BONUSES =====
+const TIER_BONUSES = [
+  { name:'Normal', hpMult:1, atkMult:1, defMult:1, rewardMult:1, color:'#0f0' },
+  { name:'Advanced', hpMult:1.5, atkMult:1.3, defMult:1.2, rewardMult:1.5, color:'#ff0' },
+  { name:'Elite', hpMult:2.5, atkMult:1.8, defMult:1.5, rewardMult:2.5, color:'#f44' },
+];
+
+// ===== CONSUMABLES =====
+const CONSUMABLES = [
+  { id:'neuralSpike', name:'Neural Spike', desc:'2x NP generation for 5 minutes', cost:{data:200,credits:100}, duration:300, effect:{npMult:2} },
+  { id:'overdriveInjector', name:'Overdrive Injector', desc:'+50% ATK for 30 seconds in combat', cost:{exploit:2,cpu:50}, duration:30, effect:{atkMult:1.5} },
+  { id:'shieldBooster', name:'Shield Booster', desc:'+50% DEF for 30 seconds in combat', cost:{hardware:2,bandwidth:30}, duration:30, effect:{defMult:1.5} },
+  { id:'dataSurge', name:'Data Surge', desc:'2x resource generation for 2 minutes', cost:{credits:500,data:300}, duration:120, effect:{prodMult:2} },
+];
+
+// ===== ENHANCEMENT =====
+const ENHANCE_ITEMS = [
+  { id:'program', label:'Program', baseBonus:2, bonusLabel:'+2 ATK', maxLvl:10 },
+  { id:'hardware', label:'Hardware', baseBonus:3, bonusLabel:'+3 DEF', maxLvl:10 },
+  { id:'exploit', label:'Exploit', baseBonus:8, bonusLabel:'+8 ATK', maxLvl:10 },
+];
+
+function enhanceSuccessRate(lvl) { return Math.max(0.1, 1 - lvl * 0.1); }
+function enhanceCost(lvl) { return { data:50*(lvl+1), credits:30*(lvl+1) }; }
+const ENEMY_ABILITIES = [
+  { id:'fortify', name:'Fortify', desc:'Boosts DEF by 50% for 8s', hpThreshold:0.5, effect:{defMult:1.5}, duration:8 },
+  { id:'regen', name:'Regen', desc:'Heals 20% HP', hpThreshold:0.3, effect:{heal:0.2} },
+  { id:'overcharge', name:'Overcharge', desc:'Doubles ATK for 5s', hpThreshold:0.6, effect:{atkMult:2}, duration:5 },
+  { id:'counter', name:'Counter', desc:'Reflects 30% damage for 6s', hpThreshold:0.4, effect:{reflect:0.3}, duration:6 },
+];
+const ENEMY_ABILITY_MAP = [0, 1, 2, 3, 0, 1, 2, 3, 0, 1]; // index into ENEMY_ABILITIES per enemy

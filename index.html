@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Netrunner Idle</title>
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=7">
 <meta name="google-adsense-account" content="ca-pub-1908159369479300">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1908159369479300" crossorigin="anonymous"></script>
 </head>
@@ -46,6 +46,8 @@
   <button class="tab-btn" data-tab="crafting">CRAFT</button>
   <button class="tab-btn" data-tab="combat">COMBAT</button>
   <button class="tab-btn" data-tab="upgrades">UPGRADES</button>
+  <button class="tab-btn" data-tab="contracts">CONTRACTS</button>
+  <button class="tab-btn" data-tab="enhance">ENHANCE</button>
   <button class="tab-btn" data-tab="progression">PROGRESS</button>
   <button class="tab-btn" data-tab="prestige">PRESTIGE</button>
 </div>
@@ -65,9 +67,9 @@
   <div id="tab-combat" class="tab-content">
     <div class="section-title">[ COMBAT ] <span>// hack network nodes</span></div>
     <div id="enemy-grid"></div>
-    <div id="battle-area" style="display:none">
-      <div id="enemy-display">
-        <div><div class="enemy-name" id="enemy-name">ICE Wall</div><div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemy-hp-fill"></div></div><div id="enemy-hp-text" style="font-size:12px;color:#888">HP: 50/50</div></div>
+      <div id="battle-area" style="display:none">
+        <div id="enemy-display">
+          <div><div class="enemy-name" id="enemy-name">ICE Wall</div><div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemy-hp-fill"></div></div><div id="enemy-hp-text" style="font-size:12px;color:#888">HP: 50/50</div><div id="enemy-ability-indicator" style="font-size:10px;margin-top:2px;display:none;"></div></div>
         <div id="player-stats"><span>ATK: <span id="p-atk">10</span></span><span>DEF: <span id="p-def">5</span></span><span>HP: <span id="p-hp">100</span>/<span id="p-maxhp">100</span></span></div>
       </div>
       <div id="combat-actions" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;">
@@ -87,6 +89,17 @@
   <div id="tab-upgrades" class="tab-content">
     <div class="section-title">[ UPGRADES ] <span>// permanent improvements</span></div>
     <div id="upgrades-container" class="upgrades-grid"></div>
+  </div>
+  <div id="tab-contracts" class="tab-content">
+    <div class="section-title">[ CONTRACTS ] <span>// daily operations</span></div>
+    <div id="contracts-container" class="contracts-grid"></div>
+  </div>
+  <div id="tab-enhance" class="tab-content">
+    <div class="section-title">[ ENHANCE ] <span>// upgrade items & craft consumables</span></div>
+    <div class="section-title" style="margin-top:8px;font-size:11px;">[ CONSUMABLES ]</div>
+    <div id="consumables-container" class="consumables-grid"></div>
+    <div class="section-title" style="margin-top:12px;font-size:11px;">[ ENHANCEMENT ]</div>
+    <div id="enhance-container"></div>
   </div>
   <div id="tab-progression" class="tab-content">
     <div class="section-title">[ PROGRESSION ] <span>// zones & achievements</span></div>
@@ -130,16 +143,16 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="js/config.js"></script>
-<script src="js/util.js"></script>
-<script src="js/state.js"></script>
-<script src="js/analytics.js"></script>
-<script src="js/ads.js"></script>
-<script src="js/cloud.js"></script>
-<script src="js/game.js"></script>
-<script src="js/monetization.js"></script>
-<script src="js/minigames.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/main.js"></script>
+<script src="js/config.js?v=7"></script>
+<script src="js/util.js?v=7"></script>
+<script src="js/state.js?v=7"></script>
+<script src="js/analytics.js?v=7"></script>
+<script src="js/ads.js?v=7"></script>
+<script src="js/cloud.js?v=7"></script>
+<script src="js/game.js?v=7"></script>
+<script src="js/monetization.js?v=7"></script>
+<script src="js/minigames.js?v=7"></script>
+<script src="js/ui.js?v=7"></script>
+<script src="js/main.js?v=7"></script>
 </body>
 </html>

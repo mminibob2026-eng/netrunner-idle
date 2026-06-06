@@ -111,11 +111,14 @@ function buildCombat() {
   const grid = document.getElementById('enemy-grid'); if (!grid) return;
   grid.innerHTML = '';
   ENEMIES.forEach((e, i) => {
+    const ai = ENEMY_ABILITY_MAP[i % ENEMY_ABILITY_MAP.length];
+    const ab = ENEMY_ABILITIES[ai];
     const card = document.createElement('div');
     card.className = 'enemy-card' + (!G.cmbt.unlocked ? ' locked' : '');
     card.innerHTML =
       '<div class="e-name">'+e.name+'</div>' +
       '<div class="e-lvl">Lv.'+e.lvl+' | HP: '+e.hp+'</div>' +
+      '<div class="e-ability" style="font-size:9px;color:#f44">' + ab.name + ': ' + ab.desc + '</div>' +
       '<div class="e-reward">'+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', ')+' +1 NP</div>' +
       '<div class="e-drop" style="font-size:9px;color:#0ff;margin-top:2px">Drop: '+DROP_LABELS[e.drop]+' (30%)</div>';
     card.addEventListener('click', () => combatEngage(i));
@@ -143,12 +146,26 @@ function buildZones() {
     const zs = G.zones[zi];
     const card = document.createElement('div');
     card.className = 'zone-card' + (zs.unlocked ? '' : ' locked');
-    card.innerHTML =
-      '<div class="zone-name">'+(zs.unlocked?'✓ ':'🔒 ')+z.name+'</div>' +
-      '<div class="zone-desc">'+z.desc+'</div>' +
-      (zs.unlocked
-        ? '<div class="zone-bonus">Bonus: '+Object.entries(z.bonuses).map(([k,v])=>fmtBonus(k,v)).join(', ')+'</div>'
-        : '<div class="zone-req">Defeat '+z.reqDefeated+' enemies total to unlock</div>');
+    const tier = getZoneTier(z.id);
+    let html = '<div class="zone-name">'+(zs.unlocked?'✓ ':'🔒 ')+z.name+'</div>' +
+      '<div class="zone-desc">'+z.desc+'</div>';
+    if (zs.unlocked) {
+      html += '<div class="zone-bonus">Bonus: '+Object.entries(z.bonuses).map(([k,v])=>fmtBonus(k,v)).join(', ')+'</div>';
+      html += '<div class="zone-tier-select">Tier: ' + TIER_BONUSES.map((tb, ti) =>
+        '<button class="tier-btn' + (ti === tier ? ' active' : '') + '" data-zone="' + z.id + '" data-tier="' + ti + '" style="background:' + (ti === tier ? tb.color : 'transparent') + ';border:1px solid ' + tb.color + ';color:' + tb.color + ';padding:2px 6px;margin:2px;font-size:10px;cursor:pointer;border-radius:2px;">' + tb.name + '</button>'
+      ).join('') + '</div>';
+    } else {
+      html += '<div class="zone-req">Defeat '+z.reqDefeated+' enemies total to unlock</div>';
+    }
+    card.innerHTML = html;
+    card.querySelectorAll('.tier-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        setZoneTier(this.dataset.zone, parseInt(this.dataset.tier));
+        buildZones();
+        toast('Zone tier: ' + TIER_BONUSES[parseInt(this.dataset.tier)].name, 'info');
+      });
+    });
     c.appendChild(card);
   });
 }
@@ -166,6 +183,94 @@ function buildAchievements() {
       (as.unlocked ? '<div class="ach-reward">Reward active</div>' : '');
     c.appendChild(card);
   });
+}
+
+function buildContracts() {
+  const c = document.getElementById('contracts-container'); if (!c) return;
+  c.innerHTML = '';
+  const quests = getActiveQuests();
+  const weekStart = getWeekStart();
+  if (G._questWeeklyDate !== weekStart) { G._questWeekly = 0; G._questWeeklyDate = weekStart; }
+  const header = document.createElement('div');
+  header.style.cssText = 'color:#888;font-size:11px;margin-bottom:8px;';
+  header.textContent = 'Weekly contracts completed: ' + (G._questWeekly || 0) + '/3';
+  c.appendChild(header);
+  quests.forEach((q, i) => {
+    const done = G._questCompleted.includes(i);
+    const progress = q.check(G);
+    const pct = Math.min(100, Math.round((progress / q.target) * 100));
+    const card = document.createElement('div');
+    card.className = 'contract-card' + (done ? ' completed' : '');
+    card.innerHTML =
+      '<div class="contract-name">' + (done ? '✓ ' : '') + q.desc + '</div>' +
+      '<div class="contract-progress-bar"><div class="contract-progress-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="contract-progress-text">' + progress + '/' + q.target + '</div>' +
+      '<div class="contract-reward">Reward: ' + q.rewardNP + ' NP' + Object.entries(q.reward).map(([r,a]) => ' + ' + fmt(a) + ' ' + r).join('') + '</div>';
+    c.appendChild(card);
+  });
+  if ((G._questWeekly || 0) >= 3) {
+    const weekly = document.createElement('div');
+    weekly.style.cssText = 'color:#0f0;font-size:12px;margin-top:6px;';
+    weekly.textContent = 'Weekly bonus available! Complete more contracts to claim.';
+    c.appendChild(weekly);
+  }
+}
+
+function buildConsumables() {
+  const c = document.getElementById('consumables-container'); if (!c) return;
+  c.innerHTML = '';
+  CONSUMABLES.forEach(cfg => {
+    const active = hasConsumableEffect(cfg.id);
+    const expires = G._consumables[cfg.id];
+    const remaining = expires ? Math.max(0, Math.round((expires - Date.now()) / 1000)) : 0;
+    const card = document.createElement('div');
+    card.className = 'consumable-card' + (active ? ' active' : '');
+    card.innerHTML =
+      '<div class="consumable-name">' + cfg.name + '</div>' +
+      '<div class="consumable-desc">' + cfg.desc + '</div>' +
+      '<div class="consumable-cost">Cost: ' + Object.entries(cfg.cost).map(([r,a]) => fmt(a) + ' ' + r).join(', ') + '</div>' +
+      (active ? '<div class="consumable-timer">Active: ' + remaining + 's</div>' : '') +
+      '<button class="consumable-btn" data-id="' + cfg.id + '"' + (active ? ' disabled' : '') + '>' + (active ? 'ACTIVE' : 'CRAFT') + '</button>';
+    card.querySelector('.consumable-btn').addEventListener('click', e => { e.stopPropagation(); craftConsumable(cfg.id); });
+    c.appendChild(card);
+  });
+}
+
+function buildEnhance() {
+  const c = document.getElementById('enhance-container'); if (!c) return;
+  c.innerHTML = '';
+  const slotRow = document.createElement('div');
+  slotRow.style.cssText = 'display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;';
+  ENHANCE_ITEMS.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'enhance-slot-btn' + (G._enhanceSlot === item.id ? ' active' : '');
+    btn.textContent = item.label + ' Lv.' + (G._enhance[item.id] || 0);
+    btn.addEventListener('click', () => { G._enhanceSlot = item.id; buildEnhance(); });
+    slotRow.appendChild(btn);
+  });
+  c.appendChild(slotRow);
+  const sel = ENHANCE_ITEMS.find(x => x.id === G._enhanceSlot);
+  if (!sel) return;
+  const lvl = G._enhance[sel.id] || 0;
+  const info = document.createElement('div');
+  info.style.cssText = 'background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:10px 12px;margin-bottom:8px;font-size:12px;';
+  info.innerHTML =
+    '<div style="color:#0ff">' + sel.label + ' Lv.' + lvl + '/' + sel.maxLvl + '</div>' +
+    '<div style="color:#888;font-size:11px;">' + sel.bonusLabel + ' per level</div>' +
+    '<div style="color:#ff0;font-size:11px;">Current bonus: +' + getEnhanceBonus(sel.id) + '</div>' +
+    '<div style="color:#888;font-size:11px;margin-top:4px;">Success rate: ' + Math.round(enhanceSuccessRate(lvl) * 100) + '%</div>' +
+    '<div style="color:#888;font-size:11px;">Cost: ' + Object.entries(enhanceCost(lvl)).map(([r,a]) => fmt(a) + ' ' + r).join(', ') + ' + 1 ' + sel.label + '</div>';
+  c.appendChild(info);
+  const craftBtn = document.createElement('button');
+  craftBtn.className = 'enhance-btn';
+  craftBtn.textContent = 'ENHANCE (consume 1 ' + sel.label + ')';
+  craftBtn.disabled = lvl >= sel.maxLvl || (G.inv[sel.id] || 0) < 1;
+  craftBtn.addEventListener('click', () => { enhanceItem(sel.id); buildEnhance(); });
+  c.appendChild(craftBtn);
+  const need = document.createElement('div');
+  need.style.cssText = 'color:#888;font-size:10px;margin-top:4px;';
+  need.textContent = 'Owned: ' + (G.inv[sel.id] || 0) + ' | Max: ' + sel.maxLvl;
+  c.appendChild(need);
 }
 
 function buildDevPanel() {
@@ -198,6 +303,9 @@ function buildUI() {
   buildCombat();
   buildZones();
   buildAchievements();
+  buildContracts();
+  buildConsumables();
+  buildEnhance();
   buildRoadMap();
   if (isDev()) buildDevPanel();
 }
@@ -347,7 +455,7 @@ function updateUI() {
   const pnl = document.getElementById('pnl'); if (pnl) pnl.textContent = G.prest.lvl;
   const pg = document.getElementById('pnl-gain'); if (pg) pg.textContent = g;
   const ld = document.getElementById('lifetime-dm'); if (ld) ld.textContent = fmt(G.prest.dm);
-  const pb = document.getElementById('prestige-btn'); if (pb) pb.disabled = g < 1;
+  const pb = document.getElementById('prestige-btn'); if (pb) { pb.disabled = g < 1; pb.textContent = g < 1 ? 'PRESTIGE (LOCKED)' : 'PRESTIGE'; }
   const dr = document.getElementById('dm-required');
   if (dr) {
     const nextDm = (g + 1) * (g + 1) * 10;
@@ -390,6 +498,33 @@ function updateUI() {
   // Combat pause warning (paused during combat)
   const cw = document.getElementById('combat-pause-warning');
   if (cw) cw.style.display = G.cmbt.inCombat ? 'block' : 'none';
+
+  // Contracts (rebuild on contracts tab visible)
+  const contractsTab = document.getElementById('tab-contracts');
+  if (contractsTab && contractsTab.classList.contains('active')) {
+    buildContracts();
+  }
+
+  // Consumables/Enhance (rebuild on enhance tab visible)
+  const enhanceTab = document.getElementById('tab-enhance');
+  if (enhanceTab && enhanceTab.classList.contains('active')) {
+    buildConsumables();
+    buildEnhance();
+  }
+
+  // Enemy ability indicator
+  const eai = document.getElementById('enemy-ability-indicator');
+  if (G.cmbt.inCombat && eai) {
+    const ei = G.cmbt.idx;
+    const ai = ENEMY_ABILITY_MAP[ei % ENEMY_ABILITY_MAP.length];
+    const ab = ENEMY_ABILITIES[ai];
+    const hpPct = G.cmbt.hp / ENEMIES[ei].hp;
+    eai.style.display = 'block';
+    eai.textContent = 'Ability: ' + ab.name + ' (' + Math.round(hpPct * 100) + '% HP - triggers at ' + Math.round(ab.hpThreshold * 100) + '%)';
+    eai.style.color = hpPct <= ab.hpThreshold ? '#f44' : '#888';
+  } else if (eai) {
+    eai.style.display = 'none';
+  }
 
   // Ad banner
   showAdBanner();

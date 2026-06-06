@@ -8,7 +8,7 @@ function freshState() {
   return {
     res: { data:0, credits:0, cpu:0, bandwidth:0, darkMatter:0 },
     branches: branches,
-    neuralPoints: 0,
+    neuralPoints: 2,
     upgs: UPGRADES.map(u => ({ id:u.id, lvl:0 })),
     inv: { program:0, hardware:0, exploit:0, neuralLinks:0, turboChargers:0, qProgram:0, qHardware:0, qExploit:0, dataShard:0, fwShard:0, iceCore:0, aiMod:0, encKey:0, dnToken:0, coreFrag:0 },
     cmbt: { idx:0, hp:50, php:100, mxhp:100, atk:10, def:5, accum:0, unlocked:false, inCombat:false, log:[], _bonus:0, burstCd:0 },
@@ -20,12 +20,19 @@ function freshState() {
     _subActive: false,
     _pw: '',
     _lastMiniGameEvent: 0,
+    _quests: [], _questDate: '', _questProgress: {}, _questCompleted: [],
+    _questWeekly: 0, _questWeeklyDate: '',
+    _zoneTiers: {},
+    _consumables: {},
+    _enhance: { program:0, hardware:0, exploit:0 },
+    _enhanceSlot: 'program',
+    _enemyAbilityCd: 0,
     ver: SAVE_VERSION,
   };
 }
 
 function migrateState(d) {
-  if (!d.ver || d.ver < SAVE_VERSION) {
+  if (!d.ver || d.ver < 6) {
     if (!d.zones) d.zones = ZONES.map(z => ({ id:z.id, unlocked:z.id === 'perimeter' }));
     if (!d.achievements) d.achievements = ACHIEVEMENTS.map(a => ({ id:a.id, unlocked:false }));
     if (!d.stats) d.stats = { earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0}, enemiesDefeated:0, itemsCrafted:0, totalPrestige:0, offlineTime:0 };
@@ -47,12 +54,25 @@ function migrateState(d) {
       });
       d.branches = branches;
     }
-    if (!d.neuralPoints) d.neuralPoints = 0;
+    if (!d.neuralPoints) d.neuralPoints = 2;
     if (!d._lastMiniGameEvent) d._lastMiniGameEvent = 0;
     delete d.skills;
     delete d.specializations;
-    d.ver = SAVE_VERSION;
   }
+  if (d.ver < 7) {
+    if (!d._quests) d._quests = [];
+    if (!d._questDate) d._questDate = '';
+    if (!d._questProgress) d._questProgress = {};
+    if (!d._questCompleted) d._questCompleted = [];
+    if (!d._questWeekly) d._questWeekly = 0;
+    if (!d._questWeeklyDate) d._questWeeklyDate = '';
+    if (!d._zoneTiers) d._zoneTiers = {};
+    if (!d._consumables) d._consumables = {};
+    if (!d._enhance) d._enhance = { program:0, hardware:0, exploit:0 };
+    if (!d._enhanceSlot) d._enhanceSlot = 'program';
+    if (!d._enemyAbilityCd) d._enemyAbilityCd = 0;
+  }
+  d.ver = SAVE_VERSION;
   return d;
 }
 

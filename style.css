@@ -402,3 +402,42 @@ body::after {
   .event-modal .ttt-grid { grid-template-columns:repeat(3,60px);grid-template-rows:repeat(3,60px); }
   .event-modal .ttt-cell { font-size:24px; }
 }
+
+/* Contracts */
+.contracts-grid { display:flex;flex-direction:column;gap:6px; }
+.contract-card { background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:10px 12px; }
+.contract-card.completed { opacity:0.5;border-color:rgba(0,255,0,0.3); }
+.contract-name { color:#0f0;font-size:12px;font-weight:bold; }
+.contract-progress-bar { height:6px;background:rgba(255,255,255,0.06);border-radius:3px;margin:4px 0;overflow:hidden; }
+.contract-progress-fill { height:100%;background:linear-gradient(90deg,#0f0,#0ff);width:0%;border-radius:3px;transition:width 0.3s; }
+.contract-progress-text { font-size:10px;color:#888; }
+.contract-reward { font-size:10px;color:#ff0;margin-top:2px; }
+
+/* Consumables */
+.consumables-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-bottom:8px; }
+.consumable-card { background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.12);border-radius:4px;padding:10px 12px; }
+.consumable-card.active { border-color:#ff0;background:rgba(255,255,0,0.04); }
+.consumable-name { color:#0ff;font-size:12px;font-weight:bold; }
+.consumable-desc { font-size:10px;color:#888;margin:2px 0; }
+.consumable-cost { font-size:10px;color:#ff0;margin:2px 0; }
+.consumable-timer { font-size:10px;color:#0f0;margin:2px 0; }
+.consumable-btn { margin-top:4px;padding:4px 12px;background:transparent;border:1px solid #0ff;color:#0ff;font-family:inherit;font-size:10px;cursor:pointer;border-radius:3px;transition:all 0.15s; }
+.consumable-btn:hover { background:rgba(0,255,255,0.2); }
+.consumable-btn:disabled { opacity:0.4;cursor:default; }
+
+/* Enhancement */
+.enhance-slot-btn { padding:6px 14px;background:transparent;border:1px solid #0ff;color:#0ff;font-family:inherit;font-size:11px;cursor:pointer;border-radius:3px;transition:all 0.15s; }
+.enhance-slot-btn:hover { background:rgba(0,255,255,0.15); }
+.enhance-slot-btn.active { background:rgba(0,255,255,0.2);border-color:#fff;color:#fff; }
+.enhance-btn { padding:8px 20px;background:transparent;border:1px solid #ff0;color:#ff0;font-family:inherit;font-size:12px;cursor:pointer;border-radius:3px;transition:all 0.15s;font-weight:bold; }
+.enhance-btn:hover { background:rgba(255,255,0,0.2);box-shadow:0 0 8px rgba(255,255,0,0.2); }
+.enhance-btn:disabled { opacity:0.3;cursor:not-allowed; }
+
+/* Zone tier selectors */
+.zone-tier-select { margin-top:4px; }
+.tier-btn { transition:all 0.15s; }
+.tier-btn:hover { opacity:0.8; }
+.tier-btn.active { font-weight:bold; }
+
+/* Enemy ability in combat */
+#enemy-ability-indicator { transition:color 0.3s; }

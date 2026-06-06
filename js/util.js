@@ -41,8 +41,8 @@ function upgradeGenMult(res) {
 }
 
 function cmbtPow() {
-  let a = G.cmbt.atk + branchAtkBonus() + G.inv.exploit*8 + G.inv.program*2 + (G.inv.turboChargers||0)*5 + (G.inv.qProgram||0)*25 + (G.inv.qExploit||0)*150;
-  let d = G.cmbt.def + G.inv.hardware*3 + (G.inv.turboChargers||0)*3 + (G.inv.qHardware||0)*10;
+  let a = G.cmbt.atk + branchAtkBonus() + G.inv.exploit*8 + G.inv.program*2 + (G.inv.turboChargers||0)*5 + (G.inv.qProgram||0)*25 + (G.inv.qExploit||0)*150 + getEnhanceBonus('exploit') + getEnhanceBonus('program');
+  let d = G.cmbt.def + G.inv.hardware*3 + (G.inv.turboChargers||0)*3 + (G.inv.qHardware||0)*10 + getEnhanceBonus('hardware');
   const b = upgSt('combatBoost');
   a = Math.floor(a * (1 + b.lvl*0.15) * getBonus('atkMult') * branchAtkPct());
   d = Math.floor(d * getBonus('defMult'));
@@ -95,6 +95,9 @@ function getBonus(type) {
   m *= zoneBonus(type);
   if (type === 'prestMult' && G.prest.lvl > 0) m *= Math.pow(1.15, G.prest.lvl);
   if (type === 'transcendMult' && G.prest.transcendLvl > 0) m *= Math.pow(2, G.prest.transcendLvl);
+  if (type === 'atkMult' && hasConsumableEffect('overdriveInjector')) m *= getAtkMult();
+  if (type === 'defMult' && hasConsumableEffect('shieldBooster')) m *= getDefMult();
+  if (type === 'prodMult' && hasConsumableEffect('dataSurge')) m *= getProdMult();
   return m;
 }
 
