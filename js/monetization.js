@@ -106,5 +106,6 @@ function getEffectiveSpeed() {
   let s = G._speed || 1;
   if (isSubActive()) s *= 1.25;
   if (hasAdBoost()) s *= 2;
+  if (G.inv.neuralLinks) s *= 1 + G.inv.neuralLinks * 0.02;
   return s;
 }

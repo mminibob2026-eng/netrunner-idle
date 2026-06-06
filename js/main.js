@@ -18,7 +18,8 @@ function tick(dt) {
       if (lvl < 1) return;
       const gen = n.gen(lvl);
       Object.entries(gen).forEach(([res, amt]) => {
-        addRes(res, amt * sdt * prodMult);
+        const upgMult = upgradeGenMult(res);
+        addRes(res, amt * sdt * prodMult * upgMult);
       });
     });
   }

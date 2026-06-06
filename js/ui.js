@@ -35,12 +35,13 @@ function buildBranchTree() {
         }).join(', ');
       }
       const reqStr = req ? '<div class="node-req" style="color:#ff0">Requires: ' + req.node + ' Lv.' + req.level + '</div>' : '';
+      const isCapped = n.id === 'costReduction' && lvl >= 20;
       html += '<div class="branch-node' + (viable ? '' : ' node-locked') + '" data-branch="' + b.id + '" data-node="' + n.id + '">';
       html += '<div class="node-header"><span class="node-name">' + n.name + '</span><span class="node-lvl">Lv.' + lvl + (lvl >= 30 ? ' MAX' : '') + '</span></div>';
       html += '<div class="node-desc">' + n.desc + '</div>';
       html += '<div class="node-effect" style="color:' + b.color + '">' + effectStr + '</div>';
       if (reqStr && !viable) html += reqStr;
-      html += '<div class="node-cost">' + (lvl >= 30 ? 'MAXED' : 'Cost: ' + cost + ' NP') + '</div>';
+      html += '<div class="node-cost">' + (lvl >= 30 ? 'MAXED' : isCapped ? 'Cost: ' + cost + ' NP (cap reached)' : 'Cost: ' + cost + ' NP') + '</div>';
       html += '</div>';
     });
     col.innerHTML = html;
@@ -86,6 +87,23 @@ function buildCrafting() {
       '<button class="craft-btn" data-id="'+cfg.id+'">CRAFT</button>';
     card.querySelector('.craft-btn').addEventListener('click', e => { e.stopPropagation(); clickCraft(cfg.id); });
     c.appendChild(card);
+  });
+
+  // Auto-craft UI for subscribers
+  const autoDiv = document.createElement('div');
+  autoDiv.style.cssText = 'margin-top:12px;padding:10px 12px;background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;';
+  autoDiv.innerHTML =
+    '<div style="color:#0f0;font-size:12px;margin-bottom:6px;">AUTO-CRAFT ' + (isSubActive() ? '' : '<span style="color:#888">(Netrunner+ feature)</span>') + '</div>' +
+    '<select id="auto-craft-select" style="width:100%;padding:6px 8px;background:rgba(0,0,0,0.3);border:1px solid rgba(0,255,65,0.3);color:#0f0;font-family:inherit;font-size:12px;border-radius:3px;' + (isSubActive() ? '' : 'opacity:0.4;pointer-events:none') + '">' +
+      '<option value="">-- None --</option>' +
+      CRAFTS.map(cfg => '<option value="'+cfg.id+'"'+(G._autoCraft===cfg.id?' selected':'')+'>'+cfg.name+'</option>').join('') +
+    '</select>';
+  c.appendChild(autoDiv);
+  const sel = document.getElementById('auto-craft-select');
+  if (sel) sel.addEventListener('change', function() {
+    G._autoCraft = this.value || null;
+    toast('Auto-craft: ' + (G._autoCraft ? 'Crafting ' + CRAFTS.find(c=>c.id===G._autoCraft)?.name : 'Disabled'), 'info');
+    save();
   });
 }
 
@@ -234,7 +252,8 @@ function updateUI() {
           el.querySelector('.node-effect').textContent = effectStr;
         }
         const cost = branchCost(b.id, n.id);
-        el.querySelector('.node-cost').textContent = lvl >= 30 ? 'MAXED' : 'Cost: ' + cost + ' NP';
+        const isCapped = n.id === 'costReduction' && lvl >= 20;
+        el.querySelector('.node-cost').textContent = lvl >= 30 ? 'MAXED' : isCapped ? 'Cost: ' + cost + ' NP (cap reached)' : 'Cost: ' + cost + ' NP';
       });
     });
   }
@@ -247,8 +266,9 @@ function updateUI() {
       const card = uc.children[i]; if (!card) return;
       const maxed = u.lvl >= cfg.max;
       card.className = 'upgrade-card' + (maxed?' maxed':'');
+      const genUpgIds = ['miningSpeed','sniffingSpeed','cryptoSpeed','scoutSpeed'];
       card.querySelector('.upgrade-name').textContent = cfg.name.replace('{level}', u.lvl+1);
-      card.querySelector('.upgrade-level').textContent = maxed?'MAX':'Lv.'+u.lvl+'/'+cfg.max;
+      card.querySelector('.upgrade-level').textContent = maxed ? 'MAX' : 'Lv.'+u.lvl+'/'+cfg.max + (genUpgIds.includes(cfg.id) ? ' (' + (1 + u.lvl * 0.2) + 'x)' : '');
       const cost = {};
       const cr = branchCostRed();
       Object.entries(cfg.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*(1-cr)*Math.pow(cfg.mult,u.lvl)); });
@@ -330,9 +350,9 @@ function updateUI() {
   const pb = document.getElementById('prestige-btn'); if (pb) pb.disabled = g < 1;
   const dr = document.getElementById('dm-required');
   if (dr) {
-    const nextDm = 10 * (g+1) * (g+1);
+    const nextDm = (g + 1) * (g + 1) * 10;
     const have = G.prest.dm || 0;
-    dr.textContent = have >= nextDm ? 'Ready!' : fmt(nextDm) + ' DM needed (have ' + fmt(have) + ')';
+    dr.textContent = have >= nextDm ? 'Ready!' : fmt(nextDm) + ' DM needed for next level (have ' + fmt(have) + ')';
   }
 
   // Transcend
@@ -410,6 +430,8 @@ function initLogin() {
       } else {
         G = freshState();
         G._pw = pass;
+        G.neuralPoints = 2;
+        toast('TIP: Spend your Neural Points (NP) on branch nodes to start generating resources!', 'info');
       }
       USER = name;
       localStorage.setItem('nr_user', USER);

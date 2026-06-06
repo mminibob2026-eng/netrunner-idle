@@ -52,13 +52,17 @@ const CRAFTS = [
   { id:'quantumProgram', name:'Quantum Program', desc:'10 Programs + 5 DM -> Quantum Program (+20 ATK burst)', result:'qProgram', cost:{program:10,darkMatter:5} },
   { id:'armorShield', name:'Armor Shield', desc:'10 Hardware + 5 DM -> Armor Shield (+50 HP burst)', result:'qHardware', cost:{hardware:10,darkMatter:5} },
   { id:'zeroDay', name:'Zero Day Exploit', desc:'5 Exploits + 3 Quantum Programs + 3 Armor Shields -> Zero Day (+150 ATK burst)', result:'qExploit', cost:{exploit:5,qProgram:3,qHardware:3} },
+  { id:'refineDataShard', name:'Deconstruct Data Shard', desc:'Convert 10 Data Shards into 500 DATA', result:'', cost:{dataShard:10}, refine:(g)=>{ addRes('data',500); toast('Refined 10 Data Shards into 500 DATA', 'loot'); } },
+  { id:'refineFwShard', name:'Deconstruct FW Shard', desc:'Convert 10 FW Shards into 250 CREDITS', result:'', cost:{fwShard:10}, refine:(g)=>{ addRes('credits',250); toast('Refined 10 FW Shards into 250 CREDITS', 'loot'); } },
+  { id:'refineIceCore', name:'Deconstruct ICE Core', desc:'Convert 5 ICE Cores into 10 DM', result:'', cost:{iceCore:5}, refine:(g)=>{ addRes('darkMatter',10); G.prest.dm+=10; toast('Refined 5 ICE Cores into 10 DM', 'loot'); } },
+  { id:'refineAiMod', name:'Deconstruct AI Module', desc:'Convert 3 AI Modules into 5 NP', result:'', cost:{aiMod:3}, refine:(g)=>{ G.neuralPoints+=5; toast('Refined 3 AI Modules into 5 NP', 'loot'); } },
 ];
 
 const UPGRADES = [
-  { id:'miningSpeed', name:'Data Miner v{level}', desc:'+20% data mining speed', cost:{credits:30}, mult:1.8, max:15 },
-  { id:'sniffingSpeed', name:'Packet Sniffer v{level}', desc:'+20% packet sniffing speed', cost:{data:40}, mult:1.8, max:15 },
-  { id:'cryptoSpeed', name:'Crypto Miner v{level}', desc:'+20% crypto mining speed', cost:{credits:60,data:30}, mult:1.8, max:15 },
-  { id:'scoutSpeed', name:'Network Scout v{level}', desc:'+20% network scouting speed', cost:{credits:80,cpu:20}, mult:1.8, max:15 },
+  { id:'miningSpeed', name:'Data Miner v{level}', desc:'+20% DATA generation speed', cost:{credits:30}, mult:1.8, max:15 },
+  { id:'sniffingSpeed', name:'Packet Sniffer v{level}', desc:'+20% CREDITS generation speed', cost:{data:40}, mult:1.8, max:15 },
+  { id:'cryptoSpeed', name:'Crypto Miner v{level}', desc:'+20% CPU generation speed', cost:{credits:60,data:30}, mult:1.8, max:15 },
+  { id:'scoutSpeed', name:'Network Scout v{level}', desc:'+20% BW generation speed', cost:{credits:80,cpu:20}, mult:1.8, max:15 },
   { id:'dataCap', name:'Data Reservoir v{level}', desc:'2x max data storage', cost:{credits:1000}, mult:1.3, max:10 },
   { id:'cpuCap', name:'CPU Rack v{level}', desc:'2x max CPU cores', cost:{data:300}, mult:1.3, max:10 },
   { id:'bwCap', name:'Fiber Link v{level}', desc:'2x max bandwidth', cost:{cpu:100}, mult:1.3, max:10 },

@@ -32,6 +32,14 @@ function branchCostRed() { return Math.min(0.6, branchLevel('efficiency','costRe
 function branchProdMult() { return 1 + branchLevel('efficiency','perfectLoop') * 0.03; }
 function branchNpRate() { return 1 + branchLevel('efficiency','quickHands') * 0.05; }
 
+function upgradeGenMult(res) {
+  const map = { data:'miningSpeed', credits:'sniffingSpeed', cpu:'cryptoSpeed', bandwidth:'scoutSpeed' };
+  const id = map[res];
+  if (!id) return 1;
+  const u = upgSt(id);
+  return u ? 1 + u.lvl * 0.2 : 1;
+}
+
 function cmbtPow() {
   let a = G.cmbt.atk + branchAtkBonus() + G.inv.exploit*8 + G.inv.program*2 + (G.inv.turboChargers||0)*5 + (G.inv.qProgram||0)*25 + (G.inv.qExploit||0)*150;
   let d = G.cmbt.def + G.inv.hardware*3 + (G.inv.turboChargers||0)*3 + (G.inv.qHardware||0)*10;

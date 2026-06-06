@@ -36,6 +36,7 @@ function migrateState(d) {
     if (!d.prest.transcendLvl) d.prest.transcendLvl = 0;
     if (!d.prest.transcendTimes) d.prest.transcendTimes = 0;
     if (d._subActive === undefined) d._subActive = false;
+    if (!d._autoCraft) d._autoCraft = null;
     if (!d.lastSave) d.lastSave = Date.now();
     if (!d.branches) {
       const branches = {};

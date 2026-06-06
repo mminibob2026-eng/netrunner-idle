@@ -35,10 +35,14 @@ function clickCraft(id) {
   Object.entries(c.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*(1-cr)); });
   if (!canPay(cost)) { toast('Not enough resources', 'error'); return; }
   pay(cost);
-  G.inv[c.result] = (G.inv[c.result]||0) + 1;
-  G.stats.itemsCrafted = (G.stats.itemsCrafted||0) + 1;
-  G.neuralPoints += 2;
-  toast('Crafted '+c.name+' +2 NP', 'loot');
+  if (c.refine) {
+    c.refine(G);
+  } else {
+    G.inv[c.result] = (G.inv[c.result]||0) + 1;
+    G.stats.itemsCrafted = (G.stats.itemsCrafted||0) + 1;
+    G.neuralPoints += 2;
+    toast('Crafted '+c.name+' +2 NP', 'loot');
+  }
   checkAchievements();
 }
 
@@ -49,8 +53,9 @@ function combatEngage(idx) {
   G.cmbt.inCombat = true;
   G.cmbt.idx = idx;
   G.cmbt.hp = ENEMIES[idx].hp;
+  G.cmbt.mxhp = 100 + branchHpBonus();
   G.cmbt._bonus = 0;
-  if (G.cmbt.php <= 0) G.cmbt.php = G.cmbt.mxhp;
+  if (G.cmbt.php <= 0 || G.cmbt.php > G.cmbt.mxhp) G.cmbt.php = G.cmbt.mxhp;
   const burst = branchBurstDmg();
   if (burst > 0) { G.cmbt.hp -= burst; logCombat('System Breach: +' + burst + ' opening damage!'); }
   G.cmbt.log = [];
@@ -101,7 +106,7 @@ function combatDisconnect() {
   if (!G.cmbt.inCombat) return;
   G.cmbt.inCombat = false;
   G.cmbt._bonus = 0;
-  logCombat('Disconnected. Skills resumed.');
+  logCombat('Disconnected. Branches resumed.');
   G.cmbt.log = [];
   toast('Disconnected', 'info');
 }
@@ -127,6 +132,7 @@ function combatWin() {
 function combatLose() {
   logCombat('System crash! Disconnecting...');
   toast('Defeated!', 'error');
+  G.cmbt.mxhp = 100 + branchHpBonus();
   G.cmbt.php = G.cmbt.mxhp;
   G.cmbt.inCombat = false;
   G.cmbt._bonus = 0;
@@ -142,6 +148,7 @@ function logCombat(msg) {
 function doPrestige() {
   const g = prestigeGain();
   if (g < 1) { toast('Need more Dark Matter', 'error'); return; }
+  if (!confirm('Prestige will reset all progress except zones, achievements, and NP multiplier.\nGain ' + g + ' prestige level' + (g > 1 ? 's' : '') + '. Continue?')) return;
   G.prest.lvl += g; G.prest.times++;
   G.stats.totalPrestige += g;
   const pw = G._pw;
@@ -163,6 +170,7 @@ function doPrestige() {
 function doTranscend() {
   if (!canTranscend()) { toast('Need more prestige levels to transcend', 'error'); return; }
   const cost = transcendCost();
+  if (!confirm('Transcend will reset all progress (including prestige) except zones and achievements.\nCost: ' + cost + ' prestige levels for 1 transcend level (2x multiplier). Continue?')) return;
   G.prest.transcendLvl += cost;
   G.prest.transcendTimes++;
   G.prest.lvl = 0;
