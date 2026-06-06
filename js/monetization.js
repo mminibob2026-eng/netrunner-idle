@@ -2,14 +2,14 @@ function subscribe() {
   G._subActive = true;
   trackEvent('subscribe', { username: USER });
   save();
-  toast('Netrunner+ activated! Enjoy premium features.', 'loot');
+  toast('Code Journey Pro activated! Enjoy premium features.', 'loot');
   rebuildUI();
 }
 
 function unsubscribe() {
   G._subActive = false;
   save();
-  toast('Netrunner+ deactivated.', 'info');
+  toast('Code Journey Pro deactivated.', 'info');
   rebuildUI();
 }
 
@@ -19,18 +19,19 @@ function showSubscribeUI() {
   overlay.style.cssText = 'position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;';
   overlay.innerHTML = `
     <div style="background:#0a0a1a;border:2px solid #0f0;border-radius:12px;padding:32px;max-width:480px;width:90%;text-align:center;">
-      <h2 style="color:#0f0;font-size:22px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;">NETRUNNER+</h2>
-      <p style="color:#888;font-size:13px;margin-bottom:20px;">Upgrade your hacking capabilities</p>
+      <h2 style="color:#0f0;font-size:22px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;">CODE JOURNEY PRO</h2>
+      <p style="color:#888;font-size:13px;margin-bottom:20px;">Level up your coding journey</p>
       <div style="font-size:36px;color:#ff0;margin-bottom:4px;">$1</div>
       <div style="color:#888;font-size:12px;margin-bottom:20px;">per month</div>
       <div style="text-align:left;margin-bottom:20px;">
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ No ads</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Full offline progress (unlimited)</div>
-        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Auto-combat mode</div>
-        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Auto-crafting queue</div>
-        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ 1.5x NP generation rate</div>
+        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Auto-debug mode</div>
+        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Auto-build queue</div>
+        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ 1.5x KP generation rate</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ 1.25x permanent speed</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Premium themes</div>
+        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Cloud save support</div>
       </div>
       <button id="sub-pay-btn" style="padding:12px 40px;background:transparent;border:2px solid #0f0;color:#0f0;font-family:inherit;font-size:16px;cursor:pointer;border-radius:6px;text-transform:uppercase;letter-spacing:2px;transition:all 0.2s;margin-bottom:8px;">SUBSCRIBE</button>
       <div><button id="sub-close-btn" style="background:transparent;border:none;color:#888;font-family:inherit;font-size:12px;cursor:pointer;padding:8px;">Maybe later</button></div>
@@ -56,7 +57,7 @@ function showAdBanner() {
   banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(10,10,26,0.95);border-top:1px solid rgba(0,255,65,0.2);padding:6px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;';
   banner.innerHTML = `
     <span style="color:#888;font-size:10px;">AD</span>
-    <span style="color:#0f0;flex:1;text-align:center;">[ Ad Space ] - Get Netrunner+ for an ad-free experience</span>
+    <span style="color:#0f0;flex:1;text-align:center;">[ Ad Space ] - Get Code Journey Pro for an ad-free experience</span>
     <button id="ad-close-btn" style="background:transparent;border:1px solid #888;color:#888;font-family:inherit;font-size:10px;cursor:pointer;padding:2px 8px;border-radius:2px;">✕</button>
   `;
   document.body.appendChild(banner);

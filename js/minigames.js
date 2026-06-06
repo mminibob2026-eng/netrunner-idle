@@ -66,7 +66,7 @@ function tttReward(result) {
   if (result === 'win') {
     const d = Math.floor(100 * mult); const c = Math.floor(50 * mult);
     addRes('data', d); addRes('credits', c); G.neuralPoints += Math.floor(5 * mult);
-    toast('Tic Tac Toe: You win! +'+fmt(d)+' DATA +'+fmt(c)+' CREDITS +'+Math.floor(5*mult)+' NP', 'loot');
+    toast('Tic Tac Toe: You win! +'+fmt(d)+' XP +'+fmt(c)+' LOC +'+Math.floor(5*mult)+' KP', 'loot');
   } else {
     const d = Math.floor(20 * mult);
     addRes('data', d);
@@ -156,7 +156,7 @@ function snakeEnd() {
   addRes('data', reward);
   addRes('credits', Math.floor(reward / 3));
   G.neuralPoints += Math.floor(snake.score * mult);
-  toast('Snake: Score ' + snake.score + '! +' + reward + ' DATA +' + Math.floor(reward / 3) + ' CREDITS +' + Math.floor(snake.score * mult) + ' NP', 'loot');
+  toast('Snake: Score ' + snake.score + '! +' + reward + ' XP +' + Math.floor(reward / 3) + ' LOC +' + Math.floor(snake.score * mult) + ' KP', 'loot');
   snakeDraw();
   if (snake._onEnd) snake._onEnd('win');
 }
@@ -249,10 +249,10 @@ function showMiniGameEventModal(type) {
   };
 
   if (type === 'ttt') {
-    title.textContent = '⚠ ANOMALY: Tic Tac Toe Signal ⚠';
+    title.textContent = '⚠ CODE ANOMALY: Tic Tac Toe Signal ⚠';
     const msg = document.createElement('p');
     msg.style.cssText = 'color:#0f0;margin-bottom:8px';
-    msg.textContent = 'Anomalous signal detected! Win to claim ' + Math.floor(100 * mult) + ' DATA, ' + Math.floor(50 * mult) + ' CREDITS, ' + Math.floor(5 * mult) + ' NP';
+    msg.textContent = 'Anomalous signal detected! Win to claim ' + Math.floor(100 * mult) + ' XP, ' + Math.floor(50 * mult) + ' LOC, ' + Math.floor(5 * mult) + ' KP';
     body.appendChild(msg);
     const grid = document.createElement('div');
     grid.className = 'ttt-grid';
@@ -266,10 +266,10 @@ function showMiniGameEventModal(type) {
     ttt._onEnd = onEnd;
     tttInit();
   } else if (type === 'snake') {
-    title.textContent = '⚠ ANOMALY: Snake Protocol ⚠';
+    title.textContent = '⚠ CODE ANOMALY: Snake Protocol ⚠';
     const msg = document.createElement('p');
     msg.style.cssText = 'color:#0f0;margin-bottom:8px';
-    msg.textContent = 'Data worm invading! Score points to claim rewards - each point = ' + Math.floor(15 * mult) + ' DATA!';
+    msg.textContent = 'Data worm invading! Score points to claim rewards - each point = ' + Math.floor(15 * mult) + ' XP!';
     body.appendChild(msg);
     const grid = document.createElement('div');
     grid.className = 'snake-grid';

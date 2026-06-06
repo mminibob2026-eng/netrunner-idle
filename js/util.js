@@ -95,9 +95,9 @@ function getBonus(type) {
   m *= zoneBonus(type);
   if (type === 'prestMult' && G.prest.lvl > 0) m *= Math.pow(1.15, G.prest.lvl);
   if (type === 'transcendMult' && G.prest.transcendLvl > 0) m *= Math.pow(2, G.prest.transcendLvl);
-  if (type === 'atkMult' && hasConsumableEffect('overdriveInjector')) m *= getAtkMult();
-  if (type === 'defMult' && hasConsumableEffect('shieldBooster')) m *= getDefMult();
-  if (type === 'prodMult' && hasConsumableEffect('dataSurge')) m *= getProdMult();
+  if (type === 'atkMult' && hasConsumableEffect('energyDrink')) m *= getAtkMult();
+  if (type === 'defMult' && hasConsumableEffect('focusPills')) m *= getDefMult();
+  if (type === 'prodMult' && hasConsumableEffect('deepWork')) m *= getProdMult();
   return m;
 }
 

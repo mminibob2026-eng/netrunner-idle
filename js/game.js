@@ -9,11 +9,11 @@ function clickBranchNode(branchId, nodeId) {
     return;
   }
   const cost = branchCost(branchId, nodeId);
-  if (G.neuralPoints < cost) { toast('Need ' + cost + ' NP', 'error'); return; }
+  if (G.neuralPoints < cost) { toast('Need ' + cost + ' KP', 'error'); return; }
   G.neuralPoints -= cost;
   G.branches[branchId][nodeId] = (G.branches[branchId][nodeId] || 0) + 1;
   trackQuestProgress('spentNp', cost);
-  toast(n.name + ' Lv.' + G.branches[branchId][nodeId], 'loot');
+    toast(n.name + ' Lv.' + G.branches[branchId][nodeId] + ' learned!', 'loot');
   checkAchievements();
 }
 
@@ -43,7 +43,7 @@ function clickCraft(id) {
     G.stats.itemsCrafted = (G.stats.itemsCrafted||0) + 1;
     G.neuralPoints += 2;
     trackQuestProgress('crafted', 1);
-    toast('Crafted '+c.name+' +2 NP', 'loot');
+    toast('Built '+c.name+' +2 KP', 'loot');
   }
   checkAchievements();
 }
@@ -64,10 +64,10 @@ function combatEngage(idx) {
   G.cmbt._tierDrops = tier > 0;
   if (G.cmbt.php <= 0 || G.cmbt.php > G.cmbt.mxhp) G.cmbt.php = G.cmbt.mxhp;
   const burst = branchBurstDmg();
-  if (burst > 0) { G.cmbt.hp -= burst; logCombat('System Breach: +' + burst + ' opening damage!'); }
+  if (burst > 0) { G.cmbt.hp -= burst; logCombat('Architecture insight: +' + burst + ' opening debug damage!'); }
   G.cmbt.log = [];
   logCombat('Engaged '+e.name+' [Lv.'+e.lvl+'] ' + TIER_BONUSES[tier].name);
-  toast('Hacking '+e.name+'!', 'info');
+  toast('Debugging '+e.name+'!', 'info');
   if (G.cmbt.hp <= 0) combatWin();
 }
 function getZoneIdForEnemy(idx) {
@@ -89,7 +89,7 @@ function combatAttack() {
   G.cmbt.hp -= de;
   if (bonus > 0) { G.cmbt._bonus = 0; logCombat('Bonus applied! +'+bonus+' damage'); }
   G.cmbt.php -= dp;
-  logCombat('HACK: -'+de+' HP to '+e.name + (dp>0?' | Counter: -'+dp+' HP':' | No counter'));
+  logCombat('DEBUG: -'+de+' HP to '+e.name + (dp>0?' | Caught: -'+dp+' HP':' | Clean fix'));
   if (G.cmbt.hp <= 0) combatWin();
   if (G.cmbt.php <= 0) combatLose();
 }
@@ -101,16 +101,16 @@ function combatUseItem(type) {
   G.inv[type]--;
   if (type === 'program') {
     G.cmbt._bonus = (G.cmbt._bonus||0) + 5;
-    logCombat('Program deployed: +5 ATK bonus');
-    toast('Program deployed!', 'loot');
+    logCombat('Script deployed: +5 debug power');
+    toast('Script deployed!', 'loot');
   } else if (type === 'hardware') {
     G.cmbt.php = Math.min(G.cmbt.mxhp, G.cmbt.php + 20);
-    logCombat('Hardware deployed: +20 HP restored');
-    toast('Hardware deployed!', 'loot');
+    logCombat('Web Page deployed: +20 focus restored');
+    toast('Web Page deployed!', 'loot');
   } else if (type === 'exploit') {
     G.cmbt.hp -= 15;
-    logCombat('Exploit deployed: -15 HP to target');
-    toast('Exploit deployed!', 'loot');
+    logCombat('Library deployed: -15 HP to bug');
+    toast('Library deployed!', 'loot');
     if (G.cmbt.hp <= 0) combatWin();
   }
 }
@@ -119,9 +119,9 @@ function combatDisconnect() {
   if (!G.cmbt.inCombat) return;
   G.cmbt.inCombat = false;
   G.cmbt._bonus = 0;
-  logCombat('Disconnected. Branches resumed.');
+  logCombat('Back to coding...');
   G.cmbt.log = [];
-  toast('Disconnected', 'info');
+  toast('Back safe', 'info');
 }
 
 function combatWin() {
@@ -140,8 +140,8 @@ function combatWin() {
   let totalDm = 0;
   Object.entries(tm.reward).forEach(([r,a]) => { if (r==='darkMatter') totalDm += a; });
   if (totalDm > 0) trackQuestProgress('dmEarned', totalDm);
-  logCombat('BREACHED '+e.name+'! Rewards: '+Object.entries(tm.reward).map(([r,a])=>fmt(a)+' '+r).join(', ')+' +1 NP');
-  toast(e.name+' breached!', 'loot');
+  logCombat('FIXED '+e.name+'! Rewards: '+Object.entries(tm.reward).map(([r,a])=>fmt(a)+' '+(RES[r]?RES[r].n:r)).join(', ')+' +1 KP');
+  toast(e.name+' fixed!', 'loot');
   G.cmbt.hp = ENEMIES[G.cmbt.idx].hp;
   G.cmbt._bonus = 0;
   G.cmbt._tierDrops = false;
@@ -151,7 +151,7 @@ function combatWin() {
 }
 
 function combatLose() {
-  logCombat('System crash! Disconnecting...');
+  logCombat('Code crashed! Bailing out...');
   toast('Defeated!', 'error');
   G.cmbt.mxhp = 100 + branchHpBonus();
   G.cmbt.php = G.cmbt.mxhp;
@@ -169,7 +169,7 @@ function logCombat(msg) {
 function doPrestige() {
   const g = prestigeGain();
   if (g < 1) { toast('Need more Dark Matter', 'error'); return; }
-  if (!confirm('Prestige will reset all progress except zones, achievements, and NP multiplier.\nGain ' + g + ' prestige level' + (g > 1 ? 's' : '') + '. Continue?')) return;
+  if (!confirm('Mastery reset will reset all progress except zones, achievements, and KP multiplier.\nGain ' + g + ' mastery level' + (g > 1 ? 's' : '') + '. Continue?')) return;
   G.prest.lvl += g; G.prest.times++;
   G.stats.totalPrestige += g;
   const pw = G._pw;
@@ -183,7 +183,7 @@ function doPrestige() {
   G = Object.assign(freshState(), keep);
   G.cmbt.hp = ENEMIES[0].hp;
   trackEvent('prestige', { level: G.prest.lvl, total: G.prest.times });
-  save(); toast('Prestige! Level '+G.prest.lvl, 'loot');
+  save(); toast('Mastery Reset! Level '+G.prest.lvl, 'loot');
   rebuildUI();
   checkAchievements();
 }
@@ -191,7 +191,7 @@ function doPrestige() {
 function doTranscend() {
   if (!canTranscend()) { toast('Need more prestige levels to transcend', 'error'); return; }
   const cost = transcendCost();
-  if (!confirm('Transcend will reset all progress (including prestige) except zones and achievements.\nCost: ' + cost + ' prestige levels for 1 transcend level (2x multiplier). Continue?')) return;
+  if (!confirm('Enlighten will reset all progress (including mastery) except zones and achievements.\nCost: ' + cost + ' mastery levels for 1 enlighten level (2x multiplier). Continue?')) return;
   G.prest.transcendLvl += cost;
   G.prest.transcendTimes++;
   G.prest.lvl = 0;
@@ -205,7 +205,7 @@ function doTranscend() {
   };
   G = Object.assign(freshState(), keep);
   G.cmbt.hp = ENEMIES[0].hp;
-  save(); toast('Transcend! Level '+G.prest.transcendLvl, 'loot');
+  save(); toast('Enlighten! Level '+G.prest.transcendLvl, 'loot');
   rebuildUI();
   checkAchievements();
 }
@@ -219,7 +219,7 @@ function checkZoneProgress() {
     if (z.reqDefeated === 0) { zs.unlocked = true; return; }
     if (totalDefeated >= z.reqDefeated) {
       zs.unlocked = true;
-      toast('Zone unlocked: '+z.name+'!', 'loot');
+      toast('Concept tier unlocked: '+z.name+'!', 'loot');
     }
   });
 }
@@ -233,14 +233,14 @@ function checkAchievements() {
     if (a.check(G)) {
       as.unlocked = true;
       G.neuralPoints += 5;
-      toast('Achievement: '+a.name+'! +5 NP', 'loot');
+      toast('Achievement: '+a.name+'! +5 KP', 'loot');
     }
   });
 }
 
 // Combat burst items
 function combatBurst(id) {
-  if (!G.cmbt.inCombat) { toast('Not in combat', 'error'); return; }
+  if (!G.cmbt.inCombat) { toast('Not debugging', 'error'); return; }
   const cfg = BURST_EXPLOITS.find(b => b.id === id);
   if (!cfg) return;
   const enemy = ENEMIES[G.cmbt.idx];
@@ -249,18 +249,17 @@ function combatBurst(id) {
   pay(cfg.cost);
   G.cmbt.hp -= cfg.damage;
   trackQuestProgress('burst', 1);
-  logCombat('BURST: '+cfg.name+' dealt '+cfg.damage+' damage!');
+  logCombat('DEEP FIX: '+cfg.name+' dealt '+cfg.damage+' damage!');
   toast(cfg.name+' deployed!', 'loot');
   if (G.cmbt.hp <= 0) combatWin();
 }
 
 // Dev
 function isDev() { return USER.toLowerCase() === 'dev'; }
-function devAddRes(id, amt) { addRes(id, amt); toast('Added '+fmt(amt)+' '+id, 'loot'); }
-function devMaxBranch() { BRANCHES.forEach(b => { b.nodes.forEach(n => { G.branches[b.id][n.id] = 30; }); }); toast('Branches maxed', 'loot'); rebuildUI(); }
-function devUnlockAll() { BRANCHES.forEach(b => { b.nodes.forEach(n => { G.branches[b.id][n.id] = Math.max(G.branches[b.id][n.id]||0, 1); }); }); G.cmbt.unlocked=true; G.zones.forEach(z=>{z.unlocked=true;}); G.neuralPoints += 1000; toast('All unlocked +1000 NP', 'loot'); rebuildUI(); }
-function devSpeed(v) { G._speed=v||1; toast('Speed x'+(v||1), 'info'); }
-function devAddNp(amt) { G.neuralPoints += amt; toast('+'+amt+' NP', 'loot'); }
+function devAddRes(id, amt) { addRes(id, amt); toast('Added '+fmt(amt)+' '+(RES[id]?RES[id].n:id), 'loot'); }
+function devMaxBranch() { BRANCHES.forEach(b => { b.nodes.forEach(n => { G.branches[b.id][n.id] = 30; }); }); toast('Languages maxed', 'loot'); rebuildUI(); }
+function devUnlockAll() { BRANCHES.forEach(b => { b.nodes.forEach(n => { G.branches[b.id][n.id] = Math.max(G.branches[b.id][n.id]||0, 1); }); }); G.cmbt.unlocked=true; G.zones.forEach(z=>{z.unlocked=true;}); G.neuralPoints += 1000; toast('All unlocked +1000 KP', 'loot'); rebuildUI(); }
+function devAddNp(amt) { G.neuralPoints += amt; toast('+'+amt+' KP', 'loot'); }
 
 // Auto-combat
 function combatAutoAttack() {
@@ -292,14 +291,14 @@ function trackQuestProgress(key, amt) {
       G._questCompleted.push(i);
       G.neuralPoints += q.rewardNP;
       Object.entries(q.reward).forEach(([r, a]) => addRes(r, a));
-      toast('Quest complete: ' + q.desc + '! +' + q.rewardNP + ' NP', 'loot');
+      toast('Quest complete: ' + q.desc + '! +' + q.rewardNP + ' KP', 'loot');
       G._questWeekly = (G._questWeekly || 0) + 1;
       const weekStart = getWeekStart();
       if (G._questWeeklyDate !== weekStart) { G._questWeekly = 1; G._questWeeklyDate = weekStart; }
       if (G._questWeekly >= 3) {
         addRes('darkMatter', 5);
         G._questWeekly = 0;
-        toast('Weekly contract bonus: +5 DM!', 'loot');
+        toast('Weekly challenge bonus: +5 Mastery!', 'loot');
       }
     }
   });
@@ -353,16 +352,16 @@ function hasConsumableEffect(id) {
   return expires && expires > Date.now();
 }
 function getProdMult() {
-  return hasConsumableEffect('dataSurge') ? (CONSUMABLES.find(c=>c.id==='dataSurge').effect.prodMult) : 1;
+  return hasConsumableEffect('deepWork') ? (CONSUMABLES.find(c=>c.id==='deepWork').effect.prodMult) : 1;
 }
 function getNpMult() {
-  return hasConsumableEffect('neuralSpike') ? (CONSUMABLES.find(c=>c.id==='neuralSpike').effect.npMult) : 1;
+  return hasConsumableEffect('coffee') ? (CONSUMABLES.find(c=>c.id==='coffee').effect.npMult) : 1;
 }
 function getAtkMult() {
-  return hasConsumableEffect('overdriveInjector') ? (CONSUMABLES.find(c=>c.id==='overdriveInjector').effect.atkMult) : 1;
+  return hasConsumableEffect('energyDrink') ? (CONSUMABLES.find(c=>c.id==='energyDrink').effect.atkMult) : 1;
 }
 function getDefMult() {
-  return hasConsumableEffect('shieldBooster') ? (CONSUMABLES.find(c=>c.id==='shieldBooster').effect.defMult) : 1;
+  return hasConsumableEffect('focusPills') ? (CONSUMABLES.find(c=>c.id==='focusPills').effect.defMult) : 1;
 }
 
 // ===== ENHANCEMENT =====
@@ -403,16 +402,16 @@ function procEnemyAbility() {
   G._enemyAbilityCd = now + 10000;
   if (ab.effect.heal) {
     G.cmbt.hp = Math.min(ENEMIES[eIdx].hp, G.cmbt.hp + Math.floor(ENEMIES[eIdx].hp * ab.effect.heal));
-    logCombat('ENEMY: ' + ab.name + ' - ' + ab.desc);
+    logCombat('BUG: ' + ab.name + ' - ' + ab.desc);
   } else if (ab.effect.atkMult) {
     const dmg = Math.floor(ENEMIES[eIdx].atk * (ab.effect.atkMult - 1));
     G.cmbt.php -= dmg;
-    logCombat('ENEMY: ' + ab.name + ' - ' + ab.desc + ' -' + dmg + ' HP');
+    logCombat('BUG: ' + ab.name + ' - ' + ab.desc + ' -' + dmg + ' HP');
     if (G.cmbt.php <= 0) combatLose();
   } else if (ab.effect.reflect) {
     const reflectDmg = Math.floor((ENEMIES[eIdx].hp - G.cmbt.hp) * ab.effect.reflect);
     G.cmbt.php -= reflectDmg;
-    logCombat('ENEMY: ' + ab.name + ' reflects ' + reflectDmg + ' damage');
+    logCombat('BUG: ' + ab.name + ' reflects ' + reflectDmg + ' damage');
     if (G.cmbt.php <= 0) combatLose();
   }
 }

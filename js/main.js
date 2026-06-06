@@ -4,7 +4,7 @@ function tick(dt) {
   const speed = getEffectiveSpeed();
   const sdt = dt * speed;
 
-  // Generate Neural Points (0.5 base per second, scaled by branch + sub bonus)
+  // Generate Knowledge Points (0.5 base per second, scaled by branch + sub bonus)
   const npRate = 0.5 * branchNpRate() * (isSubActive() ? 1.5 : 1) * speed;
   G.neuralPoints += npRate * dt;
 
@@ -12,20 +12,20 @@ function tick(dt) {
   const dataBefore = G.res.data || 0;
   const creditsBefore = G.res.credits || 0;
 
-  // Process Data Stream branch - resource generation
-  const dataBranch = BRANCHES.find(b => b.id === 'data');
-  if (dataBranch) {
-    const prodMult = branchProdMult() * getProdMult();
-    dataBranch.nodes.forEach(n => {
-      const lvl = branchLevel('data', n.id);
+  // Process all language concepts - resource generation
+  const prodMult = branchProdMult() * getProdMult();
+  BRANCHES.forEach(branch => {
+    branch.nodes.forEach(n => {
+      const lvl = branchLevel(branch.id, n.id);
       if (lvl < 1) return;
+      if (!n.gen) return;
       const gen = n.gen(lvl);
       Object.entries(gen).forEach(([res, amt]) => {
         const upgMult = upgradeGenMult(res);
         addRes(res, amt * sdt * prodMult * upgMult);
       });
     });
-  }
+  });
 
   // Track quest progress for resources earned this tick
   const dataGained = (G.res.data || 0) - dataBefore;

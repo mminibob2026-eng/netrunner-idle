@@ -19,7 +19,7 @@ function buildBranchTree() {
       let effectStr = '';
       if (n.gen) {
         const gen = n.gen(Math.max(1, lvl));
-        effectStr = Object.entries(gen).map(([r,a]) => fmt(a) + ' ' + r + '/s').join(', ');
+        effectStr = Object.entries(gen).map(([r,a]) => fmt(a) + ' ' + (RES[r]?RES[r].n:r) + '/s').join(', ');
       } else if (n.bonus) {
         const bon = n.bonus(Math.max(1, lvl));
         effectStr = Object.entries(bon).map(([k,v]) => {
@@ -46,7 +46,7 @@ function buildBranchTree() {
       html += '<div class="node-desc">' + n.desc + '</div>';
       html += '<div class="node-effect" style="color:' + b.color + '">' + effectStr + '</div>';
       if (reqStr && (!unlocked || lvl === 0)) html += reqStr;
-      html += '<div class="node-cost">' + (lvl >= 30 ? 'MAXED' : isCapped ? 'Cost: ' + cost + ' NP (cap reached)' : 'Cost: ' + cost + ' NP') + '</div>';
+      html += '<div class="node-cost">' + (lvl >= 30 ? 'MAXED' : isCapped ? 'Cost: ' + cost + ' KP (cap reached)' : 'Cost: ' + cost + ' KP') + '</div>';
       html += '</div>';
     });
     col.innerHTML = html;
@@ -88,17 +88,17 @@ function buildCrafting() {
     card.innerHTML =
       '<div class="craft-name">'+cfg.name+'</div>' +
       '<div class="craft-desc">'+cfg.desc+'</div>' +
-      '<div class="craft-cost">Cost: '+Object.entries(cfg.cost).map(([r,a])=>fmt(a)+' '+r).join(', ')+'</div>' +
-      '<button class="craft-btn" data-id="'+cfg.id+'">CRAFT</button>';
+      '<div class="craft-cost">Cost: '+Object.entries(cfg.cost).map(([r,a])=>(RES[r]?RES[r].n:r)+' '+fmt(a)).join(', ')+'</div>' +
+      '<button class="craft-btn" data-id="'+cfg.id+'">BUILD</button>';
     card.querySelector('.craft-btn').addEventListener('click', e => { e.stopPropagation(); clickCraft(cfg.id); });
     c.appendChild(card);
   });
 
-  // Auto-craft UI for subscribers
+  // Auto-build UI for subscribers
   const autoDiv = document.createElement('div');
   autoDiv.style.cssText = 'margin-top:12px;padding:10px 12px;background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;';
   autoDiv.innerHTML =
-    '<div style="color:#0f0;font-size:12px;margin-bottom:6px;">AUTO-CRAFT ' + (isSubActive() ? '' : '<span style="color:#888">(Netrunner+ feature)</span>') + '</div>' +
+    '<div style="color:#0f0;font-size:12px;margin-bottom:6px;">AUTO-BUILD ' + (isSubActive() ? '' : '<span style="color:#888">(Code Journey Pro feature)</span>') + '</div>' +
     '<select id="auto-craft-select" style="width:100%;padding:6px 8px;background:rgba(0,0,0,0.3);border:1px solid rgba(0,255,65,0.3);color:#0f0;font-family:inherit;font-size:12px;border-radius:3px;' + (isSubActive() ? '' : 'opacity:0.4;pointer-events:none') + '">' +
       '<option value="">-- None --</option>' +
       CRAFTS.map(cfg => '<option value="'+cfg.id+'"'+(G._autoCraft===cfg.id?' selected':'')+'>'+cfg.name+'</option>').join('') +
@@ -107,7 +107,7 @@ function buildCrafting() {
   const sel = document.getElementById('auto-craft-select');
   if (sel) sel.addEventListener('change', function() {
     G._autoCraft = this.value || null;
-    toast('Auto-craft: ' + (G._autoCraft ? 'Crafting ' + CRAFTS.find(c=>c.id===G._autoCraft)?.name : 'Disabled'), 'info');
+    toast('Auto-build: ' + (G._autoCraft ? 'Building ' + CRAFTS.find(c=>c.id===G._autoCraft)?.name : 'Disabled'), 'info');
     save();
   });
 }
@@ -124,7 +124,7 @@ function buildCombat() {
       '<div class="e-name">'+e.name+'</div>' +
       '<div class="e-lvl">Lv.'+e.lvl+' | HP: '+e.hp+'</div>' +
       '<div class="e-ability" style="font-size:9px;color:#f44">' + ab.name + ': ' + ab.desc + '</div>' +
-      '<div class="e-reward">'+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', ')+' +1 NP</div>' +
+      '<div class="e-reward">'+Object.entries(e.reward).map(([r,a])=>(RES[r]?RES[r].n:r)+' '+fmt(a)).join(', ')+' +1 KP</div>' +
       '<div class="e-drop" style="font-size:9px;color:#0ff;margin-top:2px">Drop: '+DROP_LABELS[e.drop]+' (30%)</div>';
     card.addEventListener('click', () => combatEngage(i));
     grid.appendChild(card);
@@ -198,7 +198,7 @@ function buildContracts() {
   if (G._questWeeklyDate !== weekStart) { G._questWeekly = 0; G._questWeeklyDate = weekStart; }
   const header = document.createElement('div');
   header.style.cssText = 'color:#888;font-size:11px;margin-bottom:8px;';
-  header.textContent = 'Weekly contracts completed: ' + (G._questWeekly || 0) + '/3';
+  header.textContent = 'Weekly challenges completed: ' + (G._questWeekly || 0) + '/3';
   c.appendChild(header);
   quests.forEach((q, i) => {
     const done = G._questCompleted.includes(i);
@@ -210,13 +210,13 @@ function buildContracts() {
       '<div class="contract-name">' + (done ? '✓ ' : '') + q.desc + '</div>' +
       '<div class="contract-progress-bar"><div class="contract-progress-fill" style="width:' + pct + '%"></div></div>' +
       '<div class="contract-progress-text">' + progress + '/' + q.target + '</div>' +
-      '<div class="contract-reward">Reward: ' + q.rewardNP + ' NP' + Object.entries(q.reward).map(([r,a]) => ' + ' + fmt(a) + ' ' + r).join('') + '</div>';
+      '<div class="contract-reward">Reward: ' + q.rewardNP + ' KP' + Object.entries(q.reward).map(([r,a]) => ' + ' + fmt(a) + ' ' + (RES[r]?RES[r].n:r)).join('') + '</div>';
     c.appendChild(card);
   });
   if ((G._questWeekly || 0) >= 3) {
     const weekly = document.createElement('div');
     weekly.style.cssText = 'color:#0f0;font-size:12px;margin-top:6px;';
-    weekly.textContent = 'Weekly bonus available! Complete more contracts to claim.';
+    weekly.textContent = 'Weekly bonus available! Complete more challenges to claim.';
     c.appendChild(weekly);
   }
 }
@@ -233,9 +233,9 @@ function buildConsumables() {
     card.innerHTML =
       '<div class="consumable-name">' + cfg.name + '</div>' +
       '<div class="consumable-desc">' + cfg.desc + '</div>' +
-      '<div class="consumable-cost">Cost: ' + Object.entries(cfg.cost).map(([r,a]) => fmt(a) + ' ' + r).join(', ') + '</div>' +
+      '<div class="consumable-cost">Cost: ' + Object.entries(cfg.cost).map(([r,a]) => fmt(a) + ' ' + (RES[r]?RES[r].n:r)).join(', ') + '</div>' +
       (active ? '<div class="consumable-timer">Active: ' + remaining + 's</div>' : '') +
-      '<button class="consumable-btn" data-id="' + cfg.id + '"' + (active ? ' disabled' : '') + '>' + (active ? 'ACTIVE' : 'CRAFT') + '</button>';
+      '<button class="consumable-btn" data-id="' + cfg.id + '"' + (active ? ' disabled' : '') + '>' + (active ? 'ACTIVE' : 'USE') + '</button>';
     card.querySelector('.consumable-btn').addEventListener('click', e => { e.stopPropagation(); craftConsumable(cfg.id); });
     c.appendChild(card);
   });
@@ -264,7 +264,7 @@ function buildEnhance() {
     '<div style="color:#888;font-size:11px;">' + sel.bonusLabel + ' per level</div>' +
     '<div style="color:#ff0;font-size:11px;">Current bonus: +' + getEnhanceBonus(sel.id) + '</div>' +
     '<div style="color:#888;font-size:11px;margin-top:4px;">Success rate: ' + Math.round(enhanceSuccessRate(lvl) * 100) + '%</div>' +
-    '<div style="color:#888;font-size:11px;">Cost: ' + Object.entries(enhanceCost(lvl)).map(([r,a]) => fmt(a) + ' ' + r).join(', ') + ' + 1 ' + sel.label + '</div>';
+    '<div style="color:#888;font-size:11px;">Cost: ' + Object.entries(enhanceCost(lvl)).map(([r,a]) => fmt(a) + ' ' + (RES[r]?RES[r].n:r)).join(', ') + ' + 1 ' + sel.label + '</div>';
   c.appendChild(info);
   const craftBtn = document.createElement('button');
   craftBtn.className = 'enhance-btn';
@@ -283,17 +283,17 @@ function buildDevPanel() {
   p.innerHTML =
     '<h3>DEV MODE</h3>' +
     '<div class="dev-row">' +
-      '<button onclick="devAddRes(\'data\',1000)">+1K DATA</button>' +
-      '<button onclick="devAddRes(\'credits\',1000)">+1K CREDITS</button>' +
-      '<button onclick="devAddRes(\'cpu\',500)">+500 CPU</button>' +
-      '<button onclick="devAddRes(\'bandwidth\',200)">+200 BW</button>' +
-      '<button onclick="devAddRes(\'darkMatter\',100)">+100 DM</button>' +
+      '<button onclick="devAddRes(\'data\',1000)">+1K XP</button>' +
+      '<button onclick="devAddRes(\'credits\',1000)">+1K LOC</button>' +
+      '<button onclick="devAddRes(\'cpu\',500)">+500 KP</button>' +
+      '<button onclick="devAddRes(\'bandwidth\',200)">+200 Insight</button>' +
+      '<button onclick="devAddRes(\'darkMatter\',100)">+100 Mastery</button>' +
     '</div>' +
     '<div class="dev-row">' +
-      '<button onclick="devMaxBranch()">MAX BRANCHES</button>' +
+      '<button onclick="devMaxBranch()">MAX LANGUAGES</button>' +
       '<button onclick="devUnlockAll()">UNLOCK ALL</button>' +
-      '<button onclick="devAddNp(100)">+100 NP</button>' +
-      '<button onclick="devAddNp(1000)">+1K NP</button>' +
+      '<button onclick="devAddNp(100)">+100 KP</button>' +
+      '<button onclick="devAddNp(1000)">+1K KP</button>' +
       '<button onclick="devSpeed(10)">x10 SPEED</button>' +
       '<button onclick="devSpeed(1)">x1 SPEED</button>' +
       '<button onclick="subscribe()">SUB ON</button>' +
@@ -328,7 +328,7 @@ function updateUI() {
     el.textContent = max === 1/0 ? fmt(amt) : fmt(amt)+'/'+fmt(max);
   });
   const ul = document.getElementById('user-label');
-  if (ul) ul.textContent = USER+(isDev()?' [DEV]':'')+(isSubActive()?' [NETRUNNER+]':'');
+  if (ul) ul.textContent = USER+(isDev()?' [DEV]':'')+(isSubActive()?' [CODE JOURNEY PRO]':'');
 
   // NP display
   const npEl = document.getElementById('np-display');
@@ -347,7 +347,7 @@ function updateUI() {
         el.querySelector('.node-lvl').textContent = 'Lv.' + lvl + (lvl >= 30 ? ' MAX' : '');
         if (n.gen) {
           const gen = n.gen(Math.max(1, lvl));
-          const effectStr = Object.entries(gen).map(([r,a]) => fmt(a) + ' ' + r + '/s').join(', ');
+          const effectStr = Object.entries(gen).map(([r,a]) => fmt(a) + ' ' + (RES[r]?RES[r].n:r) + '/s').join(', ');
           el.querySelector('.node-effect').textContent = effectStr;
         } else if (n.bonus) {
           const bon = n.bonus(Math.max(1, lvl));
@@ -366,7 +366,7 @@ function updateUI() {
         }
         const cost = branchCost(b.id, n.id);
         const isCapped = n.id === 'costReduction' && lvl >= 20;
-        el.querySelector('.node-cost').textContent = lvl >= 30 ? 'MAXED' : isCapped ? 'Cost: ' + cost + ' NP (cap reached)' : 'Cost: ' + cost + ' NP';
+        el.querySelector('.node-cost').textContent = lvl >= 30 ? 'MAXED' : isCapped ? 'Cost: ' + cost + ' KP (cap reached)' : 'Cost: ' + cost + ' KP';
         // Update requirement display
         const req = nodeRequirement(b.id, n.id);
         const reqEl = el.querySelector('.node-req');
@@ -397,7 +397,7 @@ function updateUI() {
       const cost = {};
       const cr = branchCostRed();
       Object.entries(cfg.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*(1-cr)*Math.pow(cfg.mult,u.lvl)); });
-      card.querySelector('.upgrade-cost').textContent = maxed?'MAXED':'Cost: '+Object.entries(cost).map(([r,a])=>fmt(a)+' '+r).join(', ');
+      card.querySelector('.upgrade-cost').textContent = maxed?'MAXED':'Cost: '+Object.entries(cost).map(([r,a])=>(RES[r]?RES[r].n:r)+' '+fmt(a)).join(', ');
       const btn = card.querySelector('.upgrade-btn');
       btn.disabled = maxed || !canPay(cost);
     });
@@ -422,7 +422,7 @@ function updateUI() {
   const inv = document.getElementById('inventory-container');
   if (inv) {
     inv.innerHTML = '';
-    const items = [['program','Programs'],['hardware','Hardware'],['exploit','Exploits'],['qProgram','Quantum Programs'],['qHardware','Armor Shields'],['qExploit','Zero Days'],['neuralLinks','Neural Links'],['turboChargers','Turbo Chargers']];
+    const items = ITEM_LABELS ? Object.entries(ITEM_LABELS) : [['program','Scripts'],['hardware','Web Pages'],['exploit','Libraries'],['qProgram','Databases'],['qHardware','Games'],['qExploit','OS Modules'],['neuralLinks','Frameworks'],['turboChargers','APIs']];
     Object.keys(DROP_LABELS).forEach(k => items.push([k, DROP_LABELS[k]]));
     items.forEach(([id,label]) => {
       const d=document.createElement('div'); d.style.cssText='background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:6px 12px;font-size:12px;';
@@ -472,12 +472,12 @@ function updateUI() {
   const pnl = document.getElementById('pnl'); if (pnl) pnl.textContent = G.prest.lvl;
   const pg = document.getElementById('pnl-gain'); if (pg) pg.textContent = g;
   const ld = document.getElementById('lifetime-dm'); if (ld) ld.textContent = fmt(G.prest.dm);
-  const pb = document.getElementById('prestige-btn'); if (pb) { pb.disabled = g < 1; pb.textContent = g < 1 ? 'PRESTIGE (LOCKED)' : 'PRESTIGE'; }
+  const pb = document.getElementById('prestige-btn'); if (pb) { pb.disabled = g < 1; pb.textContent = g < 1 ? 'MASTERY RESET (LOCKED)' : 'MASTERY RESET'; }
   const dr = document.getElementById('dm-required');
   if (dr) {
     const nextDm = (g + 1) * (g + 1) * 10;
     const have = G.prest.dm || 0;
-    dr.textContent = have >= nextDm ? 'Ready!' : fmt(nextDm) + ' DM needed for next level (have ' + fmt(have) + ')';
+    dr.textContent = have >= nextDm ? 'Ready!' : fmt(nextDm) + ' Mastery needed for next level (have ' + fmt(have) + ')';
   }
 
   // Transcend
@@ -485,7 +485,7 @@ function updateUI() {
   if (tc) {
     const can = canTranscend();
     tc.disabled = !can;
-    tc.textContent = can ? 'TRANSCEND (cost: '+transcendCost()+' prestige)' : 'TRANSCEND (need '+(transcendCost()*2)+' prestige)';
+    tc.textContent = can ? 'ENLIGHTEN (cost: '+transcendCost()+' mastery levels)' : 'ENLIGHTEN (need '+(transcendCost()*2)+' mastery levels)';
   }
   const tcl = document.getElementById('transcend-lvl');
   if (tcl) tcl.textContent = G.prest.transcendLvl;
@@ -504,7 +504,7 @@ function updateUI() {
   // Subscription status
   const subStatus = document.getElementById('sub-status');
   if (subStatus) {
-    subStatus.textContent = isSubActive() ? 'Netrunner+ Active' : 'Free Tier';
+    subStatus.textContent = isSubActive() ? 'Code Journey Pro Active' : 'Free Tier';
     subStatus.style.color = isSubActive() ? '#0f0' : '#888';
   }
   const subBtn = document.getElementById('sub-cta-btn');
@@ -546,6 +546,9 @@ function updateUI() {
   // Ad banner
   showAdBanner();
 
+  // Knowledge visualizer
+  updateVisualizer();
+
   // Road map
   updateRoadMap();
 }
@@ -577,7 +580,6 @@ function initLogin() {
           localStorage.removeItem('nri_'+name);
           G = freshState();
           G._pw = pass;
-          G.neuralPoints = 2;
           USER = name;
           localStorage.setItem('nr_user', USER);
           overlay.style.display='none';
@@ -603,8 +605,7 @@ function initLogin() {
       } else {
         G = freshState();
         G._pw = pass;
-        G.neuralPoints = 2;
-        toast('TIP: Spend your Neural Points (NP) on branch nodes to start generating resources!', 'info');
+        toast('TIP: Spend your Knowledge Points (KP) on language concepts to start learning!', 'info');
       }
       USER = name;
       localStorage.setItem('nr_user', USER);
@@ -625,7 +626,7 @@ function initLogin() {
         if (!G) return;
         if (!G.cmbt.unlocked && G.neuralPoints >= 25) {
           G.cmbt.unlocked = true;
-          toast('Combat unlocked! Spend NP to grow stronger.', 'loot');
+          toast('Debug unlocked! Fix bugs to earn rewards.', 'loot');
           clearInterval(_unlockCheck);
         }
       }, 3000);
@@ -724,31 +725,31 @@ function getNextMilestones() {
         const aff = G.neuralPoints >= cost;
         if (aff) {
           if (!branchAffordable || cost < branchCost(branchAffordable.b, branchAffordable.n)) {
-            branchAffordable = { label: 'Level ' + n.name, extra: cost + ' NP → ' + b.name, ready: true, b: b.id, n: n.id };
+            branchAffordable = { label: 'Level ' + n.name, extra: cost + ' KP → ' + b.name, ready: true, b: b.id, n: n.id };
           }
         } else if (!branchAction) {
-          branchAction = { label: 'Level ' + n.name, extra: cost + ' NP → ' + b.name, ready: false };
+          branchAction = { label: 'Level ' + n.name, extra: cost + ' KP → ' + b.name, ready: false };
         }
       }
     });
   });
   if (branchAffordable) ms.push(branchAffordable);
   else if (branchAction) ms.push(branchAction);
-  else ms.push({ label: 'All nodes maxed!', extra: 'Great work, runner', ready: false });
+  else ms.push({ label: 'All concepts learned!', extra: 'Great work, coder', ready: false });
 
   // 2. Combat progress
   if (!G.cmbt.unlocked) {
     const npNeeded = Math.max(0, 25 - Math.floor(G.neuralPoints));
-    ms.push({ label: 'Unlock COMBAT', extra: 'Need ' + npNeeded + ' NP', ready: G.neuralPoints >= 25 });
+    ms.push({ label: 'Unlock DEBUG', extra: 'Need ' + npNeeded + ' KP', ready: G.neuralPoints >= 25 });
   } else {
     const zi = ZONES.slice().reverse().findIndex(z => !G.zones[ZONES.indexOf(z)].unlocked);
     if (zi !== -1) {
       const z = ZONES[ZONES.length - 1 - zi];
       const d = Math.max(0, z.reqDefeated - (G.stats.enemiesDefeated || 0));
       const remain = ZONES.length - 1 - zi;
-      ms.push({ label: 'Unlock ' + z.name, extra: 'Defeat ' + d + ' more enemies (zone ' + (ZONES.length - remain + 1) + '/' + ZONES.length + ')', ready: (G.stats.enemiesDefeated || 0) >= z.reqDefeated });
+      ms.push({ label: 'Unlock ' + z.name, extra: 'Fix ' + d + ' more bugs (zone ' + (ZONES.length - remain + 1) + '/' + ZONES.length + ')', ready: (G.stats.enemiesDefeated || 0) >= z.reqDefeated });
     } else {
-      ms.push({ label: 'All zones unlocked!', extra: 'Transcend to grow stronger', ready: false });
+      ms.push({ label: 'All zones unlocked!', extra: 'Enlighten to grow stronger', ready: false });
     }
   }
 
@@ -756,15 +757,102 @@ function getNextMilestones() {
   const pg = prestigeGain();
   if (pg < 1) {
     const d = Math.max(0, 10 - (G.prest.dm || 0));
-    ms.push({ label: 'PRESTIGE', extra: fmt(d) + ' DM needed (have ' + fmt(G.prest.dm || 0) + ')', ready: pg >= 1 });
+    ms.push({ label: 'MASTERY RESET', extra: fmt(d) + ' Mastery needed (have ' + fmt(G.prest.dm || 0) + ')', ready: pg >= 1 });
   } else {
-    ms.push({ label: 'PRESTIGE READY!', extra: '+' + pg + ' levels', ready: true });
+    ms.push({ label: 'MASTERY READY!', extra: '+' + pg + ' levels', ready: true });
   }
 
   return ms.slice(0, 3);
 }
 
 function fmtBonus(k, v) {
-  const labels = { dataMult:'DATA x'+v, creditsMult:'Credits x'+v, cpuMult:'CPU x'+v, bwMult:'BW x'+v, allMult:'All x'+v };
+  const labels = { dataMult:'XP x'+v, creditsMult:'LOC x'+v, cpuMult:'KP x'+v, bwMult:'Insight x'+v, allMult:'All x'+v };
   return labels[k] || k+':'+v;
+}
+
+// ===== KNOWLEDGE VISUALIZER =====
+let _visAnimId = null;
+let _visNodes = [];
+let _visEdges = [];
+
+function updateVisualizer() {
+  const visDiv = document.getElementById('knowledge-visualizer');
+  if (!visDiv) return;
+
+  let totalLevels = 0;
+  BRANCHES.forEach(b => {
+    b.nodes.forEach(n => { totalLevels += branchLevel(b.id, n.id); });
+  });
+
+  if (totalLevels < VISUALIZER_UNLOCK_THRESHOLD) {
+    visDiv.style.display = 'none';
+    if (_visAnimId) { cancelAnimationFrame(_visAnimId); _visAnimId = null; }
+    return;
+  }
+
+  visDiv.style.display = 'block';
+  if (_visAnimId) return; // already running
+
+  const canvas = document.getElementById('vis-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  // Build nodes & edges
+  _visNodes = [];
+  _visEdges = [];
+  BRANCHES.forEach(b => {
+    let prev = null;
+    b.nodes.forEach(n => {
+      const lvl = branchLevel(b.id, n.id);
+      if (lvl > 0) {
+        const node = { name:n.name, branch:b.name, color:b.color, lvl, x:Math.random()*W, y:Math.random()*H, vx:0, vy:0, r:8+lvl*1.5 };
+        _visNodes.push(node);
+        if (prev) _visEdges.push({ from:prev, to:node, color:b.color });
+        prev = node;
+      }
+    });
+  });
+  // Cross-language connections
+  for (let i = 0; i < _visNodes.length; i++)
+    for (let j = i+1; j < _visNodes.length; j++)
+      if (_visNodes[i].branch !== _visNodes[j].branch)
+        _visEdges.push({ from:_visNodes[i], to:_visNodes[j], color:'rgba(255,255,255,0.12)' });
+
+  function step() {
+    if (visDiv.style.display === 'none') { _visAnimId = null; return; }
+    const rep = 5000, att = 0.01, damp = 0.9;
+    for (const a of _visNodes) {
+      a.vx *= damp; a.vy *= damp;
+      for (const b of _visNodes) {
+        if (a === b) continue;
+        let dx = a.x - b.x, dy = a.y - b.y, dist = Math.sqrt(dx*dx+dy*dy)||1;
+        const f = rep/(dist*dist)*0.01;
+        a.vx += dx/dist*f; a.vy += dy/dist*f;
+      }
+      for (const e of _visEdges) {
+        if (e.from === a) { a.vx += (e.to.x-a.x)*att; a.vy += (e.to.y-a.y)*att; }
+        if (e.to === a) { a.vx += (e.from.x-a.x)*att; a.vy += (e.from.y-a.y)*att; }
+      }
+      const m = 40;
+      if (a.x < m) a.vx += 1; if (a.x > W-m) a.vx -= 1;
+      if (a.y < m) a.vy += 1; if (a.y > H-m) a.vy -= 1;
+      a.x += a.vx; a.y += a.vy;
+    }
+    ctx.clearRect(0,0,W,H);
+    for (const e of _visEdges) { ctx.beginPath(); ctx.moveTo(e.from.x,e.from.y); ctx.lineTo(e.to.x,e.to.y); ctx.strokeStyle=e.color; ctx.lineWidth=1; ctx.stroke(); }
+    const t = Date.now()/1000;
+    for (const n of _visNodes) {
+      const p = 1 + Math.sin(t*2+_visNodes.indexOf(n))*0.1;
+      const r = n.r*p;
+      const g = ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r*3);
+      g.addColorStop(0,n.color+'66'); g.addColorStop(1,n.color+'00');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(n.x,n.y,r*3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=n.color; ctx.beginPath(); ctx.arc(n.x,n.y,r,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle='#fff'; ctx.font='10px Courier New'; ctx.textAlign='center'; ctx.fillText(n.name+' Lv.'+n.lvl,n.x,n.y+r+12);
+    }
+    _visAnimId = requestAnimationFrame(step);
+  }
+  _visAnimId = requestAnimationFrame(step);
 }

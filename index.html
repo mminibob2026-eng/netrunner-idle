@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Netrunner Idle</title>
+<title>Code Journey</title>
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 <meta name="google-adsense-account" content="ca-pub-1908159369479300">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1908159369479300" crossorigin="anonymous"></script>
 </head>
@@ -13,11 +13,11 @@
 
 <div id="login-overlay">
   <div id="login-box">
-    <h1>NETRUNNER IDLE</h1>
-    <p>Enter your handle to access the network</p>
+    <h1>CODE JOURNEY</h1>
+    <p>Start your programming adventure</p>
     <input type="text" id="login-input" placeholder="Username..." maxlength="20" autocomplete="off">
     <input type="password" id="pass-input" placeholder="Password..." maxlength="30" autocomplete="off">
-    <button id="login-btn">ENTER NETWORK</button>
+    <button id="login-btn">START CODING</button>
     <div class="login-error" id="login-error">Invalid credentials</div>
   </div>
 </div>
@@ -42,30 +42,34 @@
 <div id="road-map" class="road-map"></div>
 
 <div id="tabs">
-  <button class="tab-btn active" data-tab="skills">BRANCHES</button>
-  <button class="tab-btn" data-tab="crafting">CRAFT</button>
-  <button class="tab-btn" data-tab="combat">COMBAT</button>
-  <button class="tab-btn" data-tab="upgrades">UPGRADES</button>
-  <button class="tab-btn" data-tab="contracts">CONTRACTS</button>
-  <button class="tab-btn" data-tab="enhance">ENHANCE</button>
-  <button class="tab-btn" data-tab="progression">PROGRESS</button>
-  <button class="tab-btn" data-tab="prestige">PRESTIGE</button>
+  <button class="tab-btn active" data-tab="skills">LEARN</button>
+  <button class="tab-btn" data-tab="crafting">BUILD</button>
+  <button class="tab-btn" data-tab="combat">DEBUG</button>
+  <button class="tab-btn" data-tab="upgrades">TOOLS</button>
+  <button class="tab-btn" data-tab="contracts">CHALLENGES</button>
+  <button class="tab-btn" data-tab="enhance">REFACTOR</button>
+  <button class="tab-btn" data-tab="progression">ACHIEVES</button>
+  <button class="tab-btn" data-tab="prestige">MASTERY</button>
 </div>
 
 <div id="content">
   <div id="tab-skills" class="tab-content active">
-    <div class="section-title">[ BRANCHES ] <span>// invest Neural Points to grow</span></div>
-    <p style="color:#888;font-size:11px;margin-bottom:6px;">Neural Points (NP) earned passively over time. Spend NP to level up nodes. Each branch unlocks progressively.</p>
+    <div class="section-title">[ LEARN ] <span>// spend KP to learn concepts</span></div>
+    <p style="color:#888;font-size:11px;margin-bottom:6px;">Knowledge Points (KP) earned passively over time. Spend KP to learn concepts. Each language unlocks progressively.</p>
     <div id="branch-container" class="branch-tree"></div>
     <div id="dev-panel" style="display:none"></div>
+    <div id="knowledge-visualizer" style="display:none;margin-top:16px;">
+      <div class="section-title">[ KNOWLEDGE MAP ] <span>// your growing understanding</span></div>
+      <canvas id="vis-canvas" width="600" height="300" style="width:100%;height:auto;aspect-ratio:600/300;background:rgba(0,0,0,0.3);border:1px solid rgba(0,255,255,0.15);border-radius:4px;"></canvas>
+    </div>
   </div>
   <div id="tab-crafting" class="tab-content">
-    <div class="section-title">[ CRAFTING ] <span>// combine resources into gear</span></div>
+    <div class="section-title">[ BUILD ] <span>// turn XP + LOC into projects</span></div>
     <div id="craft-container" class="craft-grid"></div>
     <div style="margin-top:12px"><div class="section-title">[ INVENTORY ]</div><div id="inventory-container" class="flex-between" style="flex-wrap:wrap;gap:4px"></div></div>
   </div>
   <div id="tab-combat" class="tab-content">
-    <div class="section-title">[ COMBAT ] <span>// hack network nodes</span></div>
+    <div class="section-title">[ DEBUG ] <span>// fix bugs in code</span></div>
     <div id="enemy-grid"></div>
       <div id="battle-area" style="display:none">
         <div id="enemy-display">
@@ -73,61 +77,61 @@
         <div id="player-stats"><span>ATK: <span id="p-atk">10</span></span><span>DEF: <span id="p-def">5</span></span><span>HP: <span id="p-hp">100</span>/<span id="p-maxhp">100</span></span></div>
       </div>
       <div id="combat-actions" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;">
-        <button class="combat-btn attack-btn" onclick="combatAttack()">HACK</button>
-        <button class="combat-btn item-btn" onclick="combatUseItem('program')">PROGRAM (<span id="item-program">0</span>)</button>
-        <button class="combat-btn item-btn" onclick="combatUseItem('hardware')">HARDWARE (<span id="item-hardware">0</span>)</button>
-        <button class="combat-btn item-btn" onclick="combatUseItem('exploit')">EXPLOIT (<span id="item-exploit">0</span>)</button>
-        <button class="combat-btn disconnect-btn" onclick="combatDisconnect()">DISCONNECT</button>
+        <button class="combat-btn attack-btn" onclick="combatAttack()">DEBUG</button>
+        <button class="combat-btn item-btn" onclick="combatUseItem('program')">SCRIPT (<span id="item-program">0</span>)</button>
+        <button class="combat-btn item-btn" onclick="combatUseItem('hardware')">WEB PAGE (<span id="item-hardware">0</span>)</button>
+        <button class="combat-btn item-btn" onclick="combatUseItem('exploit')">LIBRARY (<span id="item-exploit">0</span>)</button>
+        <button class="combat-btn disconnect-btn" onclick="combatDisconnect()">BACK</button>
       </div>
       <div id="combat-actions-burst" style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;font-size:10px;">
-        <span style="color:#888;width:100%;margin-bottom:2px;">BURST ATTACKS:</span>
+        <span style="color:#888;width:100%;margin-bottom:2px;">DEEP FIXES:</span>
         <div id="burst-actions" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
       </div>
       <div id="combat-log"></div>
     </div>
   </div>
   <div id="tab-upgrades" class="tab-content">
-    <div class="section-title">[ UPGRADES ] <span>// permanent improvements</span></div>
+    <div class="section-title">[ TOOLS ] <span>// permanent improvements</span></div>
     <div id="upgrades-container" class="upgrades-grid"></div>
   </div>
   <div id="tab-contracts" class="tab-content">
-    <div class="section-title">[ CONTRACTS ] <span>// daily operations</span></div>
+    <div class="section-title">[ CHALLENGES ] <span>// daily coding challenges</span></div>
     <div id="contracts-container" class="contracts-grid"></div>
   </div>
   <div id="tab-enhance" class="tab-content">
-    <div class="section-title">[ ENHANCE ] <span>// upgrade items & craft consumables</span></div>
-    <div class="section-title" style="margin-top:8px;font-size:11px;">[ CONSUMABLES ]</div>
+    <div class="section-title">[ REFACTOR ] <span>// upgrade projects & craft study aids</span></div>
+    <div class="section-title" style="margin-top:8px;font-size:11px;">[ STUDY AIDS ]</div>
     <div id="consumables-container" class="consumables-grid"></div>
     <div class="section-title" style="margin-top:12px;font-size:11px;">[ ENHANCEMENT ]</div>
     <div id="enhance-container"></div>
   </div>
   <div id="tab-progression" class="tab-content">
-    <div class="section-title">[ PROGRESSION ] <span>// zones & achievements</span></div>
+    <div class="section-title">[ ACHIEVES ] <span>// zones & milestones</span></div>
     <div id="sub-panel">
-      <h3>NETRUNNER+</h3>
-      <p>Unlock offline progress, auto-combat, auto-crafting, speed boost & more</p>
+      <h3>CODE JOURNEY PRO</h3>
+      <p>Unlock offline progress, auto-debug, auto-build, speed boost & more</p>
       <span id="sub-status" style="color:#888;font-size:11px;display:block;margin-bottom:8px;">Free Tier</span>
       <button id="sub-cta-btn" class="sub-cta-btn">UPGRADE - $1/mo</button>
     </div>
-    <div class="section-title">[ NETWORK ZONES ] <span>// unlock new areas</span></div>
+    <div class="section-title">[ CONCEPT TIERS ] <span>// unlock new concepts</span></div>
     <div id="zones-container" class="zones-grid"></div>
     <div class="section-title" style="margin-top:12px">[ ACHIEVEMENTS ] <span>// permanent rewards</span></div>
     <div id="achievements-container" class="achievements-grid"></div>
   </div>
   <div id="tab-prestige" class="tab-content">
-    <div class="section-title">[ PRESTIGE ] <span>// reset for power</span></div>
+    <div class="section-title">[ MASTERY ] <span>// reset for power</span></div>
     <div id="prestige-area">
-      <p>Netrunner Level: <span class="text-pink" id="pnl">0</span></p>
-      <p>Each prestige resets progress but grants <span class="text-green">1.5x</span> multiplier per level.</p>
-      <p>Requirement: <span class="text-red" id="dm-required">10 lifetime DM</span></p>
-      <p>Gain: <span class="text-pink" id="pnl-gain">0</span> levels | Lifetime DM: <span class="text-cyan" id="lifetime-dm">0</span></p>
-      <button class="prestige-btn" id="prestige-btn">PRESTIGE</button>
+      <p>Coder Level: <span class="text-pink" id="pnl">0</span></p>
+      <p>Each mastery reset resets progress but grants <span class="text-green">1.5x</span> multiplier per level.</p>
+      <p>Requirement: <span class="text-red" id="dm-required">10 lifetime Mastery</span></p>
+      <p>Gain: <span class="text-pink" id="pnl-gain">0</span> levels | Lifetime Mastery: <span class="text-cyan" id="lifetime-dm">0</span></p>
+      <button class="prestige-btn" id="prestige-btn">MASTERY RESET</button>
     </div>
     <div style="text-align:center;padding:20px;margin-top:12px;border-top:1px solid rgba(0,255,255,0.2);">
-      <p class="section-title">[ TRANSCEND ] <span>// ascend to a higher plane</span></p>
-      <p style="font-size:12px;color:#888;margin:6px 0;">Reset prestige for a powerful 2x multiplier. Cost: <span class="text-cyan" id="transcend-cost">3</span> prestige levels</p>
-      <p style="font-size:12px;color:#888;">Current: <span class="text-cyan" id="transcend-lvl">0</span> | Transcensions: <span class="text-cyan" id="transcend-times">0</span></p>
-      <button class="transcend-btn" id="transcend-btn">TRANSCEND</button>
+      <p class="section-title">[ ENLIGHTEN ] <span>// ascend to a higher plane of understanding</span></p>
+      <p style="font-size:12px;color:#888;margin:6px 0;">Reset mastery for a powerful 2x multiplier. Cost: <span class="text-cyan" id="transcend-cost">3</span> mastery levels</p>
+      <p style="font-size:12px;color:#888;">Current: <span class="text-cyan" id="transcend-lvl">0</span> | Enlightenments: <span class="text-cyan" id="transcend-times">0</span></p>
+      <button class="transcend-btn" id="transcend-btn">ENLIGHTEN</button>
     </div>
   </div>
   </div>
@@ -136,23 +140,23 @@
 <div id="minigame-event-modal" class="event-modal">
   <div class="event-modal-content">
     <button class="event-close-btn" onclick="closeMiniGameEvent()">✕</button>
-    <h2 class="event-title" style="color:#ff0;text-align:center;margin-bottom:12px;text-shadow:0 0 10px rgba(255,255,0,0.5);">⚠ ANOMALY DETECTED ⚠</h2>
+    <h2 class="event-title" style="color:#ff0;text-align:center;margin-bottom:12px;text-shadow:0 0 10px rgba(255,255,0,0.5);">⚠ CODE ANOMALY ⚠</h2>
     <div class="event-body"></div>
   </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="js/config.js?v=7"></script>
-<script src="js/util.js?v=7"></script>
-<script src="js/state.js?v=7"></script>
-<script src="js/analytics.js?v=7"></script>
-<script src="js/ads.js?v=7"></script>
-<script src="js/cloud.js?v=7"></script>
-<script src="js/game.js?v=7"></script>
-<script src="js/monetization.js?v=7"></script>
-<script src="js/minigames.js?v=7"></script>
-<script src="js/ui.js?v=7"></script>
-<script src="js/main.js?v=7"></script>
+<script src="js/config.js?v=8"></script>
+<script src="js/util.js?v=8"></script>
+<script src="js/state.js?v=8"></script>
+<script src="js/analytics.js?v=8"></script>
+<script src="js/ads.js?v=8"></script>
+<script src="js/cloud.js?v=8"></script>
+<script src="js/game.js?v=8"></script>
+<script src="js/monetization.js?v=8"></script>
+<script src="js/minigames.js?v=8"></script>
+<script src="js/ui.js?v=8"></script>
+<script src="js/main.js?v=8"></script>
 </body>
 </html>

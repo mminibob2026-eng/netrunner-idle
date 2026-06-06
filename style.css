@@ -447,3 +447,11 @@ body::after {
 
 /* Enemy ability in combat */
 #enemy-ability-indicator { transition:color 0.3s; }
+
+/* Knowledge Visualizer */
+#knowledge-visualizer { border-top:1px solid rgba(0,255,65,0.1);padding-top:8px; }
+#vis-canvas { display:block;transition:opacity 1s;cursor:pointer; }
+#vis-canvas:hover { border-color:rgba(0,255,255,0.4) !important; }
+.vis-node { cursor:pointer; }
+.vis-node:hover { filter:brightness(1.5); }
+.vis-label { font-family:'Courier New',monospace;font-size:10px;pointer-events:none; }

@@ -1,138 +1,164 @@
+// Resource display names (internal id -> display)
+const RES = { data:{n:'XP',i:'<>',c:'#0f0'}, credits:{n:'LOC',i:'~~',c:'#ff0'}, cpu:{n:'KP',i:'{}',c:'#0ff'}, bandwidth:{n:'Insight',i:'&&',c:'#f0f'}, darkMatter:{n:'Mastery',i:'**',c:'#fff'} };
+const NP_LABEL = 'KP';
+const XP_LABEL = 'XP';
+const LOC_LABEL = 'LOC';
+const KP_LABEL = 'KP';
+const INSIGHT_LABEL = 'Insight';
+const MASTERY_LABEL = 'Mastery';
+
 const BRANCHES = [
   {
-    id:'data', name:'Data Stream', color:'#0f0',
-    desc:'Generates resources automatically. All nodes run simultaneously.',
+    id:'python', name:'Python', color:'#3776AB',
+    desc:'Readable, friendly. The language that says "hello" to the world.',
     nodes:[
-      { id:'dataTap', name:'Data Tap', desc:'Extract raw data.', baseCost:1, reqLvl:0,
+      { id:'print', name:'print()', desc:'Output your first message to the world.', baseCost:1, reqLvl:0,
         gen:(lvl)=>({data:(0.5+lvl*0.25)}) },
-      { id:'creditFlow', name:'Credit Flow', desc:'Intercept financial transactions.', baseCost:2, reqLvl:3,
-        gen:(lvl)=>({credits:(0.3+lvl*0.15)}) },
-      { id:'cpuHarvest', name:'CPU Harvest', desc:'Mine idle processing power.', baseCost:4, reqLvl:5,
-        gen:(lvl)=>({cpu:(0.2+lvl*0.1)}) },
-      { id:'bwLeech', name:'BW Leech', desc:'Siphon backbone bandwidth.', baseCost:8, reqLvl:10,
-        gen:(lvl)=>({bandwidth:(0.1+lvl*0.05)}) },
+      { id:'variables', name:'Variables & Types', desc:'Store data in named boxes.', baseCost:3, reqLvl:3,
+        gen:(lvl)=>({data:(0.4+lvl*0.18), credits:(0.1+lvl*0.04)}) },
+      { id:'lists', name:'Lists & Loops', desc:'Collections of items you can iterate through.', baseCost:6, reqLvl:5,
+        gen:(lvl)=>({data:(0.3+lvl*0.12), credits:(0.2+lvl*0.08)}) },
+      { id:'dicts', name:'Dictionaries', desc:'Key-value pairs for organized data.', baseCost:12, reqLvl:8,
+        gen:(lvl)=>({data:(0.5+lvl*0.2), credits:(0.4+lvl*0.12)}) },
     ]
   },
   {
-    id:'combat', name:'Combat Matrix', color:'#f44',
-    desc:'Enhances combat power. Bonuses apply during combat.',
+    id:'javascript', name:'JavaScript', color:'#F7DF1E',
+    desc:'The language of the web. Brings pages to life.',
     nodes:[
-      { id:'icePick', name:'ICE Pick', desc:'+3 ATK per level.', baseCost:1, reqLvl:0,
-        bonus:(lvl)=>({atk:3*lvl}) },
-      { id:'shieldWall', name:'Shield Wall', desc:'+8 HP per level.', baseCost:3, reqLvl:3,
-        bonus:(lvl)=>({hp:8*lvl}) },
-      { id:'overdrive', name:'Overdrive', desc:'+5% ATK per level during combat.', baseCost:6, reqLvl:5,
-        bonus:(lvl)=>({atkPct:5*lvl}) },
-      { id:'systemBreach', name:'System Breach', desc:'+15 burst DMG per level.', baseCost:12, reqLvl:10,
-        bonus:(lvl)=>({burst:15*lvl}) },
+      { id:'console', name:'console.log()', desc:'Log messages to the browser console.', baseCost:2, reqLvl:0,
+        gen:(lvl)=>({data:(0.4+lvl*0.2)}) },
+      { id:'dom', name:'DOM Manipulation', desc:'Change what users see on a web page.', baseCost:4, reqLvl:3,
+        gen:(lvl)=>({data:(0.3+lvl*0.15), credits:(0.2+lvl*0.06)}) },
+      { id:'events', name:'Event Handling', desc:'Respond to clicks, keys, and user actions.', baseCost:8, reqLvl:5,
+        gen:(lvl)=>({data:(0.4+lvl*0.15), credits:(0.3+lvl*0.1)}) },
+      { id:'async', name:'Async & Promises', desc:'Handle operations that take time.', baseCost:16, reqLvl:8,
+        gen:(lvl)=>({data:(0.6+lvl*0.2), credits:(0.5+lvl*0.15)}) },
     ]
   },
   {
-    id:'efficiency', name:'Efficiency Engine', color:'#0ff',
-    desc:'Boosts speed, caps, and reduces costs.',
+    id:'c_lang', name:'C Language', color:'#555555',
+    desc:'The foundation. Fast, powerful, close to the machine.',
     nodes:[
-      { id:'quickHands', name:'Quick Hands', desc:'+5% NP generation per level.', baseCost:1, reqLvl:0,
-        bonus:(lvl)=>({npRate:0.05*lvl}) },
-      { id:'resourceOpt', name:'Resource Optimizer', desc:'+10% resource caps per level.', baseCost:3, reqLvl:3,
-        bonus:(lvl)=>({capMult:0.1*lvl}) },
-      { id:'costReduction', name:'Cost Reduction', desc:'-3% upgrade/craft cost per level.', baseCost:6, reqLvl:5,
-        bonus:(lvl)=>({costRed:0.03*lvl}) },
-      { id:'perfectLoop', name:'Perfect Loop', desc:'+3% all resource gen per level.', baseCost:12, reqLvl:10,
-        bonus:(lvl)=>({prodMult:0.03*lvl}) },
+      { id:'printf', name:'printf()', desc:'Formatted output to the terminal.', baseCost:3, reqLvl:0,
+        gen:(lvl)=>({data:(0.6+lvl*0.2)}) },
+      { id:'pointers', name:'Pointers', desc:'Variables that hold memory addresses.', baseCost:6, reqLvl:3,
+        gen:(lvl)=>({data:(0.5+lvl*0.18), credits:(0.2+lvl*0.05)}) },
+      { id:'structs', name:'Structs', desc:'Group related data into custom types.', baseCost:12, reqLvl:5,
+        gen:(lvl)=>({data:(0.6+lvl*0.2), credits:(0.3+lvl*0.08)}) },
+      { id:'memory', name:'Memory Management', desc:'Allocate and free memory manually.', baseCost:24, reqLvl:8,
+        gen:(lvl)=>({data:(0.8+lvl*0.25), credits:(0.4+lvl*0.12)}) },
     ]
-  }
+  },
+  {
+    id:'csharp', name:'C#', color:'#9B4F96',
+    desc:'Object-oriented power from Microsoft. Build apps, games, and more.',
+    nodes:[
+      { id:'writeline', name:'Console.WriteLine()', desc:'Output text in .NET applications.', baseCost:3, reqLvl:0,
+        gen:(lvl)=>({data:(0.5+lvl*0.18)}) },
+      { id:'classes', name:'Classes & Objects', desc:'Blueprints for creating objects.', baseCost:6, reqLvl:3,
+        gen:(lvl)=>({data:(0.4+lvl*0.15), credits:(0.2+lvl*0.06)}) },
+      { id:'inheritance', name:'Inheritance', desc:'Reuse code by extending classes.', baseCost:12, reqLvl:5,
+        gen:(lvl)=>({data:(0.5+lvl*0.18), credits:(0.3+lvl*0.1)}) },
+      { id:'linq', name:'LINQ', desc:'Query collections with readable syntax.', baseCost:24, reqLvl:8,
+        gen:(lvl)=>({data:(0.7+lvl*0.22), credits:(0.5+lvl*0.15)}) },
+    ]
+  },
 ];
 
 const CRAFTS = [
-  { id:'codeWeave', name:'Code Weave', desc:'Data + CPU -> Programs', result:'program', cost:{data:50,cpu:10} },
-  { id:'hardwareAssemble', name:'Hardware Assembly', desc:'Credits + Bandwidth -> Hardware', result:'hardware', cost:{credits:75,bandwidth:15} },
-  { id:'exploitKit', name:'Exploit Kit', desc:'3 Programs + 2 Hardware -> Exploit', result:'exploit', cost:{program:3,hardware:2} },
-  { id:'neuralLink', name:'Neural Link', desc:'2 Exploits + Data + BW -> permanent +2% all skill speed', result:'neuralLinks', cost:{exploit:2,data:500,bandwidth:100} },
-  { id:'turboCharger', name:'Turbo Charger', desc:'3 Exploits + Hardware + Credits -> permanent +5 ATK +3 DEF', result:'turboChargers', cost:{exploit:3,hardware:3,credits:200} },
-  { id:'quantumProgram', name:'Quantum Program', desc:'10 Programs + 5 DM -> Quantum Program (+20 ATK burst)', result:'qProgram', cost:{program:10,darkMatter:5} },
-  { id:'armorShield', name:'Armor Shield', desc:'10 Hardware + 5 DM -> Armor Shield (+50 HP burst)', result:'qHardware', cost:{hardware:10,darkMatter:5} },
-  { id:'zeroDay', name:'Zero Day Exploit', desc:'5 Exploits + 3 Quantum Programs + 3 Armor Shields -> Zero Day (+150 ATK burst)', result:'qExploit', cost:{exploit:5,qProgram:3,qHardware:3} },
-  { id:'refineDataShard', name:'Deconstruct Data Shard', desc:'Convert 10 Data Shards into 500 DATA', result:'', cost:{dataShard:10}, refine:(g)=>{ addRes('data',500); toast('Refined 10 Data Shards into 500 DATA', 'loot'); } },
-  { id:'refineFwShard', name:'Deconstruct FW Shard', desc:'Convert 10 FW Shards into 250 CREDITS', result:'', cost:{fwShard:10}, refine:(g)=>{ addRes('credits',250); toast('Refined 10 FW Shards into 250 CREDITS', 'loot'); } },
-  { id:'refineIceCore', name:'Deconstruct ICE Core', desc:'Convert 5 ICE Cores into 10 DM', result:'', cost:{iceCore:5}, refine:(g)=>{ addRes('darkMatter',10); G.prest.dm+=10; toast('Refined 5 ICE Cores into 10 DM', 'loot'); } },
-  { id:'refineAiMod', name:'Deconstruct AI Module', desc:'Convert 3 AI Modules into 5 NP', result:'', cost:{aiMod:3}, refine:(g)=>{ G.neuralPoints+=5; toast('Refined 3 AI Modules into 5 NP', 'loot'); } },
+  { id:'simpleScript', name:'Simple Script', desc:'A small program that does one thing well.', result:'program', cost:{data:50,cpu:10} },
+  { id:'webPage', name:'Web Page', desc:'A basic HTML page with JavaScript interaction.', result:'hardware', cost:{credits:75,bandwidth:15} },
+  { id:'library', name:'Code Library', desc:'Reusable functions for other programs.', result:'exploit', cost:{program:3,hardware:2} },
+  { id:'framework', name:'Mini Framework', desc:'A foundation for building many programs.', result:'neuralLinks', cost:{exploit:2,data:500,bandwidth:100} },
+  { id:'apiService', name:'API Service', desc:'An API that serves data to other applications.', result:'turboChargers', cost:{exploit:3,hardware:3,credits:200} },
+  { id:'database', name:'Database Engine', desc:'Store and query structured data.', result:'qProgram', cost:{program:10,darkMatter:5} },
+  { id:'game', name:'Simple Game', desc:'A playable game with graphics and input.', result:'qHardware', cost:{hardware:10,darkMatter:5} },
+  { id:'osModule', name:'OS Module', desc:'A low-level system component.', result:'qExploit', cost:{exploit:5,qProgram:3,qHardware:3} },
+  { id:'refineShard', name:'Review Code', desc:'Review old code and earn insights.', result:'', cost:{dataShard:10}, refine:(g)=>{ addRes('data',500); toast('Reviewed old code. +500 XP', 'loot'); } },
+  { id:'refineFwShard', name:'Optimize Logic', desc:'Optimize logic and earn LOC.', result:'', cost:{fwShard:10}, refine:(g)=>{ addRes('credits',250); toast('Optimized logic. +250 LOC', 'loot'); } },
+  { id:'refineIceCore', name:'Refactor Module', desc:'Major refactor yields Mastery.', result:'', cost:{iceCore:5}, refine:(g)=>{ addRes('darkMatter',10); toast('Refactored! +10 Mastery', 'loot'); } },
+  { id:'refineAiMod', name:'Code Review', desc:'Peer review session earns KP.', result:'', cost:{aiMod:3}, refine:(g)=>{ G.neuralPoints+=5; toast('Code review: +5 KP', 'loot'); } },
 ];
 
 const UPGRADES = [
-  { id:'miningSpeed', name:'Data Miner v{level}', desc:'+20% DATA generation speed', cost:{credits:30}, mult:1.8, max:15 },
-  { id:'sniffingSpeed', name:'Packet Sniffer v{level}', desc:'+20% CREDITS generation speed', cost:{data:40}, mult:1.8, max:15 },
-  { id:'cryptoSpeed', name:'Crypto Miner v{level}', desc:'+20% CPU generation speed', cost:{credits:60,data:30}, mult:1.8, max:15 },
-  { id:'scoutSpeed', name:'Network Scout v{level}', desc:'+20% BW generation speed', cost:{credits:80,cpu:20}, mult:1.8, max:15 },
-  { id:'dataCap', name:'Data Reservoir v{level}', desc:'2x max data storage', cost:{credits:1000}, mult:1.3, max:10 },
-  { id:'cpuCap', name:'CPU Rack v{level}', desc:'2x max CPU cores', cost:{data:300}, mult:1.3, max:10 },
-  { id:'bwCap', name:'Fiber Link v{level}', desc:'2x max bandwidth', cost:{cpu:100}, mult:1.3, max:10 },
-  { id:'combatBoost', name:'ICE Breaker v{level}', desc:'+15% combat damage', cost:{credits:100}, mult:1.8, max:15 },
-  { id:'creditCap', name:'Swiss Account v{level}', desc:'2x max credits', cost:{data:200,cpu:50}, mult:1.3, max:10 },
-  { id:'dmCap', name:'Quantum Vault v{level}', desc:'2x max dark matter', cost:{credits:1500,bandwidth:30}, mult:1.3, max:10 },
+  { id:'xpBoost', name:'Code Editor v{level}', desc:'+20% XP generation speed', cost:{credits:30}, mult:1.8, max:15 },
+  { id:'locBoost', name:'Auto-Completion v{level}', desc:'+20% LOC generation speed', cost:{data:40}, mult:1.8, max:15 },
+  { id:'kpBoost', name:'Syntax Highlighting v{level}', desc:'+20% KP generation speed', cost:{credits:60,data:30}, mult:1.8, max:15 },
+  { id:'insightBoost', name:'AI Assistant v{level}', desc:'+20% Insight generation speed', cost:{credits:80,cpu:20}, mult:1.8, max:15 },
+  { id:'xpCap', name:'Knowledge Base v{level}', desc:'2x max XP storage', cost:{credits:1000}, mult:1.3, max:10 },
+  { id:'kpCap', name:'Memory Palace v{level}', desc:'2x max KP storage', cost:{data:300}, mult:1.3, max:10 },
+  { id:'insightCap', name:'Deep Focus v{level}', desc:'2x max Insight storage', cost:{cpu:100}, mult:1.3, max:10 },
+  { id:'debugBoost', name:'Debugger Pro v{level}', desc:'+15% debug efficiency', cost:{credits:100}, mult:1.8, max:15 },
+  { id:'locCap', name:'Project Manager v{level}', desc:'2x max LOC storage', cost:{data:200,cpu:50}, mult:1.3, max:10 },
+  { id:'masteryCap', name:'Architect Mind v{level}', desc:'2x max Mastery storage', cost:{credits:1500,bandwidth:30}, mult:1.3, max:10 },
 ];
 
-const DROP_LABELS = { dataShard:'Data Shard', fwShard:'FW Shard', iceCore:'ICE Core', aiMod:'AI Module', encKey:'Enc Key', dnToken:'DN Token', coreFrag:'Core Frag' };
-const ITEM_LABELS = { program:'Program', hardware:'Hardware', exploit:'Exploit', neuralLinks:'Neural Link', turboChargers:'Turbo Charger', qProgram:'Quantum Program', qHardware:'Armor Shield', qExploit:'Zero Day Exploit' };
+const DROP_LABELS = { dataShard:'Snippet', fwShard:'Function', iceCore:'Module', aiMod:'Algorithm', encKey:'Pattern', dnToken:'Blueprint', coreFrag:'Core Concept' };
+const ITEM_LABELS = { program:'Script', hardware:'Web Page', exploit:'Library', neuralLinks:'Framework', turboChargers:'API', qProgram:'Database', qHardware:'Game', qExploit:'OS Module' };
 
 const ENEMIES = [
-  { name:'ICE Wall', hp:50, atk:3, def:1, reward:{credits:10}, lvl:1, drop:'dataShard' },
-  { name:'Firewall Daemon', hp:120, atk:6, def:3, reward:{credits:30,darkMatter:1}, lvl:5, drop:'fwShard' },
-  { name:'Black ICE', hp:300, atk:12, def:6, reward:{credits:80,darkMatter:3}, lvl:10, drop:'iceCore' },
-  { name:'AI Sentinel', hp:600, atk:20, def:10, reward:{credits:150,darkMatter:6}, lvl:15, drop:'aiMod' },
-  { name:'Corporate Node', hp:1200, atk:35, def:18, reward:{credits:300,darkMatter:12}, lvl:20, drop:'encKey' },
-  { name:'Darknet Server', hp:2500, atk:55, def:30, reward:{credits:600,darkMatter:25}, lvl:30, drop:'dnToken' },
-  { name:'Central Core', hp:5000, atk:80, def:45, reward:{credits:1200,darkMatter:50}, lvl:40, drop:'coreFrag' },
-  { name:'Quantum Gateway', hp:10000, atk:120, def:60, reward:{credits:2500,darkMatter:100}, lvl:50, drop:'coreFrag' },
-  { name:'Void Processor', hp:20000, atk:180, def:80, reward:{credits:5000,darkMatter:200}, lvl:60, drop:'coreFrag' },
-  { name:'Singularity Core', hp:50000, atk:300, def:120, reward:{credits:12000,darkMatter:500}, lvl:80, drop:'coreFrag' },
+  { name:'Syntax Error', hp:50, atk:3, def:1, reward:{credits:10}, lvl:1, drop:'dataShard' },
+  { name:'Null Reference', hp:120, atk:6, def:3, reward:{credits:30,darkMatter:1}, lvl:5, drop:'fwShard' },
+  { name:'Memory Leak', hp:300, atk:12, def:6, reward:{credits:80,darkMatter:3}, lvl:10, drop:'iceCore' },
+  { name:'Race Condition', hp:600, atk:20, def:10, reward:{credits:150,darkMatter:6}, lvl:15, drop:'aiMod' },
+  { name:'Infinite Loop', hp:1200, atk:35, def:18, reward:{credits:300,darkMatter:12}, lvl:20, drop:'encKey' },
+  { name:'Stack Overflow', hp:2500, atk:55, def:30, reward:{credits:600,darkMatter:25}, lvl:30, drop:'dnToken' },
+  { name:'Deadlock', hp:5000, atk:80, def:45, reward:{credits:1200,darkMatter:50}, lvl:40, drop:'coreFrag' },
+  { name:'Buffer Overflow', hp:10000, atk:120, def:60, reward:{credits:2500,darkMatter:100}, lvl:50, drop:'coreFrag' },
+  { name:'Segmentation Fault', hp:20000, atk:180, def:80, reward:{credits:5000,darkMatter:200}, lvl:60, drop:'coreFrag' },
+  { name:'Quantum Bug', hp:50000, atk:300, def:120, reward:{credits:12000,darkMatter:500}, lvl:80, drop:'coreFrag' },
 ];
 
 const ZONES = [
-  { id:'perimeter', name:'Perimeter Net', desc:'The outer edge of the network.', reqDefeated:0, bonuses:{dataMult:1.2}, enemyRange:[0,1] },
-  { id:'dmz', name:'DMZ', desc:'Demilitarized zone with stronger defenses.', reqDefeated:3, bonuses:{creditsMult:1.2}, enemyRange:[1,2] },
-  { id:'corpLan', name:'Corporate LAN', desc:'Internal corporate network.', reqDefeated:6, bonuses:{cpuMult:1.2}, enemyRange:[2,3] },
-  { id:'core', name:'Core Network', desc:'The heart of the system.', reqDefeated:10, bonuses:{bwMult:1.2}, enemyRange:[3,5] },
-  { id:'darknet', name:'Darknet Depths', desc:'The deepest, most dangerous layer.', reqDefeated:15, bonuses:{allMult:1.15}, enemyRange:[5,7] },
+  { id:'basics', name:'Basic Concepts', desc:'Fundamental programming ideas.', reqDefeated:0, bonuses:{dataMult:1.2}, enemyRange:[0,1] },
+  { id:'intermediate', name:'Intermediate', desc:'More complex programming patterns.', reqDefeated:3, bonuses:{creditsMult:1.2}, enemyRange:[1,2] },
+  { id:'advanced', name:'Advanced Topics', desc:'Challenging programming concepts.', reqDefeated:6, bonuses:{cpuMult:1.2}, enemyRange:[2,3] },
+  { id:'expert', name:'Expert Level', desc:'Master-level programming knowledge.', reqDefeated:10, bonuses:{bwMult:1.2}, enemyRange:[3,5] },
+  { id:'architect', name:'Software Architect', desc:'System-level design and architecture.', reqDefeated:15, bonuses:{allMult:1.15}, enemyRange:[5,7] },
 ];
 
 const ACHIEVEMENTS = [
-  { id:'firstData', name:'First Bytes', desc:'Earn 1K DATA total', check:g=>g.stats.earned.data>=1000, reward:{dataMult:1.05} },
-  { id:'dataMiner', name:'Data Hoarder', desc:'Earn 100K DATA total', check:g=>g.stats.earned.data>=100000, reward:{dataMult:1.1} },
-  { id:'creditScore', name:'Credit Seeker', desc:'Earn 1K CREDITS total', check:g=>g.stats.earned.credits>=1000, reward:{creditsMult:1.05} },
-  { id:'cpuCollector', name:'CPU Collector', desc:'Earn 1K CPU total', check:g=>g.stats.earned.cpu>=1000, reward:{cpuMult:1.05} },
-  { id:'bwExplorer', name:'Bandwidth Explorer', desc:'Earn 1K BANDWIDTH total', check:g=>g.stats.earned.bandwidth>=1000, reward:{bwMult:1.05} },
-  { id:'dmHacker', name:'Dark Matter Hacker', desc:'Earn 10 Dark Matter total', check:g=>g.stats.earned.darkMatter>=10, reward:{dmMult:1.1} },
-  { id:'skillMaster', name:'Branch Master', desc:'Reach total 50 branch levels', check:g=>{let t=0;Object.values(g.branches).forEach(b=>{Object.values(b).forEach(v=>t+=v)});return t>=50;}, reward:{speedMult:1.05} },
-  { id:'jackOfAll', name:'Jack of All Trades', desc:'Unlock all branch nodes', check:g=>{let a=0,t=0;BRANCHES.forEach(b=>{b.nodes.forEach(n=>{t++;if((g.branches[b.id]||{})[n.id]||0>0)a++})});return a>=t;}, reward:{craftSpeed:1.1} },
-  { id:'firstBlood', name:'First Blood', desc:'Defeat your first enemy', check:g=>g.stats.enemiesDefeated>=1, reward:{atkMult:1.1} },
-  { id:'enemySlayer', name:'Enemy Slayer', desc:'Defeat 50 enemies', check:g=>g.stats.enemiesDefeated>=50, reward:{atkMult:1.15} },
-  { id:'prestige1', name:'New Game+', desc:'Prestige for the first time', check:g=>g.prest.times>=1, reward:{prestMult:1.1} },
-  { id:'prestige5', name:'Veteran Runner', desc:'Prestige 5 times', check:g=>g.prest.times>=5, reward:{prestMult:1.15} },
-  { id:'crafter', name:'Maker', desc:'Craft 10 items', check:g=>g.stats.itemsCrafted>=10, reward:{craftSpeed:1.1} },
-  { id:'massCrafter', name:'Industrialist', desc:'Craft 100 items', check:g=>g.stats.itemsCrafted>=100, reward:{craftSpeed:1.15} },
-  { id:'highRoller', name:'High Roller', desc:'Earn 10K CREDITS total', check:g=>g.stats.earned.credits>=10000, reward:{creditsMult:1.1} },
-  { id:'upgradeAddict', name:'Upgrade Addict', desc:'Buy 20 upgrades total', check:g=>g.upgs.reduce((s,u)=>s+u.lvl,0)>=20, reward:{upgradeMult:1.05} },
-  { id:'zoneExplorer', name:'Zone Explorer', desc:'Unlock 3 zones', check:g=>g.zones.filter(z=>z.unlocked).length>=3, reward:{allMult:1.05} },
-  { id:'fullMap', name:'Cartographer', desc:'Unlock all zones', check:g=>g.zones.every(z=>z.unlocked), reward:{allMult:1.1} },
-  { id:'richRunner', name:'Rich Netrunner', desc:'Hold 10K of any resource at once', check:g=>Object.values(g.res).some(v=>v>=10000), reward:{capMult:1.1} },
-  { id:'transcend', name:'Beyond the Code', desc:'Transcend for the first time', check:g=>g.prest.transcendTimes>=1, reward:{allMult:1.15} },
+  { id:'firstXp', name:'First Code', desc:'Earn 1K XP total', check:g=>g.stats.earned.data>=1000, reward:{dataMult:1.05} },
+  { id:'xpMiner', name:'Code Explorer', desc:'Earn 100K XP total', check:g=>g.stats.earned.data>=100000, reward:{dataMult:1.1} },
+  { id:'locEarner', name:'Line Writer', desc:'Earn 1K LOC total', check:g=>g.stats.earned.credits>=1000, reward:{creditsMult:1.05} },
+  { id:'kpCollector', name:'Knowledge Seeker', desc:'Earn 1K KP total', check:g=>g.stats.earned.cpu>=1000, reward:{cpuMult:1.05} },
+  { id:'insightExplorer', name:'Insightful', desc:'Earn 1K Insight total', check:g=>g.stats.earned.bandwidth>=1000, reward:{bwMult:1.05} },
+  { id:'masteryHacker', name:'Master Coder', desc:'Earn 10 Mastery total', check:g=>g.stats.earned.darkMatter>=10, reward:{dmMult:1.1} },
+  { id:'conceptMaster', name:'Concept Collector', desc:'Reach total 50 concept levels', check:g=>{let t=0;Object.values(g.branches).forEach(b=>{Object.values(b).forEach(v=>t+=v)});return t>=50;}, reward:{speedMult:1.05} },
+  { id:'polyglot', name:'Polyglot', desc:'Unlock all language concepts', check:g=>{let a=0,t=0;BRANCHES.forEach(b=>{b.nodes.forEach(n=>{t++;if((g.branches[b.id]||{})[n.id]||0>0)a++})});return a>=t;}, reward:{craftSpeed:1.1} },
+  { id:'firstDebug', name:'First Fix', desc:'Fix your first bug', check:g=>g.stats.enemiesDefeated>=1, reward:{atkMult:1.1} },
+  { id:'bugHunter', name:'Bug Hunter', desc:'Fix 50 bugs', check:g=>g.stats.enemiesDefeated>=50, reward:{atkMult:1.15} },
+  { id:'firstMastery', name:'Rewrite', desc:'Mastery for the first time', check:g=>g.prest.times>=1, reward:{prestMult:1.1} },
+  { id:'mastery5', name:'Senior Dev', desc:'Rewrite 5 times', check:g=>g.prest.times>=5, reward:{prestMult:1.15} },
+  { id:'crafter', name:'Builder', desc:'Build 10 projects', check:g=>g.stats.itemsCrafted>=10, reward:{craftSpeed:1.1} },
+  { id:'massCrafter', name:'Architect', desc:'Build 100 projects', check:g=>g.stats.itemsCrafted>=100, reward:{craftSpeed:1.15} },
+  { id:'highLoc', name:'Codebase', desc:'Earn 10K LOC total', check:g=>g.stats.earned.credits>=10000, reward:{creditsMult:1.1} },
+  { id:'toolCollector', name:'Tool Collector', desc:'Buy 20 tool upgrades total', check:g=>g.upgs.reduce((s,u)=>s+u.lvl,0)>=20, reward:{upgradeMult:1.05} },
+  { id:'zoneExplorer', name:'Concept Explorer', desc:'Unlock 3 concept tiers', check:g=>g.zones.filter(z=>z.unlocked).length>=3, reward:{allMult:1.05} },
+  { id:'fullMap', name:'Knowledge Master', desc:'Unlock all concept tiers', check:g=>g.zones.every(z=>z.unlocked), reward:{allMult:1.1} },
+  { id:'richCoder', name:'Resourceful', desc:'Hold 10K of any resource at once', check:g=>Object.values(g.res).some(v=>v>=10000), reward:{capMult:1.1} },
+  { id:'transcend', name:'Enlightenment', desc:'Transcend for the first time', check:g=>g.prest.transcendTimes>=1, reward:{allMult:1.15} },
 ];
 
 const BURST_EXPLOITS = [
-  { id:'codeBomb', name:'Code Bomb', desc:'Deals 30 damage. Costs 5 DATA + 3 CPU.', cost:{data:5,cpu:3}, damage:30, reqEnemyLvl:1 },
-  { id:'overload', name:'Overload', desc:'Deals 80 damage. Costs 20 CREDITS + 10 BW.', cost:{credits:20,bandwidth:10}, damage:80, reqEnemyLvl:10 },
-  { id:'coreMelt', name:'Core Melt', desc:'Deals 200 damage. Costs 1 Exploit + 50 DATA.', cost:{exploit:1,data:50}, damage:200, reqEnemyLvl:20 },
-  { id:'wormhole', name:'Wormhole', desc:'Deals 500 damage. Costs 5 Dark Matter + 200 CPU.', cost:{darkMatter:5,cpu:200}, damage:500, reqEnemyLvl:35 },
+  { id:'quickFix', name:'Quick Fix', desc:'Apply a quick patch for 30 debug damage. Costs 5 XP + 3 KP.', cost:{data:5,cpu:3}, damage:30, reqEnemyLvl:1 },
+  { id:'refactor', name:'Refactor', desc:'Restructure code for 80 debug damage. Costs 20 LOC + 10 Insight.', cost:{credits:20,bandwidth:10}, damage:80, reqEnemyLvl:10 },
+  { id:'rewrite', name:'Rewrite Module', desc:'Rewrite a module for 200 debug damage. Costs 1 Library + 50 XP.', cost:{exploit:1,data:50}, damage:200, reqEnemyLvl:20 },
+  { id:'redesign', name:'Redesign System', desc:'Full system redesign for 500 debug damage. Costs 5 Mastery + 200 KP.', cost:{darkMatter:5,cpu:200}, damage:500, reqEnemyLvl:35 },
 ];
+
+// ===== SURPRISE: Knowledge Visualizer =====
+const VISUALIZER_UNLOCK_THRESHOLD = 12; // Total concept levels to unlock visualizer
 
 const SUBSCRIPTION = {
   price: 1,
   features: {
     noAds: 'Remove all ads',
     offlineProgress: 'Full offline progress (free: 25% rate, 6hr cap)',
-    autoCombat: 'Auto-combat mode (free: manual only)',
-    autoCraft: 'Auto-crafting queue (free: manual only)',
-    fasterNP: '1.5x Neural Point generation rate',
+    autoDebug: 'Auto-debug mode (free: manual only)',
+    autoBuild: 'Auto-build queue (free: manual only)',
+    fasterKP: '1.5x Knowledge Point generation rate',
     speedBoost: '1.25x permanent speed boost',
     cloudSave: 'Cloud save support',
     premiumThemes: 'Premium UI themes',
@@ -143,43 +169,46 @@ const SAVE_VERSION = 7;
 
 // ===== DAILY QUESTS =====
 const QUEST_POOL = [
-  { id:'qEarnData', desc:'Earn DATA', check:g=>g._questProgress?.data||0, target:5000, rewardNP:5, reward:{data:1000} },
-  { id:'qEarnCredits', desc:'Earn CREDITS', check:g=>g._questProgress?.credits||0, target:2000, rewardNP:5, reward:{credits:500} },
-  { id:'qDefeat', desc:'Defeat enemies', check:g=>g._questProgress?.defeated||0, target:5, rewardNP:5, reward:{darkMatter:2} },
-  { id:'qCraft', desc:'Craft items', check:g=>g._questProgress?.crafted||0, target:3, rewardNP:5, reward:{cpu:200} },
-  { id:'qSpendNp', desc:'Spend NP on branches', check:g=>g._questProgress?.spentNp||0, target:20, rewardNP:5, reward:{bandwidth:100} },
-  { id:'qBurst', desc:'Use burst attacks', check:g=>g._questProgress?.burst||0, target:3, rewardNP:5, reward:{credits:500} },
-  { id:'qPrestigeDm', desc:'Earn Dark Matter', check:g=>g._questProgress?.dmEarned||0, target:10, rewardNP:8, reward:{darkMatter:3} },
+  { id:'qEarnXp', desc:'Earn XP', check:g=>g._questProgress?.data||0, target:5000, rewardNP:5, reward:{data:1000} },
+  { id:'qEarnLoc', desc:'Earn LOC', check:g=>g._questProgress?.credits||0, target:2000, rewardNP:5, reward:{credits:500} },
+  { id:'qDebug', desc:'Fix bugs', check:g=>g._questProgress?.defeated||0, target:5, rewardNP:5, reward:{darkMatter:2} },
+  { id:'qBuild', desc:'Build projects', check:g=>g._questProgress?.crafted||0, target:3, rewardNP:5, reward:{cpu:200} },
+  { id:'qLearn', desc:'Learn concepts', check:g=>g._questProgress?.spentNp||0, target:20, rewardNP:5, reward:{bandwidth:100} },
+  { id:'qDeepFix', desc:'Use deep fixes', check:g=>g._questProgress?.burst||0, target:3, rewardNP:5, reward:{credits:500} },
+  { id:'qMastery', desc:'Earn Mastery', check:g=>g._questProgress?.dmEarned||0, target:10, rewardNP:8, reward:{darkMatter:3} },
 ];
 
 // ===== TIER BONUSES =====
 const TIER_BONUSES = [
-  { name:'Normal', hpMult:1, atkMult:1, defMult:1, rewardMult:1, color:'#0f0' },
-  { name:'Advanced', hpMult:1.5, atkMult:1.3, defMult:1.2, rewardMult:1.5, color:'#ff0' },
-  { name:'Elite', hpMult:2.5, atkMult:1.8, defMult:1.5, rewardMult:2.5, color:'#f44' },
+  { name:'Beginner', hpMult:1, atkMult:1, defMult:1, rewardMult:1, color:'#0f0' },
+  { name:'Intermediate', hpMult:1.5, atkMult:1.3, defMult:1.2, rewardMult:1.5, color:'#ff0' },
+  { name:'Expert', hpMult:2.5, atkMult:1.8, defMult:1.5, rewardMult:2.5, color:'#f44' },
 ];
 
 // ===== CONSUMABLES =====
 const CONSUMABLES = [
-  { id:'neuralSpike', name:'Neural Spike', desc:'2x NP generation for 5 minutes', cost:{data:200,credits:100}, duration:300, effect:{npMult:2} },
-  { id:'overdriveInjector', name:'Overdrive Injector', desc:'+50% ATK for 30 seconds in combat', cost:{exploit:2,cpu:50}, duration:30, effect:{atkMult:1.5} },
-  { id:'shieldBooster', name:'Shield Booster', desc:'+50% DEF for 30 seconds in combat', cost:{hardware:2,bandwidth:30}, duration:30, effect:{defMult:1.5} },
-  { id:'dataSurge', name:'Data Surge', desc:'2x resource generation for 2 minutes', cost:{credits:500,data:300}, duration:120, effect:{prodMult:2} },
+  { id:'coffee', name:'Coffee Boost', desc:'2x KP generation for 5 minutes', cost:{data:200,credits:100}, duration:300, effect:{npMult:2} },
+  { id:'energyDrink', name:'Energy Drink', desc:'+50% debug efficiency for 30 seconds', cost:{exploit:2,cpu:50}, duration:30, effect:{atkMult:1.5} },
+  { id:'focusPills', name:'Focus Pills', desc:'+50% code comprehension for 30 seconds', cost:{hardware:2,bandwidth:30}, duration:30, effect:{defMult:1.5} },
+  { id:'deepWork', name:'Deep Work Session', desc:'2x all productivity for 2 minutes', cost:{credits:500,data:300}, duration:120, effect:{prodMult:2} },
 ];
 
 // ===== ENHANCEMENT =====
 const ENHANCE_ITEMS = [
-  { id:'program', label:'Program', baseBonus:2, bonusLabel:'+2 ATK', maxLvl:10 },
-  { id:'hardware', label:'Hardware', baseBonus:3, bonusLabel:'+3 DEF', maxLvl:10 },
-  { id:'exploit', label:'Exploit', baseBonus:8, bonusLabel:'+8 ATK', maxLvl:10 },
+  { id:'program', label:'Script', baseBonus:2, bonusLabel:'+2 debug power', maxLvl:10 },
+  { id:'hardware', label:'Web Page', baseBonus:3, bonusLabel:'+3 debug defense', maxLvl:10 },
+  { id:'exploit', label:'Library', baseBonus:8, bonusLabel:'+8 debug power', maxLvl:10 },
 ];
 
 function enhanceSuccessRate(lvl) { return Math.max(0.1, 1 - lvl * 0.1); }
 function enhanceCost(lvl) { return { data:50*(lvl+1), credits:30*(lvl+1) }; }
 const ENEMY_ABILITIES = [
-  { id:'fortify', name:'Fortify', desc:'Boosts DEF by 50% for 8s', hpThreshold:0.5, effect:{defMult:1.5}, duration:8 },
-  { id:'regen', name:'Regen', desc:'Heals 20% HP', hpThreshold:0.3, effect:{heal:0.2} },
-  { id:'overcharge', name:'Overcharge', desc:'Doubles ATK for 5s', hpThreshold:0.6, effect:{atkMult:2}, duration:5 },
-  { id:'counter', name:'Counter', desc:'Reflects 30% damage for 6s', hpThreshold:0.4, effect:{reflect:0.3}, duration:6 },
+  { id:'fortify', name:'Fortify', desc:'Bug becomes harder to find', hpThreshold:0.5, effect:{defMult:1.5}, duration:8 },
+  { id:'regen', name:'Regen', desc:'Bug partially rewrites itself', hpThreshold:0.3, effect:{heal:0.2} },
+  { id:'overcharge', name:'Overcharge', desc:'Bug corrupts surrounding code', hpThreshold:0.6, effect:{atkMult:2}, duration:5 },
+  { id:'counter', name:'Counter', desc:'Bug throws misleading error', hpThreshold:0.4, effect:{reflect:0.3}, duration:6 },
 ];
-const ENEMY_ABILITY_MAP = [0, 1, 2, 3, 0, 1, 2, 3, 0, 1]; // index into ENEMY_ABILITIES per enemy
+const ENEMY_ABILITY_MAP = [0, 1, 2, 3, 0, 1, 2, 3, 0, 1];
+
+// ===== KNOWLEDGE VISUALIZER NODES =====
+const VIS_NODE_COLORS = ['#3776AB','#F7DF1E','#555555','#9B4F96','#0f0','#0ff','#f0f','#ff0','#fff','#f44'];
