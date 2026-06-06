@@ -1,6 +1,74 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospace; overflow: hidden; height: 100vh; user-select: none; }
 
+/* Animated matrix rain background */
+body::before {
+  content:'';position:fixed;inset:0;z-index:-1;
+  background-image: linear-gradient(180deg, transparent 0%, rgba(0,255,65,0.02) 50%, transparent 100%);
+  animation: matrixRain 8s linear infinite;
+  background-size: 100% 200%;
+  pointer-events:none;
+}
+@keyframes matrixRain {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 100%; }
+}
+
+/* Scanline overlay */
+body::after {
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background: repeating-linear-gradient(0deg,
+    transparent, transparent 2px,
+    rgba(0,255,65,0.03) 2px, rgba(0,255,65,0.03) 4px);
+}
+
+/* Glowing resource icon pulse */
+.res {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { text-shadow: 0 0 6px rgba(0,255,65,0.4); }
+  50% { text-shadow: 0 0 12px rgba(0,255,65,0.7), 0 0 20px rgba(0,255,65,0.2); }
+}
+
+/* Combat shake */
+.shake {
+  animation: combatShake 0.15s ease-out;
+}
+@keyframes combatShake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+/* Enemy hit flash */
+.hit-flash {
+  animation: hitFlash 0.15s ease-out;
+}
+@keyframes hitFlash {
+  0% { background-color: rgba(255,0,0,0.3); }
+  100% { background-color: transparent; }
+}
+
+/* Tab content fade transition */
+.tab-content.active { animation: tabFadeIn 0.2s ease-out; }
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Enhanced enemy-card hover */
+.enemy-card:not(.locked):hover { transform: scale(1.03); }
+
+/* Prestige button glow */
+.prestige-btn:not(:disabled):hover { animation: prestigeGlow 1s ease-in-out infinite; }
+@keyframes prestigeGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255,0,255,0.2); }
+  50% { box-shadow: 0 0 40px rgba(255,0,255,0.4), 0 0 60px rgba(255,0,255,0.1); }
+}
+
 #login-overlay { position:fixed;inset:0;z-index:1000;background:#0a0a1a;display:flex;align-items:center;justify-content:center; }
 #login-box { background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.25);border-radius:8px;padding:40px;text-align:center;max-width:400px;width:90%; }
 #login-box h1 { color:#0f0;font-size:24px;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px; }
@@ -170,6 +238,58 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 .theme-neon { --accent:#f0f; }
 .theme-amber { --accent:#ff0; }
 .theme-cyan { --accent:#0ff; }
+
+/* Branch tree */
+.branch-tree { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px; }
+.branch-column { background:rgba(0,255,65,0.03);border:1px solid rgba(0,255,65,0.15);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px; }
+.branch-header { font-size:14px;font-weight:bold;text-align:center;text-transform:uppercase;letter-spacing:2px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.1); }
+.branch-desc { font-size:10px;color:#888;text-align:center;margin-bottom:4px; }
+.branch-node { background:rgba(0,255,65,0.05);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:8px;cursor:pointer;transition:all 0.15s; }
+.branch-node:hover { background:rgba(0,255,65,0.1);border-color:rgba(0,255,65,0.3); }
+.branch-node.node-locked { opacity:0.35;cursor:default; }
+.branch-node.node-locked:hover { background:rgba(0,255,65,0.05);border-color:rgba(0,255,65,0.12); }
+.node-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:2px; }
+.node-name { color:#0f0;font-size:11px;font-weight:bold; }
+.node-lvl { color:#f0f;font-size:10px; }
+.node-desc { font-size:9px;color:#666;margin:2px 0; }
+.node-effect { font-size:10px;margin:2px 0; }
+.node-req { font-size:9px;margin:2px 0; }
+.node-cost { font-size:10px;color:#ff0;margin-top:2px; }
+
+@media (max-width: 800px) { .branch-tree { grid-template-columns:1fr; } }
+@media (max-width: 600px) { .branch-tree { grid-template-columns:1fr; } }
+
+/* Mini-games */
+.mg-tab-btn {
+  flex:1;padding:8px 12px;background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.2);
+  color:#8f8;font-family:inherit;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all 0.15s;
+}
+.mg-tab-btn:hover { background:rgba(0,255,65,0.12); }
+.mg-tab-btn.active { background:rgba(0,255,65,0.15);border-color:#0f0;color:#0f0;box-shadow:0 0 8px rgba(0,255,65,0.2); }
+.mg-content { display:none; }
+.mg-content.active { display:block; }
+.mg-btn { padding:8px 20px;background:transparent;border:1px solid #0ff;color:#0ff;font-family:inherit;font-size:12px;cursor:pointer;border-radius:3px;text-transform:uppercase;letter-spacing:1px;margin-top:8px;display:block;margin-left:auto;margin-right:auto;transition:all 0.15s; }
+.mg-btn:hover { background:rgba(0,255,255,0.15);box-shadow:0 0 8px rgba(0,255,255,0.2); }
+
+/* Tic Tac Toe */
+.ttt-grid { display:grid;grid-template-columns:repeat(3,80px);grid-template-rows:repeat(3,80px);gap:4px;justify-content:center;margin:0 auto;max-width:260px; }
+.ttt-cell { display:flex;align-items:center;justify-content:center;background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.2);border-radius:4px;font-size:32px;font-weight:bold;color:#0f0;transition:all 0.15s;user-select:none; }
+.ttt-cell:hover:empty { background:rgba(0,255,65,0.1); }
+.ttt-O { color:#f44; }
+.ttt-X { color:#0ff; }
+
+/* Snake */
+.snake-grid { display:grid;gap:1px;justify-content:center;margin:0 auto;max-width:340px;background:rgba(0,255,65,0.04);padding:2px;border:1px solid rgba(0,255,65,0.1);border-radius:4px; }
+.snake-cell { border-radius:1px; }
+.snake-empty { background:rgba(0,255,65,0.02); }
+.snake-body { background:rgba(0,255,65,0.4);border-radius:2px; }
+.snake-head { background:#0f0;border-radius:2px;box-shadow:0 0 4px rgba(0,255,65,0.6); }
+.snake-food { background:#f44;border-radius:50%;box-shadow:0 0 6px rgba(255,0,0,0.6); }
+
+@media (max-width: 600px) {
+  .ttt-grid { grid-template-columns:repeat(3,70px);grid-template-rows:repeat(3,70px); }
+  .snake-grid { max-width:280px; }
+}
 
 /* Mobile responsiveness */
 @media (max-width: 600px) {

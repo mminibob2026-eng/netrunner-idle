@@ -1,47 +1,27 @@
-function clickSkill(id) {
-  const s = skillSt(id); if (!s) return;
-  if (G.cmbt.inCombat) combatDisconnect();
-  if (!s.unlocked) {
-    const c = skillCfg(id);
-    if (!c || !c.cost) return;
-    if (c.req) {
-      for (const [reqId, reqLvl] of Object.entries(c.req)) {
-        const rs = skillSt(reqId);
-        if (!rs || rs.lvl < reqLvl) { toast('Need '+c.reqLabel, 'error'); return; }
-      }
-    }
-    if (!canPay(c.cost)) { toast('Need '+c.costLabel, 'error'); return; }
-    pay(c.cost); s.unlocked = true;
-    if (G.skills.filter(x => x.active).length < maxActiveSkills()) {
-      s.active = true;
-    }
-    trackEvent('skill_unlock', { skill: id, level: s.lvl });
-    toast(c.name+' unlocked!', 'loot');
-    checkAchievements();
+function clickBranchNode(branchId, nodeId) {
+  const b = branchCfg(branchId);
+  if (!b) return;
+  const n = branchNodeCfg(branchId, nodeId);
+  if (!n) return;
+  if (!branchNodeUnlocked(branchId, nodeId)) {
+    const req = nodeRequirement(branchId, nodeId);
+    toast('Need ' + req.node + ' Lv.' + req.level, 'error');
     return;
   }
-  if (s.active) {
-    s.active = false;
-    toast(skillCfg(id).name+' stopped', 'info');
-    return;
-  }
-  const activeCount = G.skills.filter(x => x.active).length;
-  if (activeCount >= maxActiveSkills()) {
-    const oldest = G.skills.find(x => x.active);
-    if (oldest) {
-      oldest.active = false;
-      toast(oldest.id+' deactivated to make room', 'info');
-    }
-  }
-  s.active = true;
-  toast(skillCfg(id).name+' started', 'info');
+  const cost = branchCost(branchId, nodeId);
+  if (G.neuralPoints < cost) { toast('Need ' + cost + ' NP', 'error'); return; }
+  G.neuralPoints -= cost;
+  G.branches[branchId][nodeId] = (G.branches[branchId][nodeId] || 0) + 1;
+  toast(n.name + ' Lv.' + G.branches[branchId][nodeId], 'loot');
+  checkAchievements();
 }
 
 function clickUpgrade(id) {
   const u = upgSt(id), c = upgCfg(id);
   if (!u||!c||u.lvl>=c.max) return;
   const cost = {};
-  Object.entries(c.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*Math.pow(c.mult, u.lvl)); });
+  const cr = branchCostRed();
+  Object.entries(c.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*(1-cr)*Math.pow(c.mult, u.lvl)); });
   if (!canPay(cost)) { toast('Cannot afford', 'error'); return; }
   pay(cost); u.lvl++;
   toast(c.name.replace('{level}',u.lvl)+' bought', 'loot');
@@ -50,18 +30,15 @@ function clickUpgrade(id) {
 
 function clickCraft(id) {
   const c = CRAFTS.find(x=>x.id===id); if (!c) return;
-  if (!canPay(c.cost)) { toast('Not enough resources', 'error'); return; }
-  pay(c.cost);
+  const cr = branchCostRed();
+  const cost = {};
+  Object.entries(c.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*(1-cr)); });
+  if (!canPay(cost)) { toast('Not enough resources', 'error'); return; }
+  pay(cost);
   G.inv[c.result] = (G.inv[c.result]||0) + 1;
   G.stats.itemsCrafted = (G.stats.itemsCrafted||0) + 1;
-  G.skills.forEach(s => {
-    if (!s.unlocked) return;
-    const xp = 5 + Math.floor(s.lvl*0.5);
-    s.xp += xp;
-    const req = xpReq(s.lvl);
-    while (s.xp >= req && s.lvl < 99) { s.xp -= req; s.lvl++; }
-  });
-  toast('Crafted '+c.name, 'loot');
+  G.neuralPoints += 2;
+  toast('Crafted '+c.name+' +2 NP', 'loot');
   checkAchievements();
 }
 
@@ -74,13 +51,18 @@ function combatEngage(idx) {
   G.cmbt.hp = ENEMIES[idx].hp;
   G.cmbt._bonus = 0;
   if (G.cmbt.php <= 0) G.cmbt.php = G.cmbt.mxhp;
+  const burst = branchBurstDmg();
+  if (burst > 0) { G.cmbt.hp -= burst; logCombat('System Breach: +' + burst + ' opening damage!'); }
   G.cmbt.log = [];
   logCombat('Engaged '+ENEMIES[idx].name+' [Lv.'+ENEMIES[idx].lvl+']');
   toast('Hacking '+ENEMIES[idx].name+'!', 'info');
+  if (G.cmbt.hp <= 0) combatWin();
 }
 
 function combatAttack() {
   if (!G.cmbt.inCombat) return;
+  const ed = document.getElementById('enemy-display');
+  if (ed) { ed.classList.remove('shake'); void ed.offsetWidth; ed.classList.add('shake'); }
   const e = ENEMIES[G.cmbt.idx];
   const { a, d } = cmbtPow();
   const bonus = G.cmbt._bonus || 0;
@@ -132,8 +114,9 @@ function combatWin() {
     logCombat('DROP: '+DROP_LABELS[e.drop]);
   }
   G.stats.enemiesDefeated = (G.stats.enemiesDefeated||0) + 1;
+  G.neuralPoints += 1;
   trackEvent('enemy_defeated', { enemy: e.name, lvl: e.lvl });
-  logCombat('BREACHED '+e.name+'! Rewards: '+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', '));
+  logCombat('BREACHED '+e.name+'! Rewards: '+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', ')+' +1 NP');
   toast(e.name+' breached!', 'loot');
   G.cmbt.hp = e.hp;
   G.cmbt._bonus = 0;
@@ -174,8 +157,6 @@ function doPrestige() {
   trackEvent('prestige', { level: G.prest.lvl, total: G.prest.times });
   save(); toast('Prestige! Level '+G.prest.lvl, 'loot');
   rebuildUI();
-  const dm = G.skills[0];
-  if (dm && !dm.active) { dm.active = true; }
   checkAchievements();
 }
 
@@ -197,8 +178,6 @@ function doTranscend() {
   G.cmbt.hp = ENEMIES[0].hp;
   save(); toast('Transcend! Level '+G.prest.transcendLvl, 'loot');
   rebuildUI();
-  const dm = G.skills[0];
-  if (dm && !dm.active) { dm.active = true; }
   checkAchievements();
 }
 
@@ -224,24 +203,10 @@ function checkAchievements() {
     if (as.unlocked) return;
     if (a.check(G)) {
       as.unlocked = true;
-      toast('Achievement: '+a.name+'!', 'loot');
+      G.neuralPoints += 5;
+      toast('Achievement: '+a.name+'! +5 NP', 'loot');
     }
   });
-}
-
-// Specializations
-function buySpecialization(id) {
-  const cfg = SPECIALIZATIONS.find(s => s.id === id);
-  if (!cfg) return;
-  const owned = G.specializations.find(s => s.id === id);
-  if (!owned || owned.purchased) { toast('Already purchased', 'info'); return; }
-  const skill = skillSt(cfg.skillId);
-  if (!skill || skill.lvl < cfg.reqLvl) { toast('Need '+cfg.skillId+' Lv.'+cfg.reqLvl, 'error'); return; }
-  if (!canPay(cfg.cost)) { toast('Cannot afford', 'error'); return; }
-  pay(cfg.cost);
-  owned.purchased = true;
-  toast('Specialization: '+cfg.name+' unlocked!', 'loot');
-  checkAchievements();
 }
 
 // Combat burst items
@@ -262,9 +227,10 @@ function combatBurst(id) {
 // Dev
 function isDev() { return USER.toLowerCase() === 'dev'; }
 function devAddRes(id, amt) { addRes(id, amt); toast('Added '+fmt(amt)+' '+id, 'loot'); }
-function devMaxSkills() { G.skills.forEach(s=>{s.lvl=50;s.xp=0;s.unlocked=true;}); toast('Skills maxed', 'loot'); rebuildUI(); }
-function devUnlockAll() { G.skills.forEach(s=>{s.unlocked=true;}); G.cmbt.unlocked=true; G.zones.forEach(z=>{z.unlocked=true;}); toast('All unlocked', 'loot'); rebuildUI(); }
+function devMaxBranch() { BRANCHES.forEach(b => { b.nodes.forEach(n => { G.branches[b.id][n.id] = 30; }); }); toast('Branches maxed', 'loot'); rebuildUI(); }
+function devUnlockAll() { BRANCHES.forEach(b => { b.nodes.forEach(n => { G.branches[b.id][n.id] = Math.max(G.branches[b.id][n.id]||0, 1); }); }); G.cmbt.unlocked=true; G.zones.forEach(z=>{z.unlocked=true;}); G.neuralPoints += 1000; toast('All unlocked +1000 NP', 'loot'); rebuildUI(); }
 function devSpeed(v) { G._speed=v||1; toast('Speed x'+(v||1), 'info'); }
+function devAddNp(amt) { G.neuralPoints += amt; toast('+'+amt+' NP', 'loot'); }
 
 // Auto-combat
 function combatAutoAttack() {

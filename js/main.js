@@ -4,30 +4,21 @@ function tick(dt) {
   const speed = getEffectiveSpeed();
   const sdt = dt * speed;
 
-  // Skills (paused during combat)
-  if (!G.cmbt.inCombat) {
-    G.skills.forEach((s, i) => {
-      if (!s.unlocked || !s.active) return;
-      const maxActive = maxActiveSkills();
-      if (G.skills.filter(x => x.active).indexOf(s) >= maxActive) return;
-      const c = SKILLS[i];
-      const t = skillTime(c.id);
-      s.prog += sdt / t;
-      while (s.prog >= 1) {
-        s.prog -= 1;
-        if (c.res === 'all') {
-          addRes('data', 2 * (1 + (s.lvl-1)*0.1));
-          addRes('credits', 2 * (1 + (s.lvl-1)*0.1));
-          addRes('cpu', 1 * (1 + (s.lvl-1)*0.1));
-          addRes('bandwidth', 0.5 * (1 + (s.lvl-1)*0.1));
-        } else {
-          addRes(c.res, skillYield(c.id));
-        }
-        const xp = c.xp * (1 + (s.lvl-1)*0.04);
-        s.xp += xp;
-        const req = xpReq(s.lvl);
-        while (s.xp >= req && s.lvl < 99) { s.xp -= req; s.lvl++; }
-      }
+  // Generate Neural Points (0.5 base per second, scaled by branch + sub bonus)
+  const npRate = 0.5 * branchNpRate() * (isSubActive() ? 1.5 : 1) * speed;
+  G.neuralPoints += npRate * dt;
+
+  // Process Data Stream branch - resource generation
+  const dataBranch = BRANCHES.find(b => b.id === 'data');
+  if (dataBranch) {
+    const prodMult = branchProdMult();
+    dataBranch.nodes.forEach(n => {
+      const lvl = branchLevel('data', n.id);
+      if (lvl < 1) return;
+      const gen = n.gen(lvl);
+      Object.entries(gen).forEach(([res, amt]) => {
+        addRes(res, amt * sdt * prodMult);
+      });
     });
   }
 
@@ -39,7 +30,6 @@ function tick(dt) {
       combatAttack();
     }
   } else if (G.cmbt.unlocked && G.cmbt.inCombat) {
-    // Free tier: slower auto, or none
     G.cmbt.accum += sdt;
     if (G.cmbt.accum >= 3) {
       G.cmbt.accum -= 3;

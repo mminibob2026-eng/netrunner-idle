@@ -28,7 +28,7 @@ function showSubscribeUI() {
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Full offline progress (unlimited)</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Auto-combat mode</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Auto-crafting queue</div>
-        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ 4 active skills (free: 2)</div>
+        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ 1.5x NP generation rate</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ 1.25x permanent speed</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Premium themes</div>
       </div>

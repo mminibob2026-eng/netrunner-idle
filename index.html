@@ -34,6 +34,7 @@
     <div class="res">[CPU] <span id="r-cpu">0</span></div>
     <div class="res">[BANDWIDTH] <span id="r-bandwidth">0</span></div>
     <div class="res">[DARK MATTER] <span id="r-darkMatter">0</span></div>
+    <div class="res" style="color:#f0f">[NP] <span id="np-display">0</span></div>
   </div>
   <div id="user-info" style="display:flex;align-items:center;gap:8px;"><span id="user-label" style="color:#0ff"></span><span id="save-indicator" style="color:#666;font-size:10px;"></span><span id="cloud-indicator" style="color:#0ff;font-size:10px;"></span><button id="logout-btn" style="background:transparent;border:1px solid #f44;color:#f44;font-family:inherit;font-size:10px;cursor:pointer;border-radius:2px;padding:2px 6px;">LOGOUT</button></div>
 </div>
@@ -45,16 +46,14 @@
   <button class="tab-btn" data-tab="upgrades">UPGRADES</button>
   <button class="tab-btn" data-tab="progression">PROGRESS</button>
   <button class="tab-btn" data-tab="prestige">PRESTIGE</button>
+  <button class="tab-btn" data-tab="minigames">GAMES</button>
 </div>
 
 <div id="content">
   <div id="tab-skills" class="tab-content active">
-    <div class="section-title">[ SKILLS ] <span>// train to earn resources</span></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <span id="active-skill-count" style="font-size:11px;color:#0f0;">Active: 0/2</span>
-      <span style="font-size:10px;color:#888;">Subscribe for 4 active slots</span>
-    </div>
-    <div id="skills-container" class="skills-grid"></div>
+    <div class="section-title">[ BRANCHES ] <span>// invest Neural Points to grow</span></div>
+    <p style="color:#888;font-size:11px;margin-bottom:6px;">Neural Points (NP) earned passively over time. Spend NP to level up nodes. Each branch unlocks progressively.</p>
+    <div id="branch-container" class="branch-tree"></div>
     <div id="dev-panel" style="display:none"></div>
   </div>
   <div id="tab-crafting" class="tab-content">
@@ -117,6 +116,25 @@
       <button class="transcend-btn" id="transcend-btn">TRANSCEND</button>
     </div>
   </div>
+  <div id="tab-minigames" class="tab-content">
+    <div class="section-title">[ MINI GAMES ] <span>// earn resources playing games</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="mg-tab-btn active" data-mg="ttt">TIC TAC TOE</button>
+      <button class="mg-tab-btn" data-mg="snake">SNAKE</button>
+    </div>
+    <div id="mg-ttt" class="mg-content active">
+      <p style="color:#888;font-size:12px;margin-bottom:8px;">Beat the AI to earn resources. Win: +100 DATA +50 CREDITS | Draw: +20 DATA</p>
+      <div id="ttt-grid" class="ttt-grid"></div>
+      <div id="ttt-msg" style="color:#0ff;font-size:14px;margin-top:8px;text-align:center;">Your turn (X)</div>
+      <button class="mg-btn" onclick="tttInit()">NEW GAME</button>
+    </div>
+    <div id="mg-snake" class="mg-content">
+      <p style="color:#888;font-size:12px;margin-bottom:8px;">Eat food to grow! Score × 15 = DATA reward. Use arrow keys.</p>
+      <div id="snake-grid" class="snake-grid"></div>
+      <div id="snake-msg" style="color:#0ff;font-size:14px;margin-top:8px;text-align:center;">Press NEW GAME to start</div>
+      <button class="mg-btn" onclick="snakeInit()">NEW GAME</button>
+    </div>
+  </div>
 </div>
 </div>
 
@@ -130,6 +148,7 @@
 <script src="js/cloud.js"></script>
 <script src="js/game.js"></script>
 <script src="js/monetization.js"></script>
+<script src="js/minigames.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>

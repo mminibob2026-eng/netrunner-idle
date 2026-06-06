@@ -1,37 +1,59 @@
 // ========== BUILD UI ==========
-function buildSkills() {
-  const c = document.getElementById('skills-container'); if (!c) return;
+function buildBranchTree() {
+  const c = document.getElementById('branch-container');
+  if (!c) return;
   c.innerHTML = '';
-  SKILLS.forEach(cfg => {
-    const card = document.createElement('div');
-    card.className = 'skill-card';
-    const specs = SPECIALIZATIONS.filter(sp => sp.skillId === cfg.id);
-    let specsHTML = '';
-    if (specs.length > 0) {
-      specsHTML = '<div class="specs-container">';
-      specs.forEach(sp => {
-        const owned = G.specializations.find(s => s.id === sp.id);
-        const purchased = owned && owned.purchased;
-        specsHTML += '<div class="spec-item'+(purchased?' purchased':'')+'" data-spec="'+sp.id+'">' +
-          '<span class="spec-name">'+(purchased?'✓ ':'')+sp.name+'</span>' +
-          '<span class="spec-desc">'+sp.desc+'</span>' +
-          (!purchased ? '<button class="spec-btn" data-spec="'+sp.id+'">BUY</button>' : '') +
-        '</div>';
-      });
-      specsHTML += '</div>';
-    }
-    card.innerHTML =
-      '<div class="skill-header"><span class="skill-name">'+cfg.name+'</span><span class="skill-level">Lv.1</span></div>' +
-      '<div class="skill-progress"><div class="skill-progress-bar"></div></div>' +
-      '<div class="skill-info"><span class="skill-yield">0</span><span class="skill-xp">0 XP</span></div>' +
-      '<div class="skill-desc">'+(cfg.cost?'Unlock: '+cfg.costLabel+(cfg.req?' | Req: '+cfg.reqLabel:''):cfg.desc)+'</div>' +
-      '<button class="skill-btn" data-id="'+cfg.id+'">START</button>' +
-      specsHTML;
-    card.querySelectorAll('.spec-btn').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); buySpecialization(btn.dataset.spec); });
+  BRANCHES.forEach(b => {
+    const col = document.createElement('div');
+    col.className = 'branch-column';
+    col.style.borderColor = b.color;
+    let html = '<div class="branch-header" style="color:'+b.color+'">' + b.name + '</div>';
+    html += '<div class="branch-desc">' + b.desc + '</div>';
+    b.nodes.forEach(n => {
+      const lvl = branchLevel(b.id, n.id);
+      const unlocked = branchNodeUnlocked(b.id, n.id);
+      const viable = unlocked || lvl > 0;
+      const cost = branchCost(b.id, n.id);
+      const isFirst = b.nodes[0].id === n.id;
+      const req = nodeRequirement(b.id, n.id);
+      let effectStr = '';
+      if (n.gen) {
+        const gen = n.gen(Math.max(1, lvl));
+        effectStr = Object.entries(gen).map(([r,a]) => fmt(a) + ' ' + r + '/s').join(', ');
+      } else if (n.bonus) {
+        const bon = n.bonus(Math.max(1, lvl));
+        effectStr = Object.entries(bon).map(([k,v]) => {
+          if (k === 'atk') return '+' + v + ' ATK';
+          if (k === 'hp') return '+' + v + ' HP';
+          if (k === 'atkPct') return '+' + v + '% ATK';
+          if (k === 'burst') return '+' + v + ' burst';
+          if (k === 'npRate') return '+' + Math.round(v * 100) + '% NP';
+          if (k === 'capMult') return '+' + Math.round(v * 100) + '% caps';
+          if (k === 'costRed') return '-' + Math.round(v * 100) + '% cost';
+          if (k === 'prodMult') return '+' + Math.round(v * 100) + '% prod';
+          return '';
+        }).join(', ');
+      }
+      const reqStr = req ? '<div class="node-req" style="color:#ff0">Requires: ' + req.node + ' Lv.' + req.level + '</div>' : '';
+      html += '<div class="branch-node' + (viable ? '' : ' node-locked') + '" data-branch="' + b.id + '" data-node="' + n.id + '">';
+      html += '<div class="node-header"><span class="node-name">' + n.name + '</span><span class="node-lvl">Lv.' + lvl + (lvl >= 30 ? ' MAX' : '') + '</span></div>';
+      html += '<div class="node-desc">' + n.desc + '</div>';
+      html += '<div class="node-effect" style="color:' + b.color + '">' + effectStr + '</div>';
+      if (reqStr && !viable) html += reqStr;
+      html += '<div class="node-cost">' + (lvl >= 30 ? 'MAXED' : 'Cost: ' + cost + ' NP') + '</div>';
+      html += '</div>';
     });
-    card.querySelector('.skill-btn').addEventListener('click', e => { e.stopPropagation(); clickSkill(cfg.id); });
-    c.appendChild(card);
+    col.innerHTML = html;
+    c.appendChild(col);
+  });
+
+  // Click handlers
+  c.querySelectorAll('.branch-node:not(.node-locked)').forEach(el => {
+    el.addEventListener('click', function() {
+      const bid = this.dataset.branch;
+      const nid = this.dataset.node;
+      clickBranchNode(bid, nid);
+    });
   });
 }
 
@@ -76,13 +98,12 @@ function buildCombat() {
     card.innerHTML =
       '<div class="e-name">'+e.name+'</div>' +
       '<div class="e-lvl">Lv.'+e.lvl+' | HP: '+e.hp+'</div>' +
-      '<div class="e-reward">'+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', ')+'</div>' +
+      '<div class="e-reward">'+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', ')+' +1 NP</div>' +
       '<div class="e-drop" style="font-size:9px;color:#0ff;margin-top:2px">Drop: '+DROP_LABELS[e.drop]+' (30%)</div>';
     card.addEventListener('click', () => combatEngage(i));
     grid.appendChild(card);
   });
 
-  // Burst exploit buttons
   const burstArea = document.getElementById('burst-actions');
   if (burstArea) {
     burstArea.innerHTML = '';
@@ -141,8 +162,10 @@ function buildDevPanel() {
       '<button onclick="devAddRes(\'darkMatter\',100)">+100 DM</button>' +
     '</div>' +
     '<div class="dev-row">' +
-      '<button onclick="devMaxSkills()">MAX SKILLS</button>' +
+      '<button onclick="devMaxBranch()">MAX BRANCHES</button>' +
       '<button onclick="devUnlockAll()">UNLOCK ALL</button>' +
+      '<button onclick="devAddNp(100)">+100 NP</button>' +
+      '<button onclick="devAddNp(1000)">+1K NP</button>' +
       '<button onclick="devSpeed(10)">x10 SPEED</button>' +
       '<button onclick="devSpeed(1)">x1 SPEED</button>' +
       '<button onclick="subscribe()">SUB ON</button>' +
@@ -151,7 +174,7 @@ function buildDevPanel() {
 }
 
 function buildUI() {
-  buildSkills();
+  buildBranchTree();
   buildUpgrades();
   buildCrafting();
   buildCombat();
@@ -175,35 +198,43 @@ function updateUI() {
   const ul = document.getElementById('user-label');
   if (ul) ul.textContent = USER+(isDev()?' [DEV]':'')+(isSubActive()?' [NETRUNNER+]':'');
 
-  // Skills
-  const cw = document.getElementById('combat-pause-warning');
-  if (cw) cw.style.display = G.cmbt.inCombat ? 'block' : 'none';
+  // NP display
+  const npEl = document.getElementById('np-display');
+  if (npEl) npEl.textContent = fmt(Math.floor(G.neuralPoints));
 
-  // Active skill count indicator
-  const activeSkillCount = document.getElementById('active-skill-count');
-  if (activeSkillCount) {
-    const activeCount = G.skills.filter(s => s.active).length;
-    const maxActive = maxActiveSkills();
-    activeSkillCount.textContent = 'Active: '+activeCount+'/'+maxActive;
-    activeSkillCount.style.color = activeCount >= maxActive ? '#ff0' : '#0f0';
-  }
-  const sc = document.getElementById('skills-container');
-  if (sc && sc.children.length === SKILLS.length) {
-    SKILLS.forEach((cfg, i) => {
-      const s = G.skills[i];
-      const card = sc.children[i];
-      if (!card) return;
-      card.className = 'skill-card' + (s.unlocked?'':' locked') + (s.active?' active-skill':'');
-      card.querySelector('.skill-level').textContent = 'Lv.'+s.lvl+(s.lvl>=99?' MAX':'');
-      const pct = s.lvl>=99?100:(xpReq(s.lvl)>0?s.xp/xpReq(s.lvl)*100:0);
-      card.querySelector('.skill-progress-bar').style.width = Math.min(100,pct)+'%';
-      card.querySelector('.skill-yield').textContent = fmt(skillYield(cfg.id))+' '+cfg.res+'/s';
-      card.querySelector('.skill-xp').textContent = s.lvl>=99?'MAX':fmt(xpReq(s.lvl)-s.xp)+' XP';
-      const reqStr = cfg.req ? ' | Req: '+cfg.reqLabel : '';
-      card.querySelector('.skill-desc').textContent = !s.unlocked ? 'Unlock: '+cfg.costLabel + reqStr : cfg.desc;
-      const btn = card.querySelector('.skill-btn');
-      btn.textContent = s.unlocked ? (s.active?'ACTIVE':'START') : 'UNLOCK';
-      btn.className = 'skill-btn' + (s.active?' active-btn':'');
+  // Branch tree - update levels
+  const bc = document.getElementById('branch-container');
+  if (bc) {
+    BRANCHES.forEach(b => {
+      b.nodes.forEach(n => {
+        const lvl = branchLevel(b.id, n.id);
+        const el = bc.querySelector('[data-branch="'+b.id+'"][data-node="'+n.id+'"]');
+        if (!el) return;
+        const unlocked = branchNodeUnlocked(b.id, n.id);
+        el.className = 'branch-node' + (unlocked || lvl > 0 ? '' : ' node-locked');
+        el.querySelector('.node-lvl').textContent = 'Lv.' + lvl + (lvl >= 30 ? ' MAX' : '');
+        if (n.gen) {
+          const gen = n.gen(Math.max(1, lvl));
+          const effectStr = Object.entries(gen).map(([r,a]) => fmt(a) + ' ' + r + '/s').join(', ');
+          el.querySelector('.node-effect').textContent = effectStr;
+        } else if (n.bonus) {
+          const bon = n.bonus(Math.max(1, lvl));
+          const effectStr = Object.entries(bon).map(([k,v]) => {
+            if (k === 'atk') return '+' + v + ' ATK';
+            if (k === 'hp') return '+' + v + ' HP';
+            if (k === 'atkPct') return '+' + v + '% ATK';
+            if (k === 'burst') return '+' + v + ' burst';
+            if (k === 'npRate') return '+' + Math.round(v * 100) + '% NP';
+            if (k === 'capMult') return '+' + Math.round(v * 100) + '% caps';
+            if (k === 'costRed') return '-' + Math.round(v * 100) + '% cost';
+            if (k === 'prodMult') return '+' + Math.round(v * 100) + '% prod';
+            return '';
+          }).join(', ');
+          el.querySelector('.node-effect').textContent = effectStr;
+        }
+        const cost = branchCost(b.id, n.id);
+        el.querySelector('.node-cost').textContent = lvl >= 30 ? 'MAXED' : 'Cost: ' + cost + ' NP';
+      });
     });
   }
 
@@ -218,7 +249,8 @@ function updateUI() {
       card.querySelector('.upgrade-name').textContent = cfg.name.replace('{level}', u.lvl+1);
       card.querySelector('.upgrade-level').textContent = maxed?'MAX':'Lv.'+u.lvl+'/'+cfg.max;
       const cost = {};
-      Object.entries(cfg.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*Math.pow(cfg.mult,u.lvl)); });
+      const cr = branchCostRed();
+      Object.entries(cfg.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*(1-cr)*Math.pow(cfg.mult,u.lvl)); });
       card.querySelector('.upgrade-cost').textContent = maxed?'MAXED':'Cost: '+Object.entries(cost).map(([r,a])=>fmt(a)+' '+r).join(', ');
       const btn = card.querySelector('.upgrade-btn');
       btn.disabled = maxed || !canPay(cost);
@@ -231,7 +263,12 @@ function updateUI() {
     CRAFTS.forEach((cfg, i) => {
       const card = cc.children[i]; if (!card) return;
       const btn = card.querySelector('.craft-btn');
-      if (btn) btn.disabled = !canPay(cfg.cost);
+      if (btn) {
+        const cr = branchCostRed();
+        const cost = {};
+        Object.entries(cfg.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*(1-cr)); });
+        btn.disabled = !canPay(cost);
+      }
     });
   }
 
@@ -272,7 +309,7 @@ function updateUI() {
     const pa = document.getElementById('p-atk'); if (pa) pa.textContent = a;
     const pd = document.getElementById('p-def'); if (pd) pd.textContent = d;
     const ph = document.getElementById('p-hp'); if (ph) ph.textContent = Math.max(0,Math.floor(G.cmbt.php));
-    const pm = document.getElementById('p-maxhp'); if (pm) pm.textContent = G.cmbt.mxhp;
+    const pm = document.getElementById('p-maxhp'); if (pm) pm.textContent = G.cmbt.mxhp + branchHpBonus();
     ['program','hardware','exploit'].forEach(id => {
       const el = document.getElementById('item-'+id);
       if (el) el.textContent = G.inv[id]||0;
@@ -329,6 +366,10 @@ function updateUI() {
     subBtn.style.display = isSubActive() ? 'none' : 'inline-block';
   }
 
+  // Combat pause warning (paused during combat)
+  const cw = document.getElementById('combat-pause-warning');
+  if (cw) cw.style.display = G.cmbt.inCombat ? 'block' : 'none';
+
   // Ad banner
   showAdBanner();
 }
@@ -359,11 +400,9 @@ function initLogin() {
         if (!d._pw) { d._pw = pass; toast('Password set for '+name, 'info'); }
         G = Object.assign(freshState(), d);
         migrateState(G);
-        while (G.skills.length < SKILLS.length) G.skills.push({ id:SKILLS[G.skills.length].id, lvl:1, xp:0, active:false, unlocked:false, prog:0 });
         while (G.upgs.length < UPGRADES.length) G.upgs.push({ id:UPGRADES[G.upgs.length].id, lvl:0 });
         while (G.zones.length < ZONES.length) G.zones.push({ id:ZONES[G.zones.length].id, unlocked:false });
         while (G.achievements.length < ACHIEVEMENTS.length) G.achievements.push({ id:ACHIEVEMENTS[G.achievements.length].id, unlocked:false });
-        while (G.specializations.length < SPECIALIZATIONS.length) G.specializations.push({ id:SPECIALIZATIONS[G.specializations.length].id, purchased:false });
       } else {
         G = freshState();
         G._pw = pass;
@@ -383,15 +422,12 @@ function initLogin() {
       trackEvent('login', { username: USER });
       save();
 
-      setTimeout(() => {
-        if (G) { const dm = G.skills[0]; if (dm && !dm.active) { dm.active = true; toast('Data Mining started!', 'loot'); } }
-      }, 500);
-
       const _unlockCheck = setInterval(() => {
         if (!G) return;
-        if (!G.cmbt.unlocked && G.skills.filter(s=>s.unlocked&&s.lvl>=3).length>=2) {
+        if (!G.cmbt.unlocked && G.neuralPoints >= 25) {
           G.cmbt.unlocked = true;
-          toast('Combat unlocked!', 'loot');
+          toast('Combat unlocked! Spend NP to grow stronger.', 'loot');
+          clearInterval(_unlockCheck);
         }
       }, 3000);
     } catch(e) { err('Login: '+e.message); }
@@ -434,6 +470,30 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (devPanel) {
       const isSkillsTab = this.dataset.tab === 'skills';
       devPanel.style.display = isSkillsTab && isDev() ? 'block' : 'none';
+    }
+    if (this.dataset.tab === 'minigames') {
+      const activeMg = document.querySelector('.mg-tab-btn.active');
+      if (activeMg && activeMg.dataset.mg === 'ttt' && !ttt.board.length) tttInit();
+    }
+  });
+});
+
+// Mini-game tab switching
+document.querySelectorAll('.mg-tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.mg-tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.mg-content').forEach(c=>c.classList.remove('active'));
+    this.classList.add('active');
+    const mg = document.getElementById('mg-'+this.dataset.mg);
+    if (mg) mg.classList.add('active');
+    if (this.dataset.mg === 'ttt') {
+      ttt.grid = document.getElementById('ttt-grid');
+      ttt.msg = document.getElementById('ttt-msg');
+      if (!ttt.board.length) tttInit(); else tttDraw();
+    } else if (this.dataset.mg === 'snake') {
+      snake.gridEl = document.getElementById('snake-grid');
+      snake.msgEl = document.getElementById('snake-msg');
+      if (snake.timer) snakeDraw();
     }
   });
 });

@@ -1,10 +1,46 @@
-const SKILLS = [
-  { id:'dataMining', name:'Data Mining', res:'data', yield:1, time:1, xp:10, desc:'Extract raw data from network nodes.', cost:null, costLabel:'', req:null },
-  { id:'packetSniffing', name:'Packet Sniffing', res:'credits', yield:0.8, time:1.2, xp:12, desc:'Intercept traffic for credits.', cost:{data:50}, costLabel:'50 DATA', req:null },
-  { id:'cryptoMining', name:'Crypto Mining', res:'cpu', yield:0.5, time:1.5, xp:15, desc:'Mine cryptocurrency for CPU cores.', cost:{credits:100}, costLabel:'100 CREDITS', req:null },
-  { id:'networkScouting', name:'Network Scouting', res:'bandwidth', yield:0.3, time:2, xp:18, desc:'Map the network for bandwidth.', cost:{data:100,cpu:25}, costLabel:'100 DATA, 25 CPU', req:null },
-  { id:'codeDecompile', name:'Code Decompile', res:'darkMatter', yield:0.04, time:2.5, xp:25, desc:'Reverse-engineer code into Dark Matter.', cost:{credits:500,cpu:200}, costLabel:'500 CREDITS, 200 CPU', req:{dataMining:10,packetSniffing:10}, reqLabel:'Data Mining Lv.10, Packet Sniffing Lv.10' },
-  { id:'networkSynthesis', name:'Network Synthesis', res:'all', yield:0, time:3, xp:35, desc:'Synthesize all network resources at once.', cost:{data:800,credits:800,cpu:400,bandwidth:200}, costLabel:'800 DATA, 800 CREDITS, 400 CPU, 200 BW', req:{dataMining:15,packetSniffing:15,cryptoMining:15,networkScouting:15}, reqLabel:'All skills Lv.15' },
+const BRANCHES = [
+  {
+    id:'data', name:'Data Stream', color:'#0f0',
+    desc:'Generates resources automatically. All nodes run simultaneously.',
+    nodes:[
+      { id:'dataTap', name:'Data Tap', desc:'Extract raw data.', baseCost:1, reqLvl:0,
+        gen:(lvl)=>({data:(0.5+lvl*0.25)}) },
+      { id:'creditFlow', name:'Credit Flow', desc:'Intercept financial transactions.', baseCost:2, reqLvl:3,
+        gen:(lvl)=>({credits:(0.3+lvl*0.15)}) },
+      { id:'cpuHarvest', name:'CPU Harvest', desc:'Mine idle processing power.', baseCost:4, reqLvl:5,
+        gen:(lvl)=>({cpu:(0.2+lvl*0.1)}) },
+      { id:'bwLeech', name:'BW Leech', desc:'Siphon backbone bandwidth.', baseCost:8, reqLvl:10,
+        gen:(lvl)=>({bandwidth:(0.1+lvl*0.05)}) },
+    ]
+  },
+  {
+    id:'combat', name:'Combat Matrix', color:'#f44',
+    desc:'Enhances combat power. Bonuses apply during combat.',
+    nodes:[
+      { id:'icePick', name:'ICE Pick', desc:'+3 ATK per level.', baseCost:1, reqLvl:0,
+        bonus:(lvl)=>({atk:3*lvl}) },
+      { id:'shieldWall', name:'Shield Wall', desc:'+8 HP per level.', baseCost:3, reqLvl:3,
+        bonus:(lvl)=>({hp:8*lvl}) },
+      { id:'overdrive', name:'Overdrive', desc:'+5% ATK per level during combat.', baseCost:6, reqLvl:5,
+        bonus:(lvl)=>({atkPct:5*lvl}) },
+      { id:'systemBreach', name:'System Breach', desc:'+15 burst DMG per level.', baseCost:12, reqLvl:10,
+        bonus:(lvl)=>({burst:15*lvl}) },
+    ]
+  },
+  {
+    id:'efficiency', name:'Efficiency Engine', color:'#0ff',
+    desc:'Boosts speed, caps, and reduces costs.',
+    nodes:[
+      { id:'quickHands', name:'Quick Hands', desc:'+5% NP generation per level.', baseCost:1, reqLvl:0,
+        bonus:(lvl)=>({npRate:0.05*lvl}) },
+      { id:'resourceOpt', name:'Resource Optimizer', desc:'+10% resource caps per level.', baseCost:3, reqLvl:3,
+        bonus:(lvl)=>({capMult:0.1*lvl}) },
+      { id:'costReduction', name:'Cost Reduction', desc:'-3% upgrade/craft cost per level.', baseCost:6, reqLvl:5,
+        bonus:(lvl)=>({costRed:0.03*lvl}) },
+      { id:'perfectLoop', name:'Perfect Loop', desc:'+3% all resource gen per level.', baseCost:12, reqLvl:10,
+        bonus:(lvl)=>({prodMult:0.03*lvl}) },
+    ]
+  }
 ];
 
 const CRAFTS = [
@@ -62,8 +98,8 @@ const ACHIEVEMENTS = [
   { id:'cpuCollector', name:'CPU Collector', desc:'Earn 1K CPU total', check:g=>g.stats.earned.cpu>=1000, reward:{cpuMult:1.05} },
   { id:'bwExplorer', name:'Bandwidth Explorer', desc:'Earn 1K BANDWIDTH total', check:g=>g.stats.earned.bandwidth>=1000, reward:{bwMult:1.05} },
   { id:'dmHacker', name:'Dark Matter Hacker', desc:'Earn 10 Dark Matter total', check:g=>g.stats.earned.darkMatter>=10, reward:{dmMult:1.1} },
-  { id:'skillMaster', name:'Skill Master', desc:'Reach skill level 25 in any skill', check:g=>g.skills.some(s=>s.lvl>=25), reward:{speedMult:1.05} },
-  { id:'jackOfAll', name:'Jack of All Trades', desc:'Unlock all skills', check:g=>g.skills.every(s=>s.unlocked), reward:{craftSpeed:1.1} },
+  { id:'skillMaster', name:'Branch Master', desc:'Reach total 50 branch levels', check:g=>{let t=0;Object.values(g.branches).forEach(b=>{Object.values(b).forEach(v=>t+=v)});return t>=50;}, reward:{speedMult:1.05} },
+  { id:'jackOfAll', name:'Jack of All Trades', desc:'Unlock all branch nodes', check:g=>{let a=0,t=0;BRANCHES.forEach(b=>{b.nodes.forEach(n=>{t++;if((g.branches[b.id]||{})[n.id]||0>0)a++})});return a>=t;}, reward:{craftSpeed:1.1} },
   { id:'firstBlood', name:'First Blood', desc:'Defeat your first enemy', check:g=>g.stats.enemiesDefeated>=1, reward:{atkMult:1.1} },
   { id:'enemySlayer', name:'Enemy Slayer', desc:'Defeat 50 enemies', check:g=>g.stats.enemiesDefeated>=50, reward:{atkMult:1.15} },
   { id:'prestige1', name:'New Game+', desc:'Prestige for the first time', check:g=>g.prest.times>=1, reward:{prestMult:1.1} },
@@ -76,27 +112,6 @@ const ACHIEVEMENTS = [
   { id:'fullMap', name:'Cartographer', desc:'Unlock all zones', check:g=>g.zones.every(z=>z.unlocked), reward:{allMult:1.1} },
   { id:'richRunner', name:'Rich Netrunner', desc:'Hold 10K of any resource at once', check:g=>Object.values(g.res).some(v=>v>=10000), reward:{capMult:1.1} },
   { id:'transcend', name:'Beyond the Code', desc:'Transcend for the first time', check:g=>g.prest.transcendTimes>=1, reward:{allMult:1.15} },
-];
-
-const SPECIALIZATIONS = [
-  // Data Mining
-  { id:'deepExtraction', skillId:'dataMining', name:'Deep Extraction', desc:'+30% DATA yield', reqLvl:10, cost:{credits:200}, effect:{dataMiningMult:1.3} },
-  { id:'parallelProc', skillId:'dataMining', name:'Parallel Processing', desc:'+50% DATA yield', reqLvl:25, cost:{credits:2000,cpu:100}, effect:{dataMiningMult:1.5} },
-  // Packet Sniffing
-  { id:'trafficAnalysis', skillId:'packetSniffing', name:'Traffic Analysis', desc:'+30% CREDITS yield', reqLvl:10, cost:{data:200}, effect:{packetSniffingMult:1.3} },
-  { id:'darkProtocol', skillId:'packetSniffing', name:'Dark Protocol', desc:'+50% CREDITS yield', reqLvl:25, cost:{data:2000,bandwidth:50}, effect:{packetSniffingMult:1.5} },
-  // Crypto Mining
-  { id:'hashOptimize', skillId:'cryptoMining', name:'Hash Optimization', desc:'+30% CPU yield', reqLvl:10, cost:{credits:300}, effect:{cryptoMiningMult:1.3} },
-  { id:'quantumCore', skillId:'cryptoMining', name:'Quantum Core', desc:'All skills 15% faster', reqLvl:25, cost:{credits:3000,darkMatter:5}, effect:{globalSpeed:0.85} },
-  // Network Scouting
-  { id:'routeOptimize', skillId:'networkScouting', name:'Route Optimization', desc:'+30% BANDWIDTH yield', reqLvl:10, cost:{data:300,cpu:50}, effect:{networkScoutingMult:1.3} },
-  { id:'meshNetwork', skillId:'networkScouting', name:'Mesh Network', desc:'+20% all resource caps', reqLvl:25, cost:{data:3000,credits:1000}, effect:{capMult:1.2} },
-  // Code Decompile
-  { id:'deepReverse', skillId:'codeDecompile', name:'Deep Reverse', desc:'+40% DARK MATTER yield', reqLvl:15, cost:{credits:1000,cpu:200}, effect:{codeDecompileMult:1.4} },
-  { id:'sourceAccess', skillId:'codeDecompile', name:'Source Access', desc:'+5% all resource production', reqLvl:35, cost:{credits:5000,darkMatter:20}, effect:{allProdMult:1.05} },
-  // Network Synthesis
-  { id:'efficientSynth', skillId:'networkSynthesis', name:'Efficient Synth', desc:'+30% all synthesis output', reqLvl:15, cost:{data:2000,credits:2000,cpu:1000,bandwidth:500}, effect:{synthMult:1.3} },
-  { id:'fullIntegration', skillId:'networkSynthesis', name:'Full Integration', desc:'Synthesis also produces Dark Matter', reqLvl:30, cost:{data:5000,credits:5000,cpu:2500,bandwidth:1000,darkMatter:50}, effect:{synthDM:true} },
 ];
 
 const BURST_EXPLOITS = [
@@ -113,11 +128,11 @@ const SUBSCRIPTION = {
     offlineProgress: 'Full offline progress (free: 25% rate, 6hr cap)',
     autoCombat: 'Auto-combat mode (free: manual only)',
     autoCraft: 'Auto-crafting queue (free: manual only)',
-    multiSkill: 'Up to 4 active skills (free: 2 max)',
+    fasterNP: '1.5x Neural Point generation rate',
     speedBoost: '1.25x permanent speed boost',
     cloudSave: 'Cloud save support',
     premiumThemes: 'Premium UI themes',
   }
 };
 
-const SAVE_VERSION = 5;
+const SAVE_VERSION = 6;

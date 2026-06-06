@@ -1,65 +1,51 @@
 function fmt(n) { if (!n||isNaN(n)) return '0'; if (n>=1e9) return (n/1e9).toFixed(1)+'B'; if (n>=1e6) return (n/1e6).toFixed(1)+'M'; if (n>=1e3) return (n/1e3).toFixed(1)+'K'; return Math.floor(n)+''; }
 
-function xpReq(lvl) { return Math.floor(lvl * 80 * Math.pow(1.12, lvl - 1)); }
-
-function skillCfg(id) { return SKILLS.find(s => s.id === id); }
-function skillSt(id) { return G.skills.find(s => s.id === id); }
 function upgSt(id) { return G.upgs.find(u => u.id === id); }
 function upgCfg(id) { return UPGRADES.find(u => u.id === id); }
 function zoneCfg(id) { return ZONES.find(z => z.id === id); }
 function enemyCfg(idx) { return ENEMIES[idx]; }
 
-function specBonus(type) {
-  let m = 1;
-  if (!G || !G.specializations) return m;
-  G.specializations.forEach(sp => {
-    if (!sp.purchased) return;
-    const cfg = SPECIALIZATIONS.find(s => s.id === sp.id);
-    if (!cfg || !cfg.effect) return;
-    if (cfg.effect[type]) m *= cfg.effect[type];
-  });
-  return m;
+// Branch tree helpers
+function branchCfg(id) { return BRANCHES.find(b => b.id === id); }
+function branchNodeCfg(branchId, nodeId) { const b = branchCfg(branchId); if (!b) return null; return b.nodes.find(n => n.id === nodeId) || null; }
+function branchLevel(branchId, nodeId) { return (G.branches[branchId] || {})[nodeId] || 0; }
+function branchCost(branchId, nodeId) { const n = branchNodeCfg(branchId, nodeId); if (!n) return 1; return Math.floor(n.baseCost * Math.pow(1.15, branchLevel(branchId, nodeId))); }
+function nodeRequirement(branchId, nodeId) {
+  const b = branchCfg(branchId); if (!b) return null;
+  const idx = b.nodes.findIndex(n => n.id === nodeId);
+  if (idx <= 0) return null;
+  return { node: b.nodes[idx-1].id, level: b.nodes[idx-1].reqLvl };
+}
+function branchNodeUnlocked(branchId, nodeId) {
+  const req = nodeRequirement(branchId, nodeId);
+  if (!req) return true;
+  return branchLevel(branchId, req.node) >= req.level;
 }
 
-function skillMult(id) {
-  const map = { dataMining:'miningSpeed', packetSniffing:'sniffingSpeed', cryptoMining:'cryptoSpeed', networkScouting:'scoutSpeed' };
-  let m = 1 + (upgSt(map[id])?.lvl || 0) * 0.2;
-  m *= Math.pow(1.5, G.prest.lvl);
-  m *= 1 + (G.inv.neuralLinks || 0) * 0.02;
-  m *= getBonus('speedMult');
-  m *= specBonus(id+'Mult');
-  if (isSubActive()) m *= 1.25;
-  return m;
-}
-
-function skillYield(id) {
-  const c = skillCfg(id), s = skillSt(id);
-  let base = c.yield * (1 + (s.lvl-1)*0.08) * skillMult(id);
-  base *= specBonus('allProdMult');
-  return base;
-}
-
-function skillTime(id) {
-  const c = skillCfg(id), s = skillSt(id);
-  let t = c.time * Math.pow(0.97, s.lvl-1);
-  t *= specBonus('globalSpeed');
-  return Math.max(0.25, t);
-}
+// Branch bonuses
+function branchAtkBonus() { return branchLevel('combat','icePick') * 3; }
+function branchHpBonus() { return branchLevel('combat','shieldWall') * 8; }
+function branchAtkPct() { return 1 + branchLevel('combat','overdrive') * 0.05; }
+function branchBurstDmg() { return branchLevel('combat','systemBreach') * 15; }
+function branchCapMult() { return 1 + branchLevel('efficiency','resourceOpt') * 0.1; }
+function branchCostRed() { return Math.min(0.6, branchLevel('efficiency','costReduction') * 0.03); }
+function branchProdMult() { return 1 + branchLevel('efficiency','perfectLoop') * 0.03; }
+function branchNpRate() { return 1 + branchLevel('efficiency','quickHands') * 0.05; }
 
 function cmbtPow() {
-  let a = G.cmbt.atk + G.inv.exploit*8 + G.inv.program*2 + (G.inv.turboChargers||0)*5 + (G.inv.qProgram||0)*25 + (G.inv.qExploit||0)*150;
+  let a = G.cmbt.atk + branchAtkBonus() + G.inv.exploit*8 + G.inv.program*2 + (G.inv.turboChargers||0)*5 + (G.inv.qProgram||0)*25 + (G.inv.qExploit||0)*150;
   let d = G.cmbt.def + G.inv.hardware*3 + (G.inv.turboChargers||0)*3 + (G.inv.qHardware||0)*10;
   const b = upgSt('combatBoost');
-  a = Math.floor(a * (1 + b.lvl*0.15) * getBonus('atkMult'));
+  a = Math.floor(a * (1 + b.lvl*0.15) * getBonus('atkMult') * branchAtkPct());
   d = Math.floor(d * getBonus('defMult'));
   return { a, d };
 }
 
-function maxData() { return 500 * Math.pow(2, upgSt('dataCap')?.lvl||0) * getBonus('capMult'); }
-function maxCpu() { return 200 * Math.pow(2, upgSt('cpuCap')?.lvl||0) * getBonus('capMult'); }
-function maxBw() { return 100 * Math.pow(2, upgSt('bwCap')?.lvl||0) * getBonus('capMult'); }
-function maxCredits() { return 2000 * Math.pow(2, upgSt('creditCap')?.lvl||0) * getBonus('capMult'); }
-function maxDm() { return 10 * Math.pow(2, upgSt('dmCap')?.lvl||0) * getBonus('capMult'); }
+function maxData() { return 500 * Math.pow(2, upgSt('dataCap')?.lvl||0) * getBonus('capMult') * branchCapMult(); }
+function maxCpu() { return 200 * Math.pow(2, upgSt('cpuCap')?.lvl||0) * getBonus('capMult') * branchCapMult(); }
+function maxBw() { return 100 * Math.pow(2, upgSt('bwCap')?.lvl||0) * getBonus('capMult') * branchCapMult(); }
+function maxCredits() { return 2000 * Math.pow(2, upgSt('creditCap')?.lvl||0) * getBonus('capMult') * branchCapMult(); }
+function maxDm() { return 10 * Math.pow(2, upgSt('dmCap')?.lvl||0) * getBonus('capMult') * branchCapMult(); }
 
 function resMax(id) {
   const map = { data:maxData, cpu:maxCpu, bandwidth:maxBw, credits:maxCredits, darkMatter:maxDm };
@@ -99,7 +85,6 @@ function getBonus(type) {
     if (cfg.reward[type]) m *= cfg.reward[type];
   });
   m *= zoneBonus(type);
-  m *= specBonus(type);
   if (type === 'prestMult' && G.prest.lvl > 0) m *= Math.pow(1.15, G.prest.lvl);
   if (type === 'transcendMult' && G.prest.transcendLvl > 0) m *= Math.pow(2, G.prest.transcendLvl);
   return m;
@@ -134,8 +119,4 @@ function canTranscend() {
 
 function isSubActive() {
   return G._subActive === true;
-}
-
-function maxActiveSkills() {
-  return isSubActive() ? 4 : 2;
 }
