@@ -11,6 +11,7 @@ function clickBranchNode(branchId, nodeId) {
   const cost = branchCost(branchId, nodeId);
   if (G.neuralPoints < cost) { toast('Need ' + cost + ' KP', 'error'); return; }
   G.neuralPoints -= cost;
+  if (!G.branches[branchId]) G.branches[branchId] = {};
   G.branches[branchId][nodeId] = (G.branches[branchId][nodeId] || 0) + 1;
   trackQuestProgress('spentNp', cost);
     toast(n.name + ' Lv.' + G.branches[branchId][nodeId] + ' learned!', 'loot');

@@ -1,5 +1,5 @@
 // Resource display names (internal id -> display)
-const RES = { data:{n:'XP',i:'<>',c:'#0f0'}, credits:{n:'LOC',i:'~~',c:'#ff0'}, cpu:{n:'KP',i:'{}',c:'#0ff'}, bandwidth:{n:'Insight',i:'&&',c:'#f0f'}, darkMatter:{n:'Mastery',i:'**',c:'#fff'} };
+const RES = { data:{n:'XP',i:'<>',c:'#0f0'}, credits:{n:'LOC',i:'~~',c:'#ff0'}, cpu:{n:'Proc',i:'{}',c:'#0ff'}, bandwidth:{n:'Insight',i:'&&',c:'#f0f'}, darkMatter:{n:'Mastery',i:'**',c:'#fff'} };
 const NP_LABEL = 'KP';
 const XP_LABEL = 'XP';
 const LOC_LABEL = 'LOC';
@@ -165,7 +165,7 @@ const SUBSCRIPTION = {
   }
 };
 
-const SAVE_VERSION = 7;
+const SAVE_VERSION = 8;
 
 // ===== DAILY QUESTS =====
 const QUEST_POOL = [

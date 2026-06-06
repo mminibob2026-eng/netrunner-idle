@@ -766,7 +766,7 @@ function getNextMilestones() {
 }
 
 function fmtBonus(k, v) {
-  const labels = { dataMult:'XP x'+v, creditsMult:'LOC x'+v, cpuMult:'KP x'+v, bwMult:'Insight x'+v, allMult:'All x'+v };
+  const labels = { dataMult:'XP x'+v, creditsMult:'LOC x'+v, cpuMult:'Proc x'+v, bwMult:'Insight x'+v, allMult:'All x'+v };
   return labels[k] || k+':'+v;
 }
 

@@ -76,6 +76,17 @@ function migrateState(d) {
     if (!d._pendingMiniGameEvent) d._pendingMiniGameEvent = false;
     if (!d._nextMiniGameCooldown) d._nextMiniGameCooldown = 0;
   }
+  if (d.ver < 8) {
+    // Rebuild branches for new language-based system
+    const branches = {};
+    BRANCHES.forEach(b => {
+      branches[b.id] = {};
+      b.nodes.forEach(n => { branches[b.id][n.id] = 0; });
+      branches[b.id][b.nodes[0].id] = 1;
+    });
+    d.branches = branches;
+    d.neuralPoints = (d.neuralPoints || 0) + 20;
+  }
   d.ver = SAVE_VERSION;
   return d;
 }
