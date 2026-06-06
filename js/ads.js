@@ -10,17 +10,6 @@ const ADS_CONFIG = {
   clientId: 'ca-pub-1908159369479300',
 };
 
-function initAds() {
-  if (!ADS_CONFIG.enabled) return;
-  try {
-    const script = document.createElement('script');
-    script.async = true;
-    script.crossOrigin = 'anonymous';
-    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + ADS_CONFIG.clientId;
-    document.head.appendChild(script);
-  } catch(e) { console.log('AdSense init failed:', e); }
-}
-
 function loadBannerAd(containerId) {
   if (!ADS_CONFIG.enabled) return;
   const container = document.getElementById(containerId);
