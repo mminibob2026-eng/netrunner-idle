@@ -1,4 +1,5 @@
 let _loopStarted = false;
+let _eventCheckAcc = 0;
 
 function tick(dt) {
   const speed = getEffectiveSpeed();
@@ -43,6 +44,13 @@ function tick(dt) {
     if (craftCfg && canPay(craftCfg.cost)) {
       clickCraft(craftCfg.id);
     }
+  }
+
+  // Mini-game event check (once per 30s, only after 24h cooldown)
+  _eventCheckAcc += dt;
+  if (_eventCheckAcc >= 30) {
+    _eventCheckAcc = 0;
+    checkMiniGameEvent();
   }
 }
 

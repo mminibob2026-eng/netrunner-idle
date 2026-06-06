@@ -180,6 +180,7 @@ function buildUI() {
   buildCombat();
   buildZones();
   buildAchievements();
+  buildRoadMap();
   if (isDev()) buildDevPanel();
 }
 
@@ -372,6 +373,9 @@ function updateUI() {
 
   // Ad banner
   showAdBanner();
+
+  // Road map
+  updateRoadMap();
 }
 
 function rebuildUI() { buildUI(); }
@@ -471,32 +475,99 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       const isSkillsTab = this.dataset.tab === 'skills';
       devPanel.style.display = isSkillsTab && isDev() ? 'block' : 'none';
     }
-    if (this.dataset.tab === 'minigames') {
-      const activeMg = document.querySelector('.mg-tab-btn.active');
-      if (activeMg && activeMg.dataset.mg === 'ttt' && !ttt.board.length) tttInit();
-    }
   });
 });
 
-// Mini-game tab switching
-document.querySelectorAll('.mg-tab-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.mg-tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.mg-content').forEach(c=>c.classList.remove('active'));
-    this.classList.add('active');
-    const mg = document.getElementById('mg-'+this.dataset.mg);
-    if (mg) mg.classList.add('active');
-    if (this.dataset.mg === 'ttt') {
-      ttt.grid = document.getElementById('ttt-grid');
-      ttt.msg = document.getElementById('ttt-msg');
-      if (!ttt.board.length) tttInit(); else tttDraw();
-    } else if (this.dataset.mg === 'snake') {
-      snake.gridEl = document.getElementById('snake-grid');
-      snake.msgEl = document.getElementById('snake-msg');
-      if (snake.timer) snakeDraw();
+// ========== ROAD MAP ==========
+function buildRoadMap() {
+  const c = document.getElementById('road-map');
+  if (!c) return;
+  c.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const m = document.createElement('div');
+    m.className = 'road-map-item';
+    m.id = 'road-map-' + i;
+    c.appendChild(m);
+  }
+}
+
+function updateRoadMap() {
+  const ms = getNextMilestones();
+  for (let i = 0; i < 3; i++) {
+    const el = document.getElementById('road-map-' + i);
+    if (!el) continue;
+    if (i < ms.length) {
+      const m = ms[i];
+      el.style.display = 'flex';
+      el.className = 'road-map-item ' + (m.ready ? 'ready' : '');
+      el.innerHTML = '<span class="road-num">' + (i + 1) + '</span><span class="road-label">' + m.label + '</span>' + (m.extra ? '<span class="road-extra">' + m.extra + '</span>' : '');
+    } else {
+      el.style.display = 'none';
     }
+  }
+}
+
+function getNextMilestones() {
+  const ms = [];
+
+  // 1. Best next branch action
+  // Find affordable level-ups first, then unlockable nodes, then locked nodes
+  let branchAction = null;
+  let branchAffordable = null;
+  BRANCHES.forEach(b => {
+    b.nodes.forEach(n => {
+      const lvl = branchLevel(b.id, n.id);
+      if (lvl >= 30) return;
+      if (!branchNodeUnlocked(b.id, n.id)) {
+        const req = nodeRequirement(b.id, n.id);
+        const reqLvl = branchLevel(b.id, req.node);
+        if (!branchAction) {
+          branchAction = { label: 'Unlock ' + n.name, extra: 'Need ' + req.node + ' Lv.' + req.level + ' (have ' + reqLvl + ')', ready: reqLvl >= req.level && G.neuralPoints >= branchCost(b.id, n.id) };
+        }
+      } else {
+        const cost = branchCost(b.id, n.id);
+        const aff = G.neuralPoints >= cost;
+        if (aff) {
+          if (!branchAffordable || cost < branchCost(branchAffordable.b, branchAffordable.n)) {
+            branchAffordable = { label: 'Level ' + n.name, extra: cost + ' NP → ' + b.name, ready: true, b: b.id, n: n.id };
+          }
+        } else if (!branchAction) {
+          branchAction = { label: 'Level ' + n.name, extra: cost + ' NP → ' + b.name, ready: false };
+        }
+      }
+    });
   });
-});
+  if (branchAffordable) ms.push(branchAffordable);
+  else if (branchAction) ms.push(branchAction);
+  else ms.push({ label: 'All nodes maxed!', extra: 'Great work, runner', ready: false });
+
+  // 2. Combat progress
+  if (!G.cmbt.unlocked) {
+    const npNeeded = Math.max(0, 25 - Math.floor(G.neuralPoints));
+    ms.push({ label: 'Unlock COMBAT', extra: 'Need ' + npNeeded + ' NP', ready: G.neuralPoints >= 25 });
+  } else {
+    const zi = ZONES.slice().reverse().findIndex(z => !G.zones[ZONES.indexOf(z)].unlocked);
+    if (zi !== -1) {
+      const z = ZONES[ZONES.length - 1 - zi];
+      const d = Math.max(0, z.reqDefeated - (G.stats.enemiesDefeated || 0));
+      const remain = ZONES.length - 1 - zi;
+      ms.push({ label: 'Unlock ' + z.name, extra: 'Defeat ' + d + ' more enemies (zone ' + (ZONES.length - remain + 1) + '/' + ZONES.length + ')', ready: (G.stats.enemiesDefeated || 0) >= z.reqDefeated });
+    } else {
+      ms.push({ label: 'All zones unlocked!', extra: 'Transcend to grow stronger', ready: false });
+    }
+  }
+
+  // 3. Prestige
+  const pg = prestigeGain();
+  if (pg < 1) {
+    const d = Math.max(0, 10 - (G.prest.dm || 0));
+    ms.push({ label: 'PRESTIGE', extra: fmt(d) + ' DM needed (have ' + fmt(G.prest.dm || 0) + ')', ready: pg >= 1 });
+  } else {
+    ms.push({ label: 'PRESTIGE READY!', extra: '+' + pg + ' levels', ready: true });
+  }
+
+  return ms.slice(0, 3);
+}
 
 function fmtBonus(k, v) {
   const labels = { dataMult:'DATA x'+v, creditsMult:'Credits x'+v, cpuMult:'CPU x'+v, bwMult:'BW x'+v, allMult:'All x'+v };

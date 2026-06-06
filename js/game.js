@@ -238,3 +238,12 @@ function combatAutoAttack() {
   if (!isSubActive()) return;
   combatAttack();
 }
+
+// Mini-game event check
+function checkMiniGameEvent() {
+  const elapsed = Date.now() - G._lastMiniGameEvent;
+  const dayMs = 24 * 60 * 60 * 1000;
+  if (elapsed < dayMs) return;
+  if (document.getElementById('minigame-event-modal')?.classList.contains('visible')) return;
+  if (Math.random() < 0.03) launchMiniGameEvent();
+}

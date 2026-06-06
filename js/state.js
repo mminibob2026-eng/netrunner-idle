@@ -19,6 +19,7 @@ function freshState() {
     lastSave: Date.now(),
     _subActive: false,
     _pw: '',
+    _lastMiniGameEvent: 0,
     ver: SAVE_VERSION,
   };
 }
@@ -46,6 +47,7 @@ function migrateState(d) {
       d.branches = branches;
     }
     if (!d.neuralPoints) d.neuralPoints = 0;
+    if (!d._lastMiniGameEvent) d._lastMiniGameEvent = 0;
     delete d.skills;
     delete d.specializations;
     d.ver = SAVE_VERSION;

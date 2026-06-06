@@ -61,13 +61,17 @@ function tttCheck() {
 }
 
 function tttReward(result) {
+  const mult = ttt._eventMult || 1;
   if (result === 'win') {
-    addRes('data', 100); addRes('credits', 50);
-    toast('Tic Tac Toe: You win! +100 DATA +50 CREDITS', 'loot');
+    const d = Math.floor(100 * mult); const c = Math.floor(50 * mult);
+    addRes('data', d); addRes('credits', c); G.neuralPoints += Math.floor(5 * mult);
+    toast('Tic Tac Toe: You win! +'+fmt(d)+' DATA +'+fmt(c)+' CREDITS +'+Math.floor(5*mult)+' NP', 'loot');
   } else {
-    addRes('data', 20);
-    toast('Tic Tac Toe: Draw! +20 DATA', 'loot');
+    const d = Math.floor(20 * mult);
+    addRes('data', d);
+    toast('Tic Tac Toe: Draw! +'+fmt(d)+' DATA', 'loot');
   }
+  if (ttt._onEnd) ttt._onEnd(result);
 }
 
 function tttDraw() {
@@ -146,11 +150,14 @@ function snakeSpawnFood() {
 function snakeEnd() {
   snake.over = true;
   if (snake.timer) { clearInterval(snake.timer); snake.timer = null; }
-  const reward = snake.score * 15;
+  const mult = snake._eventMult || 1;
+  const reward = Math.floor(snake.score * 15 * mult);
   addRes('data', reward);
-  addRes('credits', Math.floor(reward/3));
-  toast('Snake: Score ' + snake.score + '! +' + reward + ' DATA +' + Math.floor(reward/3) + ' CREDITS', 'loot');
+  addRes('credits', Math.floor(reward / 3));
+  G.neuralPoints += Math.floor(snake.score * mult);
+  toast('Snake: Score ' + snake.score + '! +' + reward + ' DATA +' + Math.floor(reward / 3) + ' CREDITS +' + Math.floor(snake.score * mult) + ' NP', 'loot');
   snakeDraw();
+  if (snake._onEnd) snake._onEnd('win');
 }
 
 function snakeDraw() {
@@ -183,5 +190,78 @@ function snakeDraw() {
 document.addEventListener('keydown', function(e) {
   const keyMap = { ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right' };
   const dir = keyMap[e.key];
-  if (dir) { e.preventDefault(); snakeSetDirection(dir); }
+  if (dir && document.getElementById('minigame-event-modal')?.classList.contains('visible')) { e.preventDefault(); snakeSetDirection(dir); }
 });
+
+// ===== MINI-GAME EVENT SYSTEM =====
+function getMiniGameEventMult() {
+  return 1 + (G.prest.lvl || 0) * 0.3 + (G.prest.transcendLvl || 0) * 0.5;
+}
+
+function launchMiniGameEvent() {
+  const games = ['ttt', 'snake'];
+  const pick = games[Math.floor(Math.random() * games.length)];
+  showMiniGameEventModal(pick);
+}
+
+function showMiniGameEventModal(type) {
+  const modal = document.getElementById('minigame-event-modal');
+  if (!modal) return;
+  modal.classList.add('visible');
+  const title = modal.querySelector('.event-title');
+  const body = modal.querySelector('.event-body');
+  body.innerHTML = '';
+
+  const mult = getMiniGameEventMult();
+
+  const onEnd = (result) => {
+    modal.classList.remove('visible');
+    G._lastMiniGameEvent = Date.now();
+    if (type === 'snake') {
+      if (snake.timer) { clearInterval(snake.timer); snake.timer = null; }
+    }
+  };
+
+  if (type === 'ttt') {
+    title.textContent = '⚠ ANOMALY: Tic Tac Toe Signal ⚠';
+    const msg = document.createElement('p');
+    msg.style.cssText = 'color:#0f0;margin-bottom:8px';
+    msg.textContent = 'Anomalous signal detected! Win to claim ' + Math.floor(100 * mult) + ' DATA, ' + Math.floor(50 * mult) + ' CREDITS, ' + Math.floor(5 * mult) + ' NP';
+    body.appendChild(msg);
+    const grid = document.createElement('div');
+    grid.className = 'ttt-grid';
+    body.appendChild(grid);
+    const msg2 = document.createElement('div');
+    msg2.id = 'ttt-msg';
+    body.appendChild(msg2);
+    ttt.grid = grid;
+    ttt.msg = msg2;
+    ttt._eventMult = mult;
+    ttt._onEnd = onEnd;
+    tttInit();
+  } else if (type === 'snake') {
+    title.textContent = '⚠ ANOMALY: Snake Protocol ⚠';
+    const msg = document.createElement('p');
+    msg.style.cssText = 'color:#0f0;margin-bottom:8px';
+    msg.textContent = 'Data worm invading! Score points to claim rewards - each point = ' + Math.floor(15 * mult) + ' DATA!';
+    body.appendChild(msg);
+    const grid = document.createElement('div');
+    grid.className = 'snake-grid';
+    body.appendChild(grid);
+    const msg2 = document.createElement('div');
+    msg2.id = 'snake-msg';
+    body.appendChild(msg2);
+    snake.gridEl = grid;
+    snake.msgEl = msg2;
+    snake._eventMult = mult;
+    snake._onEnd = onEnd;
+    snakeInit();
+  }
+}
+
+function closeMiniGameEvent() {
+  const modal = document.getElementById('minigame-event-modal');
+  if (modal) modal.classList.remove('visible');
+  if (snake.timer) { clearInterval(snake.timer); snake.timer = null; }
+  G._lastMiniGameEvent = Date.now();
+}

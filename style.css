@@ -335,3 +335,66 @@ body::after {
   .tab-btn { min-height:44px; }
   .enemy-card, .upgrade-card { min-height:44px; }
 }
+
+/* Road Map */
+.road-map {
+  display:flex;gap:4px;padding:4px 8px;margin-top:4px;margin-bottom:2px;
+  background:rgba(0,255,65,0.03);border:1px solid rgba(0,255,65,0.1);border-radius:4px;
+  flex-shrink:0;
+}
+.road-map-item {
+  flex:1;display:flex;align-items:center;gap:4px;
+  padding:3px 6px;border-radius:3px;font-size:9px;
+  background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.1);
+}
+.road-map-item.ready {
+  background:rgba(0,255,0,0.08);border-color:rgba(0,255,0,0.3);
+}
+.road-num {
+  width:14px;height:14px;border-radius:50%;
+  background:rgba(0,255,65,0.15);color:#0f0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:bold;flex-shrink:0;
+}
+.road-map-item.ready .road-num { background:#0f0;color:#000; }
+.road-label { color:#8f8;flex:1; }
+.road-extra { color:#888;font-size:8px; }
+.road-map-item.ready .road-label { color:#0f0;font-weight:bold; }
+.road-map-item.ready .road-extra { color:#ff0; }
+
+/* Event Modal */
+.event-modal {
+  display:none;position:fixed;inset:0;z-index:900;
+  background:rgba(0,0,0,0.85);
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.event-modal.visible { display:flex; }
+.event-modal-content {
+  background:#0a0a1a;border:2px solid #ff0;
+  border-radius:8px;padding:24px;max-width:420px;width:90%;
+  box-shadow:0 0 40px rgba(255,255,0,0.15),inset 0 0 40px rgba(255,255,0,0.03);
+  animation:eventPopIn 0.25s ease-out;
+  position:relative;
+}
+@keyframes eventPopIn {
+  from { transform:scale(0.9);opacity:0; }
+  to { transform:scale(1);opacity:1; }
+}
+.event-close-btn {
+  position:absolute;top:6px;right:10px;background:none;border:none;
+  color:#888;font-size:16px;cursor:pointer;padding:4px;
+}
+.event-close-btn:hover { color:#fff; }
+
+/* Mini-games in event modal */
+.event-modal .ttt-grid { grid-template-columns:repeat(3,70px);grid-template-rows:repeat(3,70px); }
+.event-modal .snake-grid { max-width:300px; }
+
+@media (max-width: 600px) {
+  .road-map { flex-direction:column;gap:2px; }
+  .road-map-item { font-size:8px;padding:2px 4px; }
+  .event-modal-content { padding:16px;max-width:360px; }
+  .event-modal .ttt-grid { grid-template-columns:repeat(3,60px);grid-template-rows:repeat(3,60px); }
+  .event-modal .ttt-cell { font-size:24px; }
+}
