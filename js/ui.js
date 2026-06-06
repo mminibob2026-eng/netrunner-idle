@@ -374,10 +374,13 @@ function initLogin() {
       game.style.display='flex';
       buildUI();
       calcOfflineProgress();
+      initCloud();
+      syncCloud();
       updateUI();
       startLoop();
       toast('Welcome, '+USER+'!', 'info');
       if (isDev()) toast('DEV MODE ACTIVE', 'loot');
+      trackEvent('login', { username: USER });
       save();
 
       setTimeout(() => {

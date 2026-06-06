@@ -41,6 +41,12 @@ function save() {
     G.lastSave = Date.now();
     localStorage.setItem('nri_'+USER, JSON.stringify(G));
   } catch(e) {}
+  if (isSubActive()) {
+    cloudSave().then(ok => {
+      const ci = document.getElementById('cloud-indicator');
+      if (ci) ci.textContent = ok ? '☁' : '☁⚠';
+    });
+  }
   const si = document.getElementById('save-indicator');
   if (si) si.textContent = 'saved '+new Date().toLocaleTimeString();
 }

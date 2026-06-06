@@ -1,5 +1,6 @@
 function subscribe() {
   G._subActive = true;
+  trackEvent('subscribe', { username: USER });
   save();
   toast('Netrunner+ activated! Enjoy premium features.', 'loot');
   rebuildUI();

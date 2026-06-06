@@ -15,6 +15,7 @@ function clickSkill(id) {
     if (G.skills.filter(x => x.active).length < maxActiveSkills()) {
       s.active = true;
     }
+    trackEvent('skill_unlock', { skill: id, level: s.lvl });
     toast(c.name+' unlocked!', 'loot');
     checkAchievements();
     return;
@@ -131,6 +132,7 @@ function combatWin() {
     logCombat('DROP: '+DROP_LABELS[e.drop]);
   }
   G.stats.enemiesDefeated = (G.stats.enemiesDefeated||0) + 1;
+  trackEvent('enemy_defeated', { enemy: e.name, lvl: e.lvl });
   logCombat('BREACHED '+e.name+'! Rewards: '+Object.entries(e.reward).map(([r,a])=>fmt(a)+' '+r).join(', '));
   toast(e.name+' breached!', 'loot');
   G.cmbt.hp = e.hp;
@@ -169,6 +171,7 @@ function doPrestige() {
   };
   G = Object.assign(freshState(), keep);
   G.cmbt.hp = ENEMIES[0].hp;
+  trackEvent('prestige', { level: G.prest.lvl, total: G.prest.times });
   save(); toast('Prestige! Level '+G.prest.lvl, 'loot');
   rebuildUI();
   const dm = G.skills[0];

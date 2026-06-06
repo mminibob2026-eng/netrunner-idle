@@ -84,4 +84,6 @@ document.getElementById('sub-cta-btn')?.addEventListener('click', showSubscribeU
 // Global error handler
 window.onerror = function(msg, url, line) { err(msg+' (line '+line+')'); return false; };
 
+initAnalytics();
+initAds();
 initLogin();

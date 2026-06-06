@@ -33,7 +33,7 @@
     <div class="res">[BANDWIDTH] <span id="r-bandwidth">0</span></div>
     <div class="res">[DARK MATTER] <span id="r-darkMatter">0</span></div>
   </div>
-  <div id="user-info" style="display:flex;align-items:center;gap:8px;"><span id="user-label" style="color:#0ff"></span><span id="save-indicator" style="color:#666;font-size:10px;"></span><button id="logout-btn" style="background:transparent;border:1px solid #f44;color:#f44;font-family:inherit;font-size:10px;cursor:pointer;border-radius:2px;padding:2px 6px;">LOGOUT</button></div>
+  <div id="user-info" style="display:flex;align-items:center;gap:8px;"><span id="user-label" style="color:#0ff"></span><span id="save-indicator" style="color:#666;font-size:10px;"></span><span id="cloud-indicator" style="color:#0ff;font-size:10px;"></span><button id="logout-btn" style="background:transparent;border:1px solid #f44;color:#f44;font-family:inherit;font-size:10px;cursor:pointer;border-radius:2px;padding:2px 6px;">LOGOUT</button></div>
 </div>
 
 <div id="tabs">
@@ -118,9 +118,13 @@
 </div>
 </div>
 
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/util.js"></script>
 <script src="js/state.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/ads.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/game.js"></script>
 <script src="js/monetization.js"></script>
 <script src="js/ui.js"></script>
