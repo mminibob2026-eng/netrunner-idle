@@ -13,6 +13,9 @@ const CRAFTS = [
   { id:'exploitKit', name:'Exploit Kit', desc:'3 Programs + 2 Hardware -> Exploit', result:'exploit', cost:{program:3,hardware:2} },
   { id:'neuralLink', name:'Neural Link', desc:'2 Exploits + Data + BW -> permanent +2% all skill speed', result:'neuralLinks', cost:{exploit:2,data:500,bandwidth:100} },
   { id:'turboCharger', name:'Turbo Charger', desc:'3 Exploits + Hardware + Credits -> permanent +5 ATK +3 DEF', result:'turboChargers', cost:{exploit:3,hardware:3,credits:200} },
+  { id:'quantumProgram', name:'Quantum Program', desc:'10 Programs + 5 DM -> Quantum Program (+20 ATK burst)', result:'qProgram', cost:{program:10,darkMatter:5} },
+  { id:'armorShield', name:'Armor Shield', desc:'10 Hardware + 5 DM -> Armor Shield (+50 HP burst)', result:'qHardware', cost:{hardware:10,darkMatter:5} },
+  { id:'zeroDay', name:'Zero Day Exploit', desc:'5 Exploits + 3 Quantum Programs + 3 Armor Shields -> Zero Day (+150 ATK burst)', result:'qExploit', cost:{exploit:5,qProgram:3,qHardware:3} },
 ];
 
 const UPGRADES = [
@@ -29,6 +32,7 @@ const UPGRADES = [
 ];
 
 const DROP_LABELS = { dataShard:'Data Shard', fwShard:'FW Shard', iceCore:'ICE Core', aiMod:'AI Module', encKey:'Enc Key', dnToken:'DN Token', coreFrag:'Core Frag' };
+const ITEM_LABELS = { program:'Program', hardware:'Hardware', exploit:'Exploit', neuralLinks:'Neural Link', turboChargers:'Turbo Charger', qProgram:'Quantum Program', qHardware:'Armor Shield', qExploit:'Zero Day Exploit' };
 
 const ENEMIES = [
   { name:'ICE Wall', hp:50, atk:3, def:1, reward:{credits:10}, lvl:1, drop:'dataShard' },
@@ -38,6 +42,9 @@ const ENEMIES = [
   { name:'Corporate Node', hp:1200, atk:35, def:18, reward:{credits:300,darkMatter:12}, lvl:20, drop:'encKey' },
   { name:'Darknet Server', hp:2500, atk:55, def:30, reward:{credits:600,darkMatter:25}, lvl:30, drop:'dnToken' },
   { name:'Central Core', hp:5000, atk:80, def:45, reward:{credits:1200,darkMatter:50}, lvl:40, drop:'coreFrag' },
+  { name:'Quantum Gateway', hp:10000, atk:120, def:60, reward:{credits:2500,darkMatter:100}, lvl:50, drop:'coreFrag' },
+  { name:'Void Processor', hp:20000, atk:180, def:80, reward:{credits:5000,darkMatter:200}, lvl:60, drop:'coreFrag' },
+  { name:'Singularity Core', hp:50000, atk:300, def:120, reward:{credits:12000,darkMatter:500}, lvl:80, drop:'coreFrag' },
 ];
 
 const ZONES = [
@@ -69,6 +76,34 @@ const ACHIEVEMENTS = [
   { id:'fullMap', name:'Cartographer', desc:'Unlock all zones', check:g=>g.zones.every(z=>z.unlocked), reward:{allMult:1.1} },
   { id:'richRunner', name:'Rich Netrunner', desc:'Hold 10K of any resource at once', check:g=>Object.values(g.res).some(v=>v>=10000), reward:{capMult:1.1} },
   { id:'transcend', name:'Beyond the Code', desc:'Transcend for the first time', check:g=>g.prest.transcendTimes>=1, reward:{allMult:1.15} },
+];
+
+const SPECIALIZATIONS = [
+  // Data Mining
+  { id:'deepExtraction', skillId:'dataMining', name:'Deep Extraction', desc:'+30% DATA yield', reqLvl:10, cost:{credits:200}, effect:{dataMiningMult:1.3} },
+  { id:'parallelProc', skillId:'dataMining', name:'Parallel Processing', desc:'+50% DATA yield', reqLvl:25, cost:{credits:2000,cpu:100}, effect:{dataMiningMult:1.5} },
+  // Packet Sniffing
+  { id:'trafficAnalysis', skillId:'packetSniffing', name:'Traffic Analysis', desc:'+30% CREDITS yield', reqLvl:10, cost:{data:200}, effect:{packetSniffingMult:1.3} },
+  { id:'darkProtocol', skillId:'packetSniffing', name:'Dark Protocol', desc:'+50% CREDITS yield', reqLvl:25, cost:{data:2000,bandwidth:50}, effect:{packetSniffingMult:1.5} },
+  // Crypto Mining
+  { id:'hashOptimize', skillId:'cryptoMining', name:'Hash Optimization', desc:'+30% CPU yield', reqLvl:10, cost:{credits:300}, effect:{cryptoMiningMult:1.3} },
+  { id:'quantumCore', skillId:'cryptoMining', name:'Quantum Core', desc:'All skills 15% faster', reqLvl:25, cost:{credits:3000,darkMatter:5}, effect:{globalSpeed:0.85} },
+  // Network Scouting
+  { id:'routeOptimize', skillId:'networkScouting', name:'Route Optimization', desc:'+30% BANDWIDTH yield', reqLvl:10, cost:{data:300,cpu:50}, effect:{networkScoutingMult:1.3} },
+  { id:'meshNetwork', skillId:'networkScouting', name:'Mesh Network', desc:'+20% all resource caps', reqLvl:25, cost:{data:3000,credits:1000}, effect:{capMult:1.2} },
+  // Code Decompile
+  { id:'deepReverse', skillId:'codeDecompile', name:'Deep Reverse', desc:'+40% DARK MATTER yield', reqLvl:15, cost:{credits:1000,cpu:200}, effect:{codeDecompileMult:1.4} },
+  { id:'sourceAccess', skillId:'codeDecompile', name:'Source Access', desc:'+5% all resource production', reqLvl:35, cost:{credits:5000,darkMatter:20}, effect:{allProdMult:1.05} },
+  // Network Synthesis
+  { id:'efficientSynth', skillId:'networkSynthesis', name:'Efficient Synth', desc:'+30% all synthesis output', reqLvl:15, cost:{data:2000,credits:2000,cpu:1000,bandwidth:500}, effect:{synthMult:1.3} },
+  { id:'fullIntegration', skillId:'networkSynthesis', name:'Full Integration', desc:'Synthesis also produces Dark Matter', reqLvl:30, cost:{data:5000,credits:5000,cpu:2500,bandwidth:1000,darkMatter:50}, effect:{synthDM:true} },
+];
+
+const BURST_EXPLOITS = [
+  { id:'codeBomb', name:'Code Bomb', desc:'Deals 30 damage. Costs 5 DATA + 3 CPU.', cost:{data:5,cpu:3}, damage:30, reqEnemyLvl:1 },
+  { id:'overload', name:'Overload', desc:'Deals 80 damage. Costs 20 CREDITS + 10 BW.', cost:{credits:20,bandwidth:10}, damage:80, reqEnemyLvl:10 },
+  { id:'coreMelt', name:'Core Melt', desc:'Deals 200 damage. Costs 1 Exploit + 50 DATA.', cost:{exploit:1,data:50}, damage:200, reqEnemyLvl:20 },
+  { id:'wormhole', name:'Wormhole', desc:'Deals 500 damage. Costs 5 Dark Matter + 200 CPU.', cost:{darkMatter:5,cpu:200}, damage:500, reqEnemyLvl:35 },
 ];
 
 const SUBSCRIPTION = {

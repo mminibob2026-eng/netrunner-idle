@@ -5,12 +5,31 @@ function buildSkills() {
   SKILLS.forEach(cfg => {
     const card = document.createElement('div');
     card.className = 'skill-card';
+    const specs = SPECIALIZATIONS.filter(sp => sp.skillId === cfg.id);
+    let specsHTML = '';
+    if (specs.length > 0) {
+      specsHTML = '<div class="specs-container">';
+      specs.forEach(sp => {
+        const owned = G.specializations.find(s => s.id === sp.id);
+        const purchased = owned && owned.purchased;
+        specsHTML += '<div class="spec-item'+(purchased?' purchased':'')+'" data-spec="'+sp.id+'">' +
+          '<span class="spec-name">'+(purchased?'✓ ':'')+sp.name+'</span>' +
+          '<span class="spec-desc">'+sp.desc+'</span>' +
+          (!purchased ? '<button class="spec-btn" data-spec="'+sp.id+'">BUY</button>' : '') +
+        '</div>';
+      });
+      specsHTML += '</div>';
+    }
     card.innerHTML =
       '<div class="skill-header"><span class="skill-name">'+cfg.name+'</span><span class="skill-level">Lv.1</span></div>' +
       '<div class="skill-progress"><div class="skill-progress-bar"></div></div>' +
       '<div class="skill-info"><span class="skill-yield">0</span><span class="skill-xp">0 XP</span></div>' +
       '<div class="skill-desc">'+(cfg.cost?'Unlock: '+cfg.costLabel+(cfg.req?' | Req: '+cfg.reqLabel:''):cfg.desc)+'</div>' +
-      '<button class="skill-btn" data-id="'+cfg.id+'">START</button>';
+      '<button class="skill-btn" data-id="'+cfg.id+'">START</button>' +
+      specsHTML;
+    card.querySelectorAll('.spec-btn').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); buySpecialization(btn.dataset.spec); });
+    });
     card.querySelector('.skill-btn').addEventListener('click', e => { e.stopPropagation(); clickSkill(cfg.id); });
     c.appendChild(card);
   });
@@ -62,6 +81,20 @@ function buildCombat() {
     card.addEventListener('click', () => combatEngage(i));
     grid.appendChild(card);
   });
+
+  // Burst exploit buttons
+  const burstArea = document.getElementById('burst-actions');
+  if (burstArea) {
+    burstArea.innerHTML = '';
+    BURST_EXPLOITS.forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = 'combat-btn item-btn burst-btn';
+      btn.textContent = b.name+' ('+b.damage+'dmg)';
+      btn.title = b.desc;
+      btn.addEventListener('click', () => combatBurst(b.id));
+      burstArea.appendChild(btn);
+    });
+  }
 }
 
 function buildZones() {
@@ -145,6 +178,15 @@ function updateUI() {
   // Skills
   const cw = document.getElementById('combat-pause-warning');
   if (cw) cw.style.display = G.cmbt.inCombat ? 'block' : 'none';
+
+  // Active skill count indicator
+  const activeSkillCount = document.getElementById('active-skill-count');
+  if (activeSkillCount) {
+    const activeCount = G.skills.filter(s => s.active).length;
+    const maxActive = maxActiveSkills();
+    activeSkillCount.textContent = 'Active: '+activeCount+'/'+maxActive;
+    activeSkillCount.style.color = activeCount >= maxActive ? '#ff0' : '#0f0';
+  }
   const sc = document.getElementById('skills-container');
   if (sc && sc.children.length === SKILLS.length) {
     SKILLS.forEach((cfg, i) => {
@@ -197,7 +239,7 @@ function updateUI() {
   const inv = document.getElementById('inventory-container');
   if (inv) {
     inv.innerHTML = '';
-    const items = [['program','Programs'],['hardware','Hardware'],['exploit','Exploits'],['neuralLinks','Neural Links'],['turboChargers','Turbo Chargers']];
+    const items = [['program','Programs'],['hardware','Hardware'],['exploit','Exploits'],['qProgram','Quantum Programs'],['qHardware','Armor Shields'],['qExploit','Zero Days'],['neuralLinks','Neural Links'],['turboChargers','Turbo Chargers']];
     Object.keys(DROP_LABELS).forEach(k => items.push([k, DROP_LABELS[k]]));
     items.forEach(([id,label]) => {
       const d=document.createElement('div'); d.style.cssText='background:rgba(0,255,65,0.04);border:1px solid rgba(0,255,65,0.12);border-radius:4px;padding:6px 12px;font-size:12px;';
@@ -321,6 +363,7 @@ function initLogin() {
         while (G.upgs.length < UPGRADES.length) G.upgs.push({ id:UPGRADES[G.upgs.length].id, lvl:0 });
         while (G.zones.length < ZONES.length) G.zones.push({ id:ZONES[G.zones.length].id, unlocked:false });
         while (G.achievements.length < ACHIEVEMENTS.length) G.achievements.push({ id:ACHIEVEMENTS[G.achievements.length].id, unlocked:false });
+        while (G.specializations.length < SPECIALIZATIONS.length) G.specializations.push({ id:SPECIALIZATIONS[G.specializations.length].id, purchased:false });
       } else {
         G = freshState();
         G._pw = pass;

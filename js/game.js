@@ -11,17 +11,29 @@ function clickSkill(id) {
       }
     }
     if (!canPay(c.cost)) { toast('Need '+c.costLabel, 'error'); return; }
-    pay(c.cost); s.unlocked = true; s.active = true;
+    pay(c.cost); s.unlocked = true;
+    if (G.skills.filter(x => x.active).length < maxActiveSkills()) {
+      s.active = true;
+    }
     toast(c.name+' unlocked!', 'loot');
     checkAchievements();
     return;
   }
-  if (!s.active && G.skills.filter(x => x.active).length >= maxActiveSkills()) {
-    toast('Max active skills reached. Upgrade subscription for more.', 'error');
+  if (s.active) {
+    s.active = false;
+    toast(skillCfg(id).name+' stopped', 'info');
     return;
   }
-  s.active = !s.active;
-  if (s.active) toast(skillCfg(id).name+' started', 'info');
+  const activeCount = G.skills.filter(x => x.active).length;
+  if (activeCount >= maxActiveSkills()) {
+    const oldest = G.skills.find(x => x.active);
+    if (oldest) {
+      oldest.active = false;
+      toast(oldest.id+' deactivated to make room', 'info');
+    }
+  }
+  s.active = true;
+  toast(skillCfg(id).name+' started', 'info');
 }
 
 function clickUpgrade(id) {
@@ -212,6 +224,36 @@ function checkAchievements() {
       toast('Achievement: '+a.name+'!', 'loot');
     }
   });
+}
+
+// Specializations
+function buySpecialization(id) {
+  const cfg = SPECIALIZATIONS.find(s => s.id === id);
+  if (!cfg) return;
+  const owned = G.specializations.find(s => s.id === id);
+  if (!owned || owned.purchased) { toast('Already purchased', 'info'); return; }
+  const skill = skillSt(cfg.skillId);
+  if (!skill || skill.lvl < cfg.reqLvl) { toast('Need '+cfg.skillId+' Lv.'+cfg.reqLvl, 'error'); return; }
+  if (!canPay(cfg.cost)) { toast('Cannot afford', 'error'); return; }
+  pay(cfg.cost);
+  owned.purchased = true;
+  toast('Specialization: '+cfg.name+' unlocked!', 'loot');
+  checkAchievements();
+}
+
+// Combat burst items
+function combatBurst(id) {
+  if (!G.cmbt.inCombat) { toast('Not in combat', 'error'); return; }
+  const cfg = BURST_EXPLOITS.find(b => b.id === id);
+  if (!cfg) return;
+  const enemy = ENEMIES[G.cmbt.idx];
+  if (enemy.lvl < cfg.reqEnemyLvl) { toast('Enemy too weak for this', 'info'); return; }
+  if (!canPay(cfg.cost)) { toast('Cannot afford', 'error'); return; }
+  pay(cfg.cost);
+  G.cmbt.hp -= cfg.damage;
+  logCombat('BURST: '+cfg.name+' dealt '+cfg.damage+' damage!');
+  toast(cfg.name+' deployed!', 'loot');
+  if (G.cmbt.hp <= 0) combatWin();
 }
 
 // Dev

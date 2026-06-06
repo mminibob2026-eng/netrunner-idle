@@ -157,6 +157,16 @@ body { background: #0a0a1a; color: #c0c0c0; font-family: 'Courier New', monospac
 #ad-banner { animation: fadeIn 0.3s ease-out; }
 
 /* Premium theme variations */
+.specs-container { margin-top:6px;padding-top:4px;border-top:1px solid rgba(0,255,65,0.1); }
+.spec-item { display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10px;padding:2px 0; }
+.spec-item.purchased { opacity:0.6; }
+.spec-name { color:#ff0;font-size:10px; }
+.spec-desc { color:#888;font-size:9px;flex:1; }
+.spec-btn { padding:2px 8px;background:rgba(255,255,0,0.1);border:1px solid rgba(255,255,0,0.3);color:#ff0;font-family:inherit;font-size:9px;cursor:pointer;border-radius:2px; }
+.spec-btn:hover { background:rgba(255,255,0,0.2); }
+
+.burst-btn { padding:4px 10px;font-size:10px; }
+
 .theme-neon { --accent:#f0f; }
 .theme-amber { --accent:#ff0; }
 .theme-cyan { --accent:#0ff; }

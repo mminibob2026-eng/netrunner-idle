@@ -3,12 +3,13 @@ function freshState() {
     res: { data:0, credits:0, cpu:0, bandwidth:0, darkMatter:0 },
     skills: SKILLS.map(s => ({ id:s.id, lvl:1, xp:0, active:false, unlocked:!s.cost, prog:0 })),
     upgs: UPGRADES.map(u => ({ id:u.id, lvl:0 })),
-    inv: { program:0, hardware:0, exploit:0, neuralLinks:0, turboChargers:0, dataShard:0, fwShard:0, iceCore:0, aiMod:0, encKey:0, dnToken:0, coreFrag:0 },
-    cmbt: { idx:0, hp:50, php:100, mxhp:100, atk:10, def:5, accum:0, unlocked:false, inCombat:false, log:[], _bonus:0 },
+    inv: { program:0, hardware:0, exploit:0, neuralLinks:0, turboChargers:0, qProgram:0, qHardware:0, qExploit:0, dataShard:0, fwShard:0, iceCore:0, aiMod:0, encKey:0, dnToken:0, coreFrag:0 },
+    cmbt: { idx:0, hp:50, php:100, mxhp:100, atk:10, def:5, accum:0, unlocked:false, inCombat:false, log:[], _bonus:0, burstCd:0 },
     prest: { lvl:0, dm:0, times:0, transcendLvl:0, transcendTimes:0 },
     stats: { earned:{data:0,credits:0,cpu:0,bandwidth:0,darkMatter:0}, enemiesDefeated:0, itemsCrafted:0, totalPrestige:0, offlineTime:0 },
     zones: ZONES.map(z => ({ id:z.id, unlocked:z.id === 'perimeter' })),
     achievements: ACHIEVEMENTS.map(a => ({ id:a.id, unlocked:false })),
+    specializations: SPECIALIZATIONS.map(s => ({ id:s.id, purchased:false })),
     lastSave: Date.now(),
     _subActive: false,
     _pw: '',
@@ -29,6 +30,7 @@ function migrateState(d) {
     if (!d.prest.transcendTimes) d.prest.transcendTimes = 0;
     if (d._subActive === undefined) d._subActive = false;
     if (!d.lastSave) d.lastSave = Date.now();
+    if (!d.specializations) d.specializations = SPECIALIZATIONS.map(s => ({ id:s.id, purchased:false }));
     d.ver = SAVE_VERSION;
   }
   return d;
@@ -54,6 +56,7 @@ function load() {
       while (G.upgs.length < UPGRADES.length) G.upgs.push({ id:UPGRADES[G.upgs.length].id, lvl:0 });
       while (G.zones.length < ZONES.length) G.zones.push({ id:ZONES[G.zones.length].id, unlocked:false });
       while (G.achievements.length < ACHIEVEMENTS.length) G.achievements.push({ id:ACHIEVEMENTS[G.achievements.length].id, unlocked:false });
+      while (G.specializations.length < SPECIALIZATIONS.length) G.specializations.push({ id:SPECIALIZATIONS[G.specializations.length].id, purchased:false });
       return true;
     }
   } catch(e) { err('Load error: '+e.message); }

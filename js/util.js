@@ -9,29 +9,46 @@ function upgCfg(id) { return UPGRADES.find(u => u.id === id); }
 function zoneCfg(id) { return ZONES.find(z => z.id === id); }
 function enemyCfg(idx) { return ENEMIES[idx]; }
 
+function specBonus(type) {
+  let m = 1;
+  if (!G || !G.specializations) return m;
+  G.specializations.forEach(sp => {
+    if (!sp.purchased) return;
+    const cfg = SPECIALIZATIONS.find(s => s.id === sp.id);
+    if (!cfg || !cfg.effect) return;
+    if (cfg.effect[type]) m *= cfg.effect[type];
+  });
+  return m;
+}
+
 function skillMult(id) {
   const map = { dataMining:'miningSpeed', packetSniffing:'sniffingSpeed', cryptoMining:'cryptoSpeed', networkScouting:'scoutSpeed' };
   let m = 1 + (upgSt(map[id])?.lvl || 0) * 0.2;
   m *= Math.pow(1.5, G.prest.lvl);
   m *= 1 + (G.inv.neuralLinks || 0) * 0.02;
   m *= getBonus('speedMult');
+  m *= specBonus(id+'Mult');
   if (isSubActive()) m *= 1.25;
   return m;
 }
 
 function skillYield(id) {
   const c = skillCfg(id), s = skillSt(id);
-  return c.yield * (1 + (s.lvl-1)*0.08) * skillMult(id);
+  let base = c.yield * (1 + (s.lvl-1)*0.08) * skillMult(id);
+  base *= specBonus('allProdMult');
+  return base;
 }
 
 function skillTime(id) {
   const c = skillCfg(id), s = skillSt(id);
-  return Math.max(0.25, c.time * Math.pow(0.97, s.lvl-1));
+  let t = c.time * Math.pow(0.97, s.lvl-1);
+  t *= specBonus('globalSpeed');
+  return Math.max(0.25, t);
 }
 
 function cmbtPow() {
-  let a = G.cmbt.atk + G.inv.exploit*8 + G.inv.program*2 + (G.inv.turboChargers||0)*5;
-  let d = G.cmbt.def + G.inv.hardware*3 + (G.inv.turboChargers||0)*3;
+  let a = G.cmbt.atk + G.inv.exploit*8 + G.inv.program*2 + (G.inv.turboChargers||0)*5 + (G.inv.qProgram||0)*25 + (G.inv.qExploit||0)*150;
+  let d = G.cmbt.def + G.inv.hardware*3 + (G.inv.turboChargers||0)*3 + (G.inv.qHardware||0)*10;
   const b = upgSt('combatBoost');
   a = Math.floor(a * (1 + b.lvl*0.15) * getBonus('atkMult'));
   d = Math.floor(d * getBonus('defMult'));
@@ -82,6 +99,7 @@ function getBonus(type) {
     if (cfg.reward[type]) m *= cfg.reward[type];
   });
   m *= zoneBonus(type);
+  m *= specBonus(type);
   if (type === 'prestMult' && G.prest.lvl > 0) m *= Math.pow(1.15, G.prest.lvl);
   if (type === 'transcendMult' && G.prest.transcendLvl > 0) m *= Math.pow(2, G.prest.transcendLvl);
   return m;

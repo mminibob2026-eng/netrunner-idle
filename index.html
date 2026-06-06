@@ -48,6 +48,10 @@
 <div id="content">
   <div id="tab-skills" class="tab-content active">
     <div class="section-title">[ SKILLS ] <span>// train to earn resources</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span id="active-skill-count" style="font-size:11px;color:#0f0;">Active: 0/2</span>
+      <span style="font-size:10px;color:#888;">Subscribe for 4 active slots</span>
+    </div>
     <div id="skills-container" class="skills-grid"></div>
     <div id="dev-panel" style="display:none"></div>
   </div>
@@ -70,6 +74,10 @@
         <button class="combat-btn item-btn" onclick="combatUseItem('hardware')">HARDWARE (<span id="item-hardware">0</span>)</button>
         <button class="combat-btn item-btn" onclick="combatUseItem('exploit')">EXPLOIT (<span id="item-exploit">0</span>)</button>
         <button class="combat-btn disconnect-btn" onclick="combatDisconnect()">DISCONNECT</button>
+      </div>
+      <div id="combat-actions-burst" style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;font-size:10px;">
+        <span style="color:#888;width:100%;margin-bottom:2px;">BURST ATTACKS:</span>
+        <div id="burst-actions" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
       </div>
       <div id="combat-log"></div>
     </div>
