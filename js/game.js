@@ -281,6 +281,13 @@ function refreshQuests() {
 }
 function getActiveQuests() {
   refreshQuests();
+  // Functions don't survive JSON serialization, so rebuild if quests are plain objects
+  if (G._quests.length > 0 && typeof G._quests[0].check !== 'function') {
+    G._quests = [];
+    G._questProgress = {};
+    G._questCompleted = [];
+    refreshQuests();
+  }
   return G._quests;
 }
 function trackQuestProgress(key, amt) {
