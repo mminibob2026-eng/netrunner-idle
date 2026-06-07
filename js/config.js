@@ -15,11 +15,11 @@ const BRANCHES = [
       { id:'print', name:'print()', desc:'Output your first message to the world.', baseCost:1, reqLvl:0,
         gen:(lvl)=>({data:(0.5+lvl*0.25)}) },
       { id:'variables', name:'Variables & Types', desc:'Store data in named boxes.', baseCost:3, reqLvl:3,
-        gen:(lvl)=>({data:(0.4+lvl*0.18), credits:(0.1+lvl*0.04)}) },
+        gen:(lvl)=>({data:(0.4+lvl*0.18), credits:(0.1+lvl*0.04), cpu:(0.05+lvl*0.02)}) },
       { id:'lists', name:'Lists & Loops', desc:'Collections of items you can iterate through.', baseCost:6, reqLvl:5,
-        gen:(lvl)=>({data:(0.3+lvl*0.12), credits:(0.2+lvl*0.08)}) },
+        gen:(lvl)=>({data:(0.3+lvl*0.12), credits:(0.2+lvl*0.08), cpu:(0.1+lvl*0.04)}) },
       { id:'dicts', name:'Dictionaries', desc:'Key-value pairs for organized data.', baseCost:12, reqLvl:8,
-        gen:(lvl)=>({data:(0.5+lvl*0.2), credits:(0.4+lvl*0.12)}) },
+        gen:(lvl)=>({data:(0.5+lvl*0.2), credits:(0.4+lvl*0.12), cpu:(0.15+lvl*0.06)}) },
     ]
   },
   {
@@ -29,11 +29,11 @@ const BRANCHES = [
       { id:'console', name:'console.log()', desc:'Log messages to the browser console.', baseCost:2, reqLvl:0,
         gen:(lvl)=>({data:(0.4+lvl*0.2)}) },
       { id:'dom', name:'DOM Manipulation', desc:'Change what users see on a web page.', baseCost:4, reqLvl:3,
-        gen:(lvl)=>({data:(0.3+lvl*0.15), credits:(0.2+lvl*0.06)}) },
+        gen:(lvl)=>({data:(0.3+lvl*0.15), credits:(0.2+lvl*0.06), cpu:(0.05+lvl*0.02)}) },
       { id:'events', name:'Event Handling', desc:'Respond to clicks, keys, and user actions.', baseCost:8, reqLvl:5,
-        gen:(lvl)=>({data:(0.4+lvl*0.15), credits:(0.3+lvl*0.1)}) },
+        gen:(lvl)=>({data:(0.4+lvl*0.15), credits:(0.3+lvl*0.1), cpu:(0.1+lvl*0.04)}) },
       { id:'async', name:'Async & Promises', desc:'Handle operations that take time.', baseCost:16, reqLvl:8,
-        gen:(lvl)=>({data:(0.6+lvl*0.2), credits:(0.5+lvl*0.15)}) },
+        gen:(lvl)=>({data:(0.6+lvl*0.2), credits:(0.5+lvl*0.15), cpu:(0.15+lvl*0.06)}) },
     ]
   },
   {
@@ -43,11 +43,11 @@ const BRANCHES = [
       { id:'printf', name:'printf()', desc:'Formatted output to the terminal.', baseCost:3, reqLvl:0,
         gen:(lvl)=>({data:(0.6+lvl*0.2)}) },
       { id:'pointers', name:'Pointers', desc:'Variables that hold memory addresses.', baseCost:6, reqLvl:3,
-        gen:(lvl)=>({data:(0.5+lvl*0.18), credits:(0.2+lvl*0.05)}) },
+        gen:(lvl)=>({data:(0.5+lvl*0.18), credits:(0.2+lvl*0.05), cpu:(0.05+lvl*0.02)}) },
       { id:'structs', name:'Structs', desc:'Group related data into custom types.', baseCost:12, reqLvl:5,
-        gen:(lvl)=>({data:(0.6+lvl*0.2), credits:(0.3+lvl*0.08)}) },
+        gen:(lvl)=>({data:(0.6+lvl*0.2), credits:(0.3+lvl*0.08), cpu:(0.1+lvl*0.04)}) },
       { id:'memory', name:'Memory Management', desc:'Allocate and free memory manually.', baseCost:24, reqLvl:8,
-        gen:(lvl)=>({data:(0.8+lvl*0.25), credits:(0.4+lvl*0.12)}) },
+        gen:(lvl)=>({data:(0.8+lvl*0.25), credits:(0.4+lvl*0.12), cpu:(0.15+lvl*0.06)}) },
     ]
   },
   {
@@ -57,11 +57,39 @@ const BRANCHES = [
       { id:'writeline', name:'Console.WriteLine()', desc:'Output text in .NET applications.', baseCost:3, reqLvl:0,
         gen:(lvl)=>({data:(0.5+lvl*0.18)}) },
       { id:'classes', name:'Classes & Objects', desc:'Blueprints for creating objects.', baseCost:6, reqLvl:3,
-        gen:(lvl)=>({data:(0.4+lvl*0.15), credits:(0.2+lvl*0.06)}) },
+        gen:(lvl)=>({data:(0.4+lvl*0.15), credits:(0.2+lvl*0.06), cpu:(0.05+lvl*0.02)}) },
       { id:'inheritance', name:'Inheritance', desc:'Reuse code by extending classes.', baseCost:12, reqLvl:5,
-        gen:(lvl)=>({data:(0.5+lvl*0.18), credits:(0.3+lvl*0.1)}) },
+        gen:(lvl)=>({data:(0.5+lvl*0.18), credits:(0.3+lvl*0.1), cpu:(0.1+lvl*0.04)}) },
       { id:'linq', name:'LINQ', desc:'Query collections with readable syntax.', baseCost:24, reqLvl:8,
-        gen:(lvl)=>({data:(0.7+lvl*0.22), credits:(0.5+lvl*0.15)}) },
+        gen:(lvl)=>({data:(0.7+lvl*0.22), credits:(0.5+lvl*0.15), cpu:(0.15+lvl*0.06)}) },
+    ]
+  },
+  {
+    id:'go', name:'Go', color:'#00ADD8',
+    desc:'Fast, concurrent, and simple. Built for modern cloud apps.',
+    nodes:[
+      { id:'fmt', name:'fmt.Println()', desc:'Print output in Go programs.', baseCost:3, reqLvl:0,
+        gen:(lvl)=>({data:(0.5+lvl*0.2)}) },
+      { id:'goroutines', name:'Goroutines', desc:'Run functions concurrently with goroutines.', baseCost:8, reqLvl:3,
+        gen:(lvl)=>({data:(0.4+lvl*0.15), credits:(0.2+lvl*0.06), cpu:(0.05+lvl*0.02)}) },
+      { id:'interfaces', name:'Interfaces', desc:'Define behavior with method signatures.', baseCost:16, reqLvl:5,
+        gen:(lvl)=>({data:(0.5+lvl*0.18), credits:(0.3+lvl*0.1), cpu:(0.1+lvl*0.04)}) },
+      { id:'concurrency', name:'Channels', desc:'Communicate between goroutines safely.', baseCost:32, reqLvl:8,
+        gen:(lvl)=>({data:(0.7+lvl*0.22), credits:(0.5+lvl*0.14), cpu:(0.15+lvl*0.06)}) },
+    ]
+  },
+  {
+    id:'typescript', name:'TypeScript', color:'#3178C6',
+    desc:'JavaScript with types. Catch bugs before they happen.',
+    nodes:[
+      { id:'tsconsole', name:'console.log()', desc:'Log messages in TypeScript.', baseCost:3, reqLvl:0,
+        gen:(lvl)=>({data:(0.4+lvl*0.18)}) },
+      { id:'tstypes', name:'Type Annotations', desc:'Add type safety to your code.', baseCost:6, reqLvl:3,
+        gen:(lvl)=>({data:(0.3+lvl*0.14), credits:(0.2+lvl*0.05), cpu:(0.05+lvl*0.02)}) },
+      { id:'tsinterfaces', name:'Interfaces & Types', desc:'Shape your data with custom types.', baseCost:12, reqLvl:5,
+        gen:(lvl)=>({data:(0.4+lvl*0.16), credits:(0.3+lvl*0.08), cpu:(0.1+lvl*0.04)}) },
+      { id:'generics', name:'Generics', desc:'Write reusable code for any type.', baseCost:24, reqLvl:8,
+        gen:(lvl)=>({data:(0.6+lvl*0.2), credits:(0.4+lvl*0.12), cpu:(0.15+lvl*0.06)}) },
     ]
   },
 ];
@@ -139,6 +167,12 @@ const ACHIEVEMENTS = [
   { id:'fullMap', name:'Knowledge Master', desc:'Unlock all concept tiers', check:g=>g.zones.every(z=>z.unlocked), reward:{allMult:1.1} },
   { id:'richCoder', name:'Resourceful', desc:'Hold 10K of any resource at once', check:g=>Object.values(g.res).some(v=>v>=10000), reward:{capMult:1.1} },
   { id:'transcend', name:'Enlightenment', desc:'Transcend for the first time', check:g=>g.prest.transcendTimes>=1, reward:{allMult:1.15} },
+  { id:'firstProject', name:'First Project', desc:'Complete your first project', check:g=>(g._totalProjectsBuilt||0)>=1, reward:{dataMult:1.05} },
+  { id:'projectMaster', name:'Project Lead', desc:'Complete 5 projects', check:g=>(g._totalProjectsBuilt||0)>=5, reward:{creditsMult:1.1} },
+  { id:'firstSprint', name:'First Sprint', desc:'Complete your first daily sprint', check:g=>(g._sprintCompleted||0)>=1, reward:{cpuMult:1.05} },
+  { id:'sprintMaster', name:'Sprint Champion', desc:'Complete 10 daily sprints', check:g=>(g._sprintCompleted||0)>=10, reward:{allMult:1.1} },
+  { id:'firstLibrary', name:'First Library', desc:'Upgrade a code library once', check:g=>Object.values(g._libraries).some(v=>v>=1), reward:{bwMult:1.05} },
+  { id:'libMaster', name:'Library Master', desc:'Upgrade any library to level 10', check:g=>Object.values(g._libraries).some(v=>v>=10), reward:{allMult:1.1} },
 ];
 
 const BURST_EXPLOITS = [
@@ -165,7 +199,7 @@ const SUBSCRIPTION = {
   }
 };
 
-const SAVE_VERSION = 8;
+const SAVE_VERSION = 9;
 
 // ===== DAILY QUESTS =====
 const QUEST_POOL = [
@@ -211,4 +245,42 @@ const ENEMY_ABILITIES = [
 const ENEMY_ABILITY_MAP = [0, 1, 2, 3, 0, 1, 2, 3, 0, 1];
 
 // ===== KNOWLEDGE VISUALIZER NODES =====
-const VIS_NODE_COLORS = ['#3776AB','#F7DF1E','#555555','#9B4F96','#0f0','#0ff','#f0f','#ff0','#fff','#f44'];
+const VIS_NODE_COLORS = ['#3776AB','#F7DF1E','#555555','#9B4F96','#00ADD8','#3178C6','#0f0','#0ff','#f0f','#ff0','#fff','#f44'];
+
+// ===== PROJECTS (like Idleon construction - build over time for permanent buffs) =====
+const PROJECTS = [
+  { id:'portfolio', name:'Portfolio Site', desc:'A showcase of your work. +5% XP gen.', kpCost:200, duration:60, bonus:{dataMult:1.05} },
+  { id:'github', name:'GitHub Profile', desc:'Share your code with the world. +5% LOC gen.', kpCost:300, duration:80, bonus:{creditsMult:1.05} },
+  { id:'docs', name:'Documentation Site', desc:'Write clear docs for others. +5% Insight gen.', kpCost:300, duration:100, bonus:{bwMult:1.05} },
+  { id:'cli', name:'CLI Tool', desc:'Build a command-line tool. +10% all gen.', kpCost:500, duration:120, bonus:{allMult:1.1} },
+  { id:'webapp', name:'Web Application', desc:'A full web app with backend. +15% XP gen.', kpCost:800, duration:200, bonus:{dataMult:1.15} },
+  { id:'mobile', name:'Mobile App', desc:'An app that runs on phones. +15% LOC gen.', kpCost:1000, duration:250, bonus:{creditsMult:1.15} },
+  { id:'api', name:'REST API', desc:'An API others can use. +20% Proc gen.', kpCost:1500, duration:350, bonus:{cpuMult:1.2} },
+  { id:'engine', name:'Game Engine', desc:'A reusable game engine. +30% all gen.', kpCost:3000, duration:500, bonus:{allMult:1.3} },
+];
+
+// ===== SPRINTS (like Idleon post office - deliver specific code for rewards) =====
+const SPRINT_POOL = [
+  { id:'sprintXp', desc:'Write X pages of documentation', req:{data:2000}, rewardNP:10, reward:{credits:500} },
+  { id:'sprintLoc', desc:'Write X lines of production code', req:{credits:1000}, rewardNP:10, reward:{data:2000} },
+  { id:'sprintProc', desc:'Refactor X modules for performance', req:{cpu:500}, rewardNP:10, reward:{bandwidth:200} },
+  { id:'sprintBw', desc:'Review X lines of peer code', req:{bandwidth:200}, rewardNP:10, reward:{cpu:300} },
+  { id:'sprintMastery', desc:'Fix X critical bugs', req:{darkMatter:10}, rewardNP:15, reward:{allMult:1.05} },
+];
+
+// ===== LIBRARIES (like Idleon alchemy - level up with resources for permanent bonuses) =====
+const LIBRARIES = [
+  { id:'stdLib', name:'Standard Library', desc:'+XP generation per level', baseCost:{data:100,credits:50}, mult:1.5, max:20, bonus:(lvl)=>({dataMult:1.05+lvl*0.02}) },
+  { id:'packageMgr', name:'Package Manager', desc:'+LOC generation per level', baseCost:{credits:80,cpu:20}, mult:1.5, max:20, bonus:(lvl)=>({creditsMult:1.05+lvl*0.02}) },
+  { id:'compiler', name:'Compiler Tools', desc:'+Proc generation per level', baseCost:{data:150,cpu:30}, mult:1.5, max:20, bonus:(lvl)=>({cpuMult:1.05+lvl*0.02}) },
+  { id:'debugger', name:'Debugger Suite', desc:'+Insight generation per level', baseCost:{bandwidth:30,credits:100}, mult:1.5, max:20, bonus:(lvl)=>({bwMult:1.05+lvl*0.02}) },
+  { id:'profiler', name:'Profiler', desc:'+All generation per level', baseCost:{darkMatter:5,cpu:100}, mult:1.8, max:10, bonus:(lvl)=>({allMult:1.05+lvl*0.03}) },
+];
+
+// ===== SPECIALIZATIONS (choose a dev path that changes playstyle) =====
+const SPECIALIZATIONS = [
+  { id:'frontend', name:'Frontend Dev', desc:'Build beautiful UIs. +20% XP gen, +10% debug power.', bonus:{dataMult:1.2, atkMult:1.1} },
+  { id:'backend', name:'Backend Dev', desc:'Build server-side systems. +20% LOC gen, +15% max HP.', bonus:{creditsMult:1.2, hpMult:1.15} },
+  { id:'systems', name:'Systems Dev', desc:'Low-level programming. +20% Proc gen, +10% debug defense.', bonus:{cpuMult:1.2, defMult:1.1} },
+  { id:'data', name:'Data Scientist', desc:'Analyze data and build models. +20% Insight gen, +15% KP rate.', bonus:{bwMult:1.2, npRate:1.15} },
+];

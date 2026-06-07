@@ -285,9 +285,10 @@ function buildDevPanel() {
     '<div class="dev-row">' +
       '<button onclick="devAddRes(\'data\',1000)">+1K XP</button>' +
       '<button onclick="devAddRes(\'credits\',1000)">+1K LOC</button>' +
-      '<button onclick="devAddRes(\'cpu\',500)">+500 KP</button>' +
+      '<button onclick="devAddRes(\'cpu\',500)">+500 Proc</button>' +
       '<button onclick="devAddRes(\'bandwidth\',200)">+200 Insight</button>' +
       '<button onclick="devAddRes(\'darkMatter\',100)">+100 Mastery</button>' +
+      '<button onclick="devResetAll()" style="border-color:#f44;color:#f44;">RESET ALL</button>' +
     '</div>' +
     '<div class="dev-row">' +
       '<button onclick="devMaxBranch()">MAX LANGUAGES</button>' +
@@ -301,6 +302,96 @@ function buildDevPanel() {
     '</div>';
 }
 
+function buildProjects() {
+  const c = document.getElementById('projects-container'); if (!c) return;
+  c.innerHTML = '';
+  PROJECTS.forEach(p => {
+    const active = G._projects[p.id];
+    const done = active?.done;
+    const pct = active ? Math.max(0, Math.min(100, 100 - (active.timeLeft / p.duration) * 100)) : 0;
+    const card = document.createElement('div');
+    card.className = 'project-card' + (done ? ' done' : '');
+    card.innerHTML =
+      '<div class="project-name">' + p.name + '</div>' +
+      '<div class="project-desc">' + p.desc + '</div>' +
+      '<div class="project-bonus" style="color:#ff0;font-size:10px;">' + Object.entries(p.bonus).map(([k,v]) => fmtBonus(k,v)).join(', ') + '</div>' +
+      (active ? '<div class="project-progress"><div class="project-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="project-time">' + (done ? 'COMPLETE!' : Math.ceil(active.timeLeft) + 's remaining') + '</div>'
+      : '<div class="project-cost">Cost: ' + p.kpCost + ' KP</div>' +
+        '<button class="project-btn" data-id="' + p.id + '">START BUILD</button>');
+    if (!active) {
+      card.querySelector('.project-btn').addEventListener('click', e => { e.stopPropagation(); startProject(p.id); });
+    }
+    c.appendChild(card);
+  });
+}
+
+function buildSprints() {
+  const c = document.getElementById('sprints-container'); if (!c) return;
+  c.innerHTML = '';
+  const s = getActiveSprint();
+  if (!s) { c.innerHTML = '<div style="color:#888;font-size:11px;">No sprint available</div>'; return; }
+  const card = document.createElement('div');
+  card.className = 'sprint-card';
+  card.innerHTML =
+    '<div class="sprint-name">Daily Sprint: ' + s.desc + '</div>' +
+    '<div class="sprint-req">Deliver: ' + Object.entries(s.req).map(([r,a]) => fmt(a) + ' ' + (RES[r]?RES[r].n:r)).join(', ') + '</div>' +
+    '<div class="sprint-reward">Reward: ' + s.rewardNP + ' KP' + Object.entries(s.reward).map(([r,a]) => ' + ' + fmt(a) + ' ' + (RES[r]?RES[r].n:r)).join('') + '</div>' +
+    '<div class="sprint-count">Sprints completed: ' + (G._sprintCompleted || 0) + '</div>' +
+    '<button class="sprint-btn" onclick="deliverSprint()">DELIVER</button>';
+  c.appendChild(card);
+}
+
+function buildLibraries() {
+  const c = document.getElementById('libraries-container'); if (!c) return;
+  c.innerHTML = '';
+  LIBRARIES.forEach(lib => {
+    const lvl = G._libraries[lib.id] || 0;
+    const maxed = lvl >= lib.max;
+    const cost = {};
+    Object.entries(lib.baseCost).forEach(([r,a]) => { cost[r] = Math.floor(a * Math.pow(lib.mult, lvl)); });
+    const bon = lib.bonus(lvl);
+    const card = document.createElement('div');
+    card.className = 'library-card' + (maxed ? ' maxed' : '');
+    card.innerHTML =
+      '<div class="library-name">' + lib.name + '</div>' +
+      '<div class="library-desc">' + lib.desc + '</div>' +
+      '<div class="library-effect" style="color:#0ff;">' + Object.entries(bon).map(([k,v]) => fmtBonus(k,v)).join(', ') + '</div>' +
+      '<div class="library-level">Lv.' + lvl + '/' + lib.max + '</div>' +
+      (maxed ? '<div class="library-max">MAXED</div>' : '<div class="library-cost">Cost: ' + Object.entries(cost).map(([r,a]) => fmt(a) + ' ' + (RES[r]?RES[r].n:r)).join(', ') + '</div>' +
+        '<button class="library-btn" data-id="' + lib.id + '">UPGRADE</button>');
+    if (!maxed) {
+      card.querySelector('.library-btn').addEventListener('click', e => { e.stopPropagation(); upgradeLibrary(lib.id); });
+    }
+    c.appendChild(card);
+  });
+}
+
+function buildSpecializations() {
+  const c = document.getElementById('specializations-container'); if (!c) return;
+  c.innerHTML = '';
+  if (G._specialization) {
+    const spec = SPECIALIZATIONS.find(x => x.id === G._specialization);
+    c.innerHTML = '<div class="spec-card" style="border-color:#0ff;">' +
+      '<div class="spec-name" style="color:#0ff;">' + spec.name + '</div>' +
+      '<div class="spec-desc">' + spec.desc + '</div>' +
+      '<div class="spec-bonus" style="color:#0f0;">' + Object.entries(spec.bonus).map(([k,v]) => fmtBonus(k,v)).join(', ') + '</div>' +
+      '<div style="color:#888;font-size:10px;margin-top:4px;">Enlightenment to respecialize</div></div>';
+    return;
+  }
+  SPECIALIZATIONS.forEach(spec => {
+    const card = document.createElement('div');
+    card.className = 'spec-card';
+    card.innerHTML =
+      '<div class="spec-name">' + spec.name + '</div>' +
+      '<div class="spec-desc">' + spec.desc + '</div>' +
+      '<div class="spec-bonus">' + Object.entries(spec.bonus).map(([k,v]) => fmtBonus(k,v)).join(', ') + '</div>' +
+      '<button class="spec-btn" data-id="' + spec.id + '">CHOOSE</button>';
+    card.querySelector('.spec-btn').addEventListener('click', e => { e.stopPropagation(); selectSpecialization(spec.id); });
+    c.appendChild(card);
+  });
+}
+
 function buildUI() {
   buildBranchTree();
   buildUpgrades();
@@ -311,6 +402,10 @@ function buildUI() {
   buildContracts();
   buildConsumables();
   buildEnhance();
+  buildProjects();
+  buildSprints();
+  buildLibraries();
+  buildSpecializations();
   buildRoadMap();
   if (isDev()) buildDevPanel();
 }
@@ -529,6 +624,37 @@ function updateUI() {
     buildEnhance();
   }
 
+  // Projects/Sprints/Libraries (rebuild on build tab visible)
+  const buildTab = document.getElementById('tab-build');
+  if (buildTab && buildTab.classList.contains('active')) {
+    buildProjects();
+    buildSprints();
+    buildLibraries();
+    buildSpecializations();
+  }
+
+  // Update active project progress bars every tick
+  const pc = document.getElementById('projects-container');
+  if (pc) {
+    PROJECTS.forEach((p, i) => {
+      const active = G._projects[p.id];
+      const card = pc.children[i];
+      if (!card) return;
+      if (active && !active.done) {
+        const pct = Math.max(0, Math.min(100, 100 - (active.timeLeft / p.duration) * 100));
+        const fill = card.querySelector('.project-fill');
+        const time = card.querySelector('.project-time');
+        if (fill) fill.style.width = pct + '%';
+        if (time) time.textContent = Math.ceil(active.timeLeft) + 's remaining';
+      }
+      if (active?.done) {
+        const time = card.querySelector('.project-time');
+        if (time) time.textContent = 'COMPLETE!';
+        card.className = 'project-card done';
+      }
+    });
+  }
+
   // Enemy ability indicator
   const eai = document.getElementById('enemy-ability-indicator');
   if (G.cmbt.inCombat && eai) {
@@ -707,7 +833,6 @@ function getNextMilestones() {
   const ms = [];
 
   // 1. Best next branch action
-  // Find affordable level-ups first, then unlockable nodes, then locked nodes
   let branchAction = null;
   let branchAffordable = null;
   BRANCHES.forEach(b => {
@@ -737,29 +862,66 @@ function getNextMilestones() {
   else if (branchAction) ms.push(branchAction);
   else ms.push({ label: 'All concepts learned!', extra: 'Great work, coder', ready: false });
 
-  // 2. Combat progress
-  if (!G.cmbt.unlocked) {
-    const npNeeded = Math.max(0, 25 - Math.floor(G.neuralPoints));
-    ms.push({ label: 'Unlock DEBUG', extra: 'Need ' + npNeeded + ' KP', ready: G.neuralPoints >= 25 });
-  } else {
-    const zi = ZONES.slice().reverse().findIndex(z => !G.zones[ZONES.indexOf(z)].unlocked);
-    if (zi !== -1) {
-      const z = ZONES[ZONES.length - 1 - zi];
-      const d = Math.max(0, z.reqDefeated - (G.stats.enemiesDefeated || 0));
-      const remain = ZONES.length - 1 - zi;
-      ms.push({ label: 'Unlock ' + z.name, extra: 'Fix ' + d + ' more bugs (zone ' + (ZONES.length - remain + 1) + '/' + ZONES.length + ')', ready: (G.stats.enemiesDefeated || 0) >= z.reqDefeated });
+  // 2. Combat / project / library
+  // Check if there's an unstarted affordable project
+  let projectAffordable = null;
+  PROJECTS.forEach(p => {
+    if (G._projects[p.id]?.done) return;
+    if (G._projects[p.id]) return;
+    if (G.neuralPoints >= p.kpCost) {
+      if (!projectAffordable || p.kpCost < projectAffordable.cost) {
+        projectAffordable = { label: 'Build ' + p.name, extra: p.kpCost + ' KP → ' + Object.values(p.bonus)[0], ready: true, cost: p.kpCost };
+      }
+    }
+  });
+  if (projectAffordable) ms.push(projectAffordable);
+  else {
+    // Check combat progress
+    if (!G.cmbt.unlocked) {
+      const npNeeded = Math.max(0, 25 - Math.floor(G.neuralPoints));
+      ms.push({ label: 'Unlock DEBUG', extra: 'Need ' + npNeeded + ' KP', ready: G.neuralPoints >= 25 });
     } else {
-      ms.push({ label: 'All zones unlocked!', extra: 'Enlighten to grow stronger', ready: false });
+      const zi = ZONES.slice().reverse().findIndex(z => !G.zones[ZONES.indexOf(z)].unlocked);
+      if (zi !== -1) {
+        const z = ZONES[ZONES.length - 1 - zi];
+        const d = Math.max(0, z.reqDefeated - (G.stats.enemiesDefeated || 0));
+        ms.push({ label: 'Unlock ' + z.name, extra: 'Fix ' + d + ' more bugs', ready: (G.stats.enemiesDefeated || 0) >= z.reqDefeated });
+      } else {
+        // Suggest a library upgrade
+        let libAffordable = null;
+        LIBRARIES.forEach(lib => {
+          const lvl = G._libraries[lib.id] || 0;
+          if (lvl >= lib.max) return;
+          const cost = {};
+          Object.entries(lib.baseCost).forEach(([r,a]) => { cost[r] = Math.floor(a * Math.pow(lib.mult, lvl)); });
+          if (canPay(cost)) {
+            if (!libAffordable || lvl < (G._libraries[libAffordable.id] || 0)) {
+              libAffordable = { label: 'Upgrade ' + lib.name, extra: 'Lv.' + (lvl+1), ready: true, id: lib.id };
+            }
+          }
+        });
+        if (libAffordable) ms.push(libAffordable);
+        else ms.push({ label: 'All zones unlocked!', extra: 'Enlighten to grow', ready: false });
+      }
     }
   }
 
-  // 3. Prestige
-  const pg = prestigeGain();
-  if (pg < 1) {
-    const d = Math.max(0, 10 - (G.prest.dm || 0));
-    ms.push({ label: 'MASTERY RESET', extra: fmt(d) + ' Mastery needed (have ' + fmt(G.prest.dm || 0) + ')', ready: pg >= 1 });
+  // 3. Specialization / Sprint / Prestige
+  if (!G._specialization) {
+    ms.push({ label: 'Choose Specialization', extra: 'Frontend/Backend/Systems/Data', ready: true });
   } else {
-    ms.push({ label: 'MASTERY READY!', extra: '+' + pg + ' levels', ready: true });
+    const s = getActiveSprint();
+    if (s && canPay(s.req)) {
+      ms.push({ label: 'Complete Sprint', extra: s.desc, ready: true });
+    } else {
+      const pg = prestigeGain();
+      if (pg < 1) {
+        const d = Math.max(0, 10 - (G.prest.dm || 0));
+        ms.push({ label: 'MASTERY RESET', extra: fmt(d) + ' Mastery needed', ready: pg >= 1 });
+      } else {
+        ms.push({ label: 'MASTERY READY!', extra: '+' + pg + ' levels', ready: true });
+      }
+    }
   }
 
   return ms.slice(0, 3);

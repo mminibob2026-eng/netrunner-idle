@@ -65,6 +65,9 @@ function tick(dt) {
   if (G._pendingMiniGameEvent && !document.getElementById('minigame-event-modal')?.classList.contains('visible')) {
     triggerMiniGameAfterCombat();
   }
+
+  // Process active projects
+  tickProjects(dt);
 }
 
 function startLoop() {

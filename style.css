@@ -251,7 +251,7 @@ body::after {
 .theme-cyan { --accent:#0ff; }
 
 /* Branch tree */
-.branch-tree { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px; }
+.branch-tree { display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:8px; }
 .branch-column { background:rgba(0,255,65,0.03);border:1px solid rgba(0,255,65,0.15);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px; }
 .branch-header { font-size:14px;font-weight:bold;text-align:center;text-transform:uppercase;letter-spacing:2px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.1); }
 .branch-desc { font-size:10px;color:#888;text-align:center;margin-bottom:4px; }
@@ -456,3 +456,51 @@ body::after {
 .vis-node { cursor:pointer; }
 .vis-node:hover { filter:brightness(1.5); }
 .vis-label { font-family:'Courier New',monospace;font-size:10px;pointer-events:none; }
+
+/* Projects */
+.projects-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px; }
+.project-card { background:rgba(0,255,0,0.04);border:1px solid rgba(0,255,0,0.12);border-radius:4px;padding:10px 12px; }
+.project-card.done { border-color:#0f0;background:rgba(0,255,0,0.08); }
+.project-name { color:#0f0;font-size:12px;font-weight:bold; }
+.project-desc { font-size:10px;color:#888;margin:2px 0; }
+.project-bonus { font-size:10px;margin:2px 0; }
+.project-progress { height:6px;background:rgba(255,255,255,0.06);border-radius:3px;margin:4px 0;overflow:hidden; }
+.project-fill { height:100%;background:linear-gradient(90deg,#0f0,#0ff);width:0%;border-radius:3px;transition:width 0.3s; }
+.project-time { font-size:10px;color:#ff0; }
+.project-cost { font-size:10px;color:#ff0;margin:2px 0; }
+.project-btn { padding:6px 14px;background:transparent;border:1px solid #0f0;color:#0f0;font-family:inherit;font-size:11px;cursor:pointer;border-radius:3px;transition:all 0.15s;margin-top:4px; }
+.project-btn:hover { background:rgba(0,255,0,0.2); }
+
+/* Sprints */
+.sprint-card { background:rgba(255,255,0,0.04);border:1px solid rgba(255,255,0,0.15);border-radius:4px;padding:12px;text-align:center; }
+.sprint-name { color:#ff0;font-size:13px;font-weight:bold; }
+.sprint-req { font-size:11px;color:#888;margin:4px 0; }
+.sprint-reward { font-size:11px;color:#0f0;margin:2px 0; }
+.sprint-count { font-size:10px;color:#888;margin:2px 0; }
+.sprint-btn { padding:8px 20px;background:transparent;border:1px solid #ff0;color:#ff0;font-family:inherit;font-size:12px;cursor:pointer;border-radius:3px;transition:all 0.15s;margin-top:6px;font-weight:bold; }
+.sprint-btn:hover { background:rgba(255,255,0,0.2); }
+
+/* Libraries */
+.libraries-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px; }
+.library-card { background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.12);border-radius:4px;padding:10px 12px; }
+.library-card.maxed { opacity:0.5; }
+.library-name { color:#0ff;font-size:12px;font-weight:bold; }
+.library-desc { font-size:10px;color:#888;margin:2px 0; }
+.library-effect { font-size:10px;margin:2px 0; }
+.library-level { font-size:10px;color:#f0f;margin:2px 0; }
+.library-max { color:#ff0;font-size:10px;font-weight:bold;margin-top:4px; }
+.library-cost { font-size:10px;color:#ff0;margin:2px 0; }
+.library-btn { padding:6px 14px;background:transparent;border:1px solid #0ff;color:#0ff;font-family:inherit;font-size:11px;cursor:pointer;border-radius:3px;transition:all 0.15s;margin-top:4px; }
+.library-btn:hover { background:rgba(0,255,255,0.2); }
+
+/* Specializations */
+.spec-card { background:rgba(255,0,255,0.04);border:1px solid rgba(255,0,255,0.15);border-radius:4px;padding:10px 12px;text-align:center; }
+.spec-card:hover { border-color:rgba(255,0,255,0.3); }
+.spec-name { color:#f0f;font-size:13px;font-weight:bold; }
+.spec-desc { font-size:10px;color:#888;margin:4px 0; }
+.spec-bonus { font-size:11px;color:#0f0;margin:2px 0; }
+.spec-btn { padding:6px 16px;background:transparent;border:1px solid #f0f;color:#f0f;font-family:inherit;font-size:11px;cursor:pointer;border-radius:3px;transition:all 0.15s;margin-top:4px;font-weight:bold; }
+.spec-btn:hover { background:rgba(255,0,255,0.2); }
+
+@media (max-width: 800px) { .branch-tree { grid-template-columns:repeat(2,1fr); } }
+@media (max-width: 600px) { .branch-tree { grid-template-columns:1fr; } }

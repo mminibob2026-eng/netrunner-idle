@@ -29,6 +29,11 @@ function freshState() {
     _enhance: { program:0, hardware:0, exploit:0 },
     _enhanceSlot: 'program',
     _enemyAbilityCd: 0,
+    _projects: {},
+    _libraries: {},
+    _specialization: null,
+    _sprint: null, _sprintDate: '',
+    _sprintCompleted: 0,
     ver: SAVE_VERSION,
   };
 }
@@ -77,7 +82,7 @@ function migrateState(d) {
     if (!d._nextMiniGameCooldown) d._nextMiniGameCooldown = 0;
   }
   if (d.ver < 8) {
-    // Rebuild branches for new language-based system
+    // Rebuild branches for new language-based system (old saves have stale IDs)
     const branches = {};
     BRANCHES.forEach(b => {
       branches[b.id] = {};
@@ -85,6 +90,13 @@ function migrateState(d) {
       branches[b.id][b.nodes[0].id] = 1;
     });
     d.branches = branches;
+    // Reset upgrades (old saves have stale upgrade IDs)
+    d.upgs = UPGRADES.map(u => ({ id:u.id, lvl:0 }));
+    // Reset inv to fresh state keys (old item IDs no longer valid)
+    d.inv = { program:0, hardware:0, exploit:0, neuralLinks:0, turboChargers:0, qProgram:0, qHardware:0, qExploit:0, dataShard:0, fwShard:0, iceCore:0, aiMod:0, encKey:0, dnToken:0, coreFrag:0 };
+    // Clear stale quests
+    d.quests = [];
+    d._questProgress = {};
     d.neuralPoints = (d.neuralPoints || 0) + 20;
   }
   d.ver = SAVE_VERSION;

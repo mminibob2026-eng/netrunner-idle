@@ -31,7 +31,7 @@
   <div id="resources">
     <div class="res res-data" title="XP (data) - used for building projects"><span class="res-icon" data-res="data">&#9632;</span> <span class="res-label">XP</span> <span id="r-data">0</span></div>
     <div class="res res-credits" title="LOC (lines of code) - used for building and tools"><span class="res-icon" data-res="credits">&#9679;</span> <span class="res-label">LOC</span> <span id="r-credits">0</span></div>
-    <div class="res res-cpu" title="Proc (processing power) - used for advanced builds"><span class="res-icon" data-res="cpu">&#9650;</span> <span class="res-label">Proc</span> <span id="r-cpu">0</span></div>
+    <div class="res res-cpu" title="Proc (processing power) - used for advanced builds. Earned by leveling up Variables, DOM, Pointers, Classes, and higher concepts."><span class="res-icon" data-res="cpu">&#9650;</span> <span class="res-label">Proc</span> <span id="r-cpu">0</span></div>
     <div class="res res-bandwidth" title="Insight - used for deep work and refactoring"><span class="res-icon" data-res="bandwidth">&#9660;</span> <span class="res-label">Insight</span> <span id="r-bandwidth">0</span></div>
     <div class="res res-darkmatter" title="Mastery - earned from fixing bugs, used for mastery reset"><span class="res-icon" data-res="darkMatter">&#9670;</span> <span class="res-label">Mastery</span> <span id="r-darkMatter">0</span></div>
     <div class="res res-np" title="KP (knowledge points) - earned over time, spend on learning concepts"><span class="res-icon" data-res="np">&#9889;</span> <span class="res-label">KP</span> <span id="np-display">0</span></div>
@@ -59,14 +59,24 @@
     <div id="branch-container" class="branch-tree"></div>
     <div id="dev-panel" style="display:none"></div>
     <div id="knowledge-visualizer" style="display:none;margin-top:16px;">
-      <div class="section-title">[ KNOWLEDGE MAP ] <span>// your growing understanding</span></div>
+      <div class="section-title">[ KNOWLEDGE MAP ] <span>// a visual graph of concepts you've learned — learn 12+ total levels to unlock</span></div>
+      <p style="color:#888;font-size:11px;margin-bottom:6px;">Each node is a concept you've learned. Connected nodes build on each other. Pulsing glow = active knowledge. Learn more concepts across all languages to expand your map!</p>
       <canvas id="vis-canvas" width="600" height="300" style="width:100%;height:auto;aspect-ratio:600/300;background:rgba(0,0,0,0.3);border:1px solid rgba(0,255,255,0.15);border-radius:4px;"></canvas>
     </div>
+    <div style="margin-top:12px"><div class="section-title">[ SPECIALIZATION ] <span>// choose your dev path</span></div>
+    <p style="color:#888;font-size:11px;margin-bottom:6px;">Pick a specialization to boost your strengths. Can be reset with Enlightenment.</p>
+    <div id="specializations-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;"></div></div>
   </div>
   <div id="tab-crafting" class="tab-content">
     <div class="section-title">[ BUILD ] <span>// turn XP + LOC into projects</span></div>
     <div id="craft-container" class="craft-grid"></div>
     <div style="margin-top:12px"><div class="section-title">[ INVENTORY ]</div><div id="inventory-container" class="flex-between" style="flex-wrap:wrap;gap:4px"></div></div>
+    <div style="margin-top:12px"><div class="section-title">[ PROJECTS ] <span>// build apps over time for permanent bonuses</span></div>
+    <p style="color:#888;font-size:11px;margin-bottom:6px;">Start a project with KP. It builds over time and grants permanent bonuses when complete.</p>
+    <div id="projects-container" class="projects-grid"></div></div>
+    <div style="margin-top:12px"><div class="section-title">[ DAILY SPRINT ] <span>// deliver code for rewards</span></div>
+    <p style="color:#888;font-size:11px;margin-bottom:6px;">Complete one daily sprint by delivering resources. Resets each day.</p>
+    <div id="sprints-container"></div></div>
   </div>
   <div id="tab-combat" class="tab-content">
     <div class="section-title">[ DEBUG ] <span>// fix bugs in code</span></div>
@@ -104,6 +114,9 @@
     <div id="consumables-container" class="consumables-grid"></div>
     <div class="section-title" style="margin-top:12px;font-size:11px;">[ ENHANCEMENT ]</div>
     <div id="enhance-container"></div>
+    <div style="margin-top:12px"><div class="section-title">[ CODE LIBRARIES ] <span>// level up libraries for permanent boosts</span></div>
+    <p style="color:#888;font-size:11px;margin-bottom:6px;">Upgrade libraries with resources to permanently boost your generation rates.</p>
+    <div id="libraries-container" class="libraries-grid"></div></div>
   </div>
   <div id="tab-progression" class="tab-content">
     <div class="section-title">[ ACHIEVES ] <span>// zones & milestones</span></div>

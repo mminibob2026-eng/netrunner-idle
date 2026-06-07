@@ -93,11 +93,32 @@ function getBonus(type) {
     if (cfg.reward[type]) m *= cfg.reward[type];
   });
   m *= zoneBonus(type);
+  // Project bonuses
+  if (G._projectBonuses && G._projectBonuses[type]) m *= G._projectBonuses[type];
+  // Library bonuses
+  if (G._libraries) {
+    LIBRARIES.forEach(lib => {
+      const lvl = G._libraries[lib.id] || 0;
+      if (lvl > 0) {
+        const bon = lib.bonus(lvl);
+        if (bon[type]) m *= bon[type];
+      }
+    });
+  }
+  // Specialization bonuses
+  if (G._specialization) {
+    const spec = SPECIALIZATIONS.find(x => x.id === G._specialization);
+    if (spec && spec.bonus[type]) m *= spec.bonus[type];
+  }
   if (type === 'prestMult' && G.prest.lvl > 0) m *= Math.pow(1.15, G.prest.lvl);
   if (type === 'transcendMult' && G.prest.transcendLvl > 0) m *= Math.pow(2, G.prest.transcendLvl);
   if (type === 'atkMult' && hasConsumableEffect('energyDrink')) m *= getAtkMult();
   if (type === 'defMult' && hasConsumableEffect('focusPills')) m *= getDefMult();
   if (type === 'prodMult' && hasConsumableEffect('deepWork')) m *= getProdMult();
+  if (type === 'npRate' && G._specialization) {
+    const spec = SPECIALIZATIONS.find(x => x.id === G._specialization);
+    if (spec && spec.bonus.npRate) m *= spec.bonus.npRate;
+  }
   return m;
 }
 

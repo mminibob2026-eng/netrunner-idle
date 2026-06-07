@@ -20,7 +20,8 @@ function clickBranchNode(branchId, nodeId) {
 
 function clickUpgrade(id) {
   const u = upgSt(id), c = upgCfg(id);
-  if (!u||!c||u.lvl>=c.max) return;
+  if (!u||!c) { toast('Tool corrupted - try refreshing', 'error'); return; }
+  if (u.lvl>=c.max) return;
   const cost = {};
   const cr = branchCostRed();
   Object.entries(c.cost).forEach(([r,a])=>{ cost[r]=Math.floor(a*(1-cr)*Math.pow(c.mult, u.lvl)); });
@@ -261,6 +262,19 @@ function devAddRes(id, amt) { addRes(id, amt); toast('Added '+fmt(amt)+' '+(RES[
 function devMaxBranch() { BRANCHES.forEach(b => { b.nodes.forEach(n => { G.branches[b.id][n.id] = 30; }); }); toast('Languages maxed', 'loot'); rebuildUI(); }
 function devUnlockAll() { BRANCHES.forEach(b => { b.nodes.forEach(n => { G.branches[b.id][n.id] = Math.max(G.branches[b.id][n.id]||0, 1); }); }); G.cmbt.unlocked=true; G.zones.forEach(z=>{z.unlocked=true;}); G.neuralPoints += 1000; toast('All unlocked +1000 KP', 'loot'); rebuildUI(); }
 function devAddNp(amt) { G.neuralPoints += amt; toast('+'+amt+' KP', 'loot'); }
+function devResetAll() {
+  if (!confirm('Reset ALL progress? This cannot be undone! Are you sure?')) return;
+  if (!confirm('Really? All your languages, tools, items, everything will be gone.')) return;
+  localStorage.removeItem('codejourney_save');
+  Object.assign(G, freshState());
+  rebuildUI();
+  buildDevPanel();
+  buildProjects();
+  buildSprints();
+  buildLibraries();
+  buildSpecializations();
+  toast('Game has been reset!', 'loot');
+}
 
 // Auto-combat
 function combatAutoAttack() {
@@ -422,4 +436,87 @@ function procEnemyAbility() {
     logCombat('BUG: ' + ab.name + ' reflects ' + reflectDmg + ' damage');
     if (G.cmbt.php <= 0) combatLose();
   }
+}
+
+// ===== PROJECTS (construction-like) =====
+function startProject(id) {
+  const p = PROJECTS.find(x => x.id === id);
+  if (!p) return;
+  if (G._projects[id]) { toast('Already building this project', 'info'); return; }
+  if (G.neuralPoints < p.kpCost) { toast('Need ' + p.kpCost + ' KP', 'error'); return; }
+  G.neuralPoints -= p.kpCost;
+  G._projects[id] = { timeLeft: p.duration };
+  toast('Started building ' + p.name + '!', 'loot');
+}
+function tickProjects(dt) {
+  Object.entries(G._projects).forEach(([id, prog]) => {
+    prog.timeLeft -= dt;
+    prog.timeLeft = Math.max(0, prog.timeLeft);
+    if (prog.timeLeft <= 0 && !prog.done) {
+      prog.done = true;
+      const p = PROJECTS.find(x => x.id === id);
+      if (p) {
+        Object.entries(p.bonus).forEach(([k,v]) => {
+          if (!G._projectBonuses) G._projectBonuses = {};
+          G._projectBonuses[k] = (G._projectBonuses[k] || 1) * v;
+        });
+        G._totalProjectsBuilt = (G._totalProjectsBuilt || 0) + 1;
+        toast('Project complete: ' + p.name + '!', 'loot');
+        checkAchievements();
+      }
+    }
+  });
+}
+
+// ===== SPRINTS (daily delivery) =====
+function refreshSprint() {
+  const today = new Date().toDateString();
+  if (G._sprintDate === today && G._sprint) return;
+  G._sprintDate = today;
+  const shuffled = [...SPRINT_POOL].sort(() => Math.random() - 0.5);
+  G._sprint = shuffled[0];
+  G._sprintProgress = 0;
+}
+function getActiveSprint() {
+  refreshSprint();
+  return G._sprint;
+}
+function deliverSprint() {
+  const s = getActiveSprint();
+  if (!s) { toast('No active sprint', 'error'); return; }
+  if (!canPay(s.req)) { toast('Cannot afford sprint requirements', 'error'); return; }
+  pay(s.req);
+  G._sprintCompleted = (G._sprintCompleted || 0) + 1;
+  G.neuralPoints += s.rewardNP;
+  Object.entries(s.reward).forEach(([r,a]) => addRes(r,a));
+  toast('Sprint complete! +' + s.rewardNP + ' KP', 'loot');
+  G._sprint = null;
+  G._sprintDate = '';
+  refreshSprint();
+  checkAchievements();
+}
+
+// ===== LIBRARIES (alchemy-like) =====
+function upgradeLibrary(id) {
+  const lib = LIBRARIES.find(x => x.id === id);
+  if (!lib) return;
+  const lvl = G._libraries[id] || 0;
+  if (lvl >= lib.max) { toast('Max level', 'info'); return; }
+  const cost = {};
+  Object.entries(lib.baseCost).forEach(([r,a]) => { cost[r] = Math.floor(a * Math.pow(lib.mult, lvl)); });
+  if (!canPay(cost)) { toast('Cannot afford', 'error'); return; }
+  pay(cost);
+  G._libraries[id] = lvl + 1;
+  toast(lib.name + ' Lv.' + (lvl + 1) + ' upgraded!', 'loot');
+  checkAchievements();
+}
+
+// ===== SPECIALIZATIONS =====
+function selectSpecialization(id) {
+  const spec = SPECIALIZATIONS.find(x => x.id === id);
+  if (!spec) return;
+  if (G._specialization) { toast('Already specialized! Enlightenment can reset.', 'info'); return; }
+  if (!confirm('Choose ' + spec.name + '? This cannot be undone without Enlightenment.')) return;
+  G._specialization = id;
+  toast('Specialized as ' + spec.name + '!', 'loot');
 }
