@@ -21,32 +21,39 @@ function tttClick(idx) {
 
 function tttAI() {
   if (ttt.over) return;
-  // Win if possible
-  for (let i = 0; i < 9; i++) {
-    if (ttt.board[i] !== '') continue;
-    ttt.board[i] = 'O';
-    if (tttCheckWins('O')) { tttCheck(); tttDraw(); return; }
-    ttt.board[i] = '';
+  const empty = [];
+  for (let i = 0; i < 9; i++) { if (ttt.board[i] === '') empty.push(i); }
+  const diff = Math.random() < 0.33 ? 'easy' : Math.random() < 0.5 ? 'medium' : 'hard';
+  if (diff === 'easy') {
+    ttt.board[empty[Math.floor(Math.random() * empty.length)]] = 'O';
+    tttCheck(); tttDraw(); return;
   }
-  // Block player win
+  // medium+: block player wins
   for (let i = 0; i < 9; i++) {
     if (ttt.board[i] !== '') continue;
     ttt.board[i] = 'X';
     if (tttCheckWins('X')) { ttt.board[i] = 'O'; tttCheck(); tttDraw(); return; }
     ttt.board[i] = '';
   }
-  // Take center
+  if (diff === 'medium') {
+    ttt.board[empty[Math.floor(Math.random() * empty.length)]] = 'O';
+    tttCheck(); tttDraw(); return;
+  }
+  // hard: optimal play
+  for (let i = 0; i < 9; i++) {
+    if (ttt.board[i] !== '') continue;
+    ttt.board[i] = 'O';
+    if (tttCheckWins('O')) { tttCheck(); tttDraw(); return; }
+    ttt.board[i] = '';
+  }
   if (ttt.board[4] === '') { ttt.board[4] = 'O'; tttCheck(); tttDraw(); return; }
-  // Take corners
   const corners = [0,2,6,8].filter(i => ttt.board[i] === '');
   if (corners.length > 0) {
     ttt.board[corners[Math.floor(Math.random() * corners.length)]] = 'O';
     tttCheck(); tttDraw(); return;
   }
-  // Take any empty
-  const empty = [];
-  for (let i = 0; i < 9; i++) { if (ttt.board[i] === '') empty.push(i); }
-  if (empty.length > 0) { ttt.board[empty[Math.floor(Math.random() * empty.length)]] = 'O'; tttCheck(); tttDraw(); }
+  ttt.board[empty[Math.floor(Math.random() * empty.length)]] = 'O';
+  tttCheck(); tttDraw();
 }
 
 function tttCheckWins(p) {
@@ -249,10 +256,10 @@ function showMiniGameEventModal(type) {
   };
 
   if (type === 'ttt') {
-    title.textContent = '⚠ CODE ANOMALY: Tic Tac Toe Signal ⚠';
+    title.textContent = '⚠ FOCUS CHALLENGE: Tic Tac Toe ⚠';
     const msg = document.createElement('p');
     msg.style.cssText = 'color:#0f0;margin-bottom:8px';
-    msg.textContent = 'Anomalous signal detected! Win to claim ' + Math.floor(100 * mult) + ' XP, ' + Math.floor(50 * mult) + ' LOC, ' + Math.floor(5 * mult) + ' KP';
+    msg.textContent = 'Programming break! Win to claim ' + Math.floor(100 * mult) + ' XP, ' + Math.floor(50 * mult) + ' LOC, ' + Math.floor(5 * mult) + ' KP';
     body.appendChild(msg);
     const grid = document.createElement('div');
     grid.className = 'ttt-grid';
@@ -266,10 +273,10 @@ function showMiniGameEventModal(type) {
     ttt._onEnd = onEnd;
     tttInit();
   } else if (type === 'snake') {
-    title.textContent = '⚠ CODE ANOMALY: Snake Protocol ⚠';
+    title.textContent = '⚠ FOCUS CHALLENGE: Snake ⚠';
     const msg = document.createElement('p');
     msg.style.cssText = 'color:#0f0;margin-bottom:8px';
-    msg.textContent = 'Data worm invading! Score points to claim rewards - each point = ' + Math.floor(15 * mult) + ' XP!';
+    msg.textContent = 'Quick focus exercise! Score points to claim rewards - each point = ' + Math.floor(15 * mult) + ' XP!';
     body.appendChild(msg);
     const grid = document.createElement('div');
     grid.className = 'snake-grid';

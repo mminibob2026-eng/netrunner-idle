@@ -40,6 +40,28 @@ function upgradeGenMult(res) {
   return u ? 1 + u.lvl * 0.2 : 1;
 }
 
+function getSpec() {
+  if (!G._specialization) return null;
+  return SPECIALIZATIONS.find(x => x.id === G._specialization) || null;
+}
+
+function getLangBonus(branchId) {
+  const spec = getSpec();
+  if (!spec || !spec.langBonus) return 1;
+  return spec.langBonus[branchId] || 1;
+}
+
+function getSpecProjectSpeed() {
+  const spec = getSpec();
+  if (!spec || !spec.bonus) return 1;
+  return spec.bonus.projectSpeed || 1;
+}
+
+function hasSpecAutoAction() {
+  const spec = getSpec();
+  return spec && spec.bonus && spec.bonus.autoAction === true;
+}
+
 function cmbtPow() {
   let a = G.cmbt.atk + branchAtkBonus() + G.inv.exploit*8 + G.inv.program*2 + (G.inv.turboChargers||0)*5 + (G.inv.qProgram||0)*25 + (G.inv.qExploit||0)*150 + getEnhanceBonus('exploit') + getEnhanceBonus('program');
   let d = G.cmbt.def + G.inv.hardware*3 + (G.inv.turboChargers||0)*3 + (G.inv.qHardware||0)*10 + getEnhanceBonus('hardware');
@@ -86,11 +108,18 @@ function zoneBonus(type) {
 
 function getBonus(type) {
   let m = 1;
+  // Achievement bonuses (with achMult from spec support)
+  let achMult = 1;
+  const specA = getSpec();
+  if (specA && specA.bonus && specA.bonus.achMult) achMult = specA.bonus.achMult;
   (G.achievements||[]).forEach(a => {
     if (!a.unlocked) return;
     const cfg = ACHIEVEMENTS.find(x => x.id === a.id);
     if (!cfg || !cfg.reward) return;
-    if (cfg.reward[type]) m *= cfg.reward[type];
+    if (cfg.reward[type]) {
+      if (achMult > 1) m *= Math.pow(cfg.reward[type], achMult);
+      else m *= cfg.reward[type];
+    }
   });
   m *= zoneBonus(type);
   // Project bonuses
@@ -106,18 +135,15 @@ function getBonus(type) {
     });
   }
   // Specialization bonuses
-  if (G._specialization) {
-    const spec = SPECIALIZATIONS.find(x => x.id === G._specialization);
-    if (spec && spec.bonus[type]) m *= spec.bonus[type];
-  }
+  const spec = getSpec();
+  if (spec && spec.bonus && spec.bonus[type]) m *= spec.bonus[type];
   if (type === 'prestMult' && G.prest.lvl > 0) m *= Math.pow(1.15, G.prest.lvl);
   if (type === 'transcendMult' && G.prest.transcendLvl > 0) m *= Math.pow(2, G.prest.transcendLvl);
   if (type === 'atkMult' && hasConsumableEffect('energyDrink')) m *= getAtkMult();
   if (type === 'defMult' && hasConsumableEffect('focusPills')) m *= getDefMult();
   if (type === 'prodMult' && hasConsumableEffect('deepWork')) m *= getProdMult();
-  if (type === 'npRate' && G._specialization) {
-    const spec = SPECIALIZATIONS.find(x => x.id === G._specialization);
-    if (spec && spec.bonus.npRate) m *= spec.bonus.npRate;
+  if (type === 'npRate') {
+    if (spec && spec.bonus && spec.bonus.npRate) m *= spec.bonus.npRate;
   }
   return m;
 }
@@ -151,4 +177,84 @@ function canTranscend() {
 
 function isSubActive() {
   return G._subActive === true;
+}
+
+async function hashPassword(pass) {
+  const enc = new TextEncoder().encode(pass);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function showFloatingText(text, color) {
+  const el = document.createElement('div');
+  el.style.cssText = `position:fixed;z-index:9999;pointer-events:none;font-size:16px;font-weight:bold;color:${color};text-shadow:0 0 6px ${color};font-family:inherit;left:50%;top:50%;transform:translate(-50%,-50%);transition:all 0.8s ease-out;`;
+  el.textContent = text;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => {
+    el.style.top = '30%';
+    el.style.opacity = '0';
+  });
+  setTimeout(() => el.remove(), 900);
+}
+
+function flashResource(type) {
+  const el = document.querySelector(`.res-${type}`);
+  if (!el) return;
+  el.style.transition = 'background 0.3s';
+  el.style.background = 'rgba(0,255,65,0.2)';
+  setTimeout(() => { el.style.background = 'transparent'; }, 300);
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.frequency.value = 880;
+    o.type = 'sine';
+    g.gain.value = 0.05;
+    o.start();
+    o.stop(ctx.currentTime + 0.1);
+  } catch(e) {}
+}
+
+function spawnParticles(x, y, color) {
+  const c = document.createElement('canvas');
+  c.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:9998;';
+  c.width = window.innerWidth;
+  c.height = window.innerHeight;
+  document.body.appendChild(c);
+  const ctx = c.getContext('2d');
+  const pts = Array.from({length:12}, () => ({
+    x, y, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6-3,
+    life: 1, size: 2+Math.random()*3,
+  }));
+  function anim() {
+    ctx.clearRect(0,0,c.width,c.height);
+    let alive = false;
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.1;
+      p.life -= 0.03;
+      if (p.life > 0) {
+        alive = true;
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.fill();
+      }
+    });
+    if (alive) requestAnimationFrame(anim);
+    else c.remove();
+  }
+  anim();
+}
+
+function activityFeedback(text, color, resType) {
+  showFloatingText(text, color);
+  if (resType) flashResource(resType);
+  spawnParticles(window.innerWidth/2, window.innerHeight/2, color);
+  playBeep();
 }

@@ -154,7 +154,7 @@ const ACHIEVEMENTS = [
   { id:'insightExplorer', name:'Insightful', desc:'Earn 1K Insight total', check:g=>g.stats.earned.bandwidth>=1000, reward:{bwMult:1.05} },
   { id:'masteryHacker', name:'Master Coder', desc:'Earn 10 Mastery total', check:g=>g.stats.earned.darkMatter>=10, reward:{dmMult:1.1} },
   { id:'conceptMaster', name:'Concept Collector', desc:'Reach total 50 concept levels', check:g=>{let t=0;Object.values(g.branches).forEach(b=>{Object.values(b).forEach(v=>t+=v)});return t>=50;}, reward:{speedMult:1.05} },
-  { id:'polyglot', name:'Polyglot', desc:'Unlock all language concepts', check:g=>{let a=0,t=0;BRANCHES.forEach(b=>{b.nodes.forEach(n=>{t++;if((g.branches[b.id]||{})[n.id]||0>0)a++})});return a>=t;}, reward:{craftSpeed:1.1} },
+  { id:'polyglot', name:'Polyglot', desc:'Unlock all language concepts', check:g=>{let a=0,t=0;BRANCHES.forEach(b=>{b.nodes.forEach(n=>{t++;if(((g.branches[b.id]||{})[n.id]||0)>0)a++})});return a>=t;}, reward:{craftSpeed:1.1} },
   { id:'firstDebug', name:'First Fix', desc:'Fix your first bug', check:g=>g.stats.enemiesDefeated>=1, reward:{atkMult:1.1} },
   { id:'bugHunter', name:'Bug Hunter', desc:'Fix 50 bugs', check:g=>g.stats.enemiesDefeated>=50, reward:{atkMult:1.15} },
   { id:'firstMastery', name:'Rewrite', desc:'Mastery for the first time', check:g=>g.prest.times>=1, reward:{prestMult:1.1} },
@@ -277,10 +277,34 @@ const LIBRARIES = [
   { id:'profiler', name:'Profiler', desc:'+All generation per level', baseCost:{darkMatter:5,cpu:100}, mult:1.8, max:10, bonus:(lvl)=>({allMult:1.05+lvl*0.03}) },
 ];
 
-// ===== SPECIALIZATIONS (choose a dev path that changes playstyle) =====
+// ===== SPECIALIZATIONS — each boosts a primary language 2x with a unique playstyle twist =====
 const SPECIALIZATIONS = [
-  { id:'frontend', name:'Frontend Dev', desc:'Build beautiful UIs. +20% XP gen, +10% debug power.', bonus:{dataMult:1.2, atkMult:1.1} },
-  { id:'backend', name:'Backend Dev', desc:'Build server-side systems. +20% LOC gen, +15% max HP.', bonus:{creditsMult:1.2, hpMult:1.15} },
-  { id:'systems', name:'Systems Dev', desc:'Low-level programming. +20% Proc gen, +10% debug defense.', bonus:{cpuMult:1.2, defMult:1.1} },
-  { id:'data', name:'Data Scientist', desc:'Analyze data and build models. +20% Insight gen, +15% KP rate.', bonus:{bwMult:1.2, npRate:1.15} },
+  {
+    id:'python_master', name:'Python Master',
+    desc:'Python ×2 generation. Projects complete 50% faster — clean code ships quick.',
+    langBonus:{ python: 2 },
+    bonus:{ projectSpeed: 2 },
+    color:'#3776AB'
+  },
+  {
+    id:'web_expert', name:'Web Expert',
+    desc:'JavaScript ×2 generation. Auto-performs the cheapest available action every 5s (learn/build/debug).',
+    langBonus:{ javascript: 2 },
+    bonus:{ autoAction: true },
+    color:'#F7DF1E'
+  },
+  {
+    id:'systems_pro', name:'Systems Pro',
+    desc:'C ×2 generation. All resource storage caps and defense doubled — tanky and efficient.',
+    langBonus:{ c_lang: 2 },
+    bonus:{ capMult: 2, defMult: 2 },
+    color:'#555555'
+  },
+  {
+    id:'go_getter', name:'Go Getter',
+    desc:'Go ×2 generation. Double KP income from every source — knowledge is power.',
+    langBonus:{ go: 2 },
+    bonus:{ npRate: 2 },
+    color:'#00ADD8'
+  },
 ];

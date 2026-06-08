@@ -1,7 +1,7 @@
 {
-  "name": "Netrunner Idle",
-  "short_name": "Netrunner",
-  "description": "A cyberpunk idle hacking game",
+  "name": "Code Journey",
+  "short_name": "CodeJourney",
+  "description": "A programming idle game",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a1a",

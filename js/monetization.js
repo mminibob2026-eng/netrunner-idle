@@ -1,15 +1,49 @@
-function subscribe() {
-  G._subActive = true;
-  trackEvent('subscribe', { username: USER });
-  save();
-  toast('Code Journey Pro activated! Enjoy premium features.', 'loot');
-  rebuildUI();
+async function createCheckoutSession() {
+  try {
+    const res = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: USER, returnUrl: window.location.origin }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+      return;
+    }
+    // If API returned but no url, fall through to dev fallback
+    if (data.error) console.error('Checkout API error:', data.error);
+  } catch(e) {
+    console.error('Checkout fetch error:', e);
+  }
+  // Fallback for dev/local: activate directly
+  if (isDev()) {
+    subscribe(true);
+    toast('DEV: Subscription activated (no payment processed)', 'loot');
+  } else {
+    toast('Payment service unavailable - check back later', 'error');
+  }
 }
 
-function unsubscribe() {
-  G._subActive = false;
+async function verifySubscription() {
+  try {
+    const res = await fetch('/api/verify-subscription?username=' + encodeURIComponent(USER));
+    const data = await res.json();
+    G._subActive = data.active === true;
+    if (data.active) toast('Code Journey Pro active!', 'loot');
+  } catch(e) {
+    G._subActive = false;
+  }
+}
+
+function subscribe(status) {
+  G._subActive = status === true;
+  if (status) {
+    trackEvent('subscribe', { username: USER });
+    toast('Code Journey Pro activated! Enjoy premium features.', 'loot');
+  } else {
+    toast('Code Journey Pro deactivated.', 'info');
+  }
   save();
-  toast('Code Journey Pro deactivated.', 'info');
   rebuildUI();
 }
 
@@ -24,23 +58,23 @@ function showSubscribeUI() {
       <div style="font-size:36px;color:#ff0;margin-bottom:4px;">$1</div>
       <div style="color:#888;font-size:12px;margin-bottom:20px;">per month</div>
       <div style="text-align:left;margin-bottom:20px;">
-        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ No ads</div>
-        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Full offline progress (unlimited)</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Auto-debug mode</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Auto-build queue</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ 1.5x KP generation rate</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ 1.25x permanent speed</div>
-        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Premium themes</div>
+        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ 2x offline resource rate</div>
         <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Cloud save support</div>
+        <div style="color:#0f0;font-size:12px;padding:4px 0;">✓ Support development</div>
       </div>
-      <button id="sub-pay-btn" style="padding:12px 40px;background:transparent;border:2px solid #0f0;color:#0f0;font-family:inherit;font-size:16px;cursor:pointer;border-radius:6px;text-transform:uppercase;letter-spacing:2px;transition:all 0.2s;margin-bottom:8px;">SUBSCRIBE</button>
+      <button id="sub-pay-btn" style="padding:12px 40px;background:transparent;border:2px solid #0f0;color:#0f0;font-family:inherit;font-size:16px;cursor:pointer;border-radius:6px;text-transform:uppercase;letter-spacing:2px;transition:all 0.2s;margin-bottom:8px;">SUBSCRIBE - $1/mo</button>
+      <div style="color:#666;font-size:10px;margin-bottom:8px;">Secured by Stripe</div>
       <div><button id="sub-close-btn" style="background:transparent;border:none;color:#888;font-family:inherit;font-size:12px;cursor:pointer;padding:8px;">Maybe later</button></div>
     </div>
   `;
   document.body.appendChild(overlay);
   document.getElementById('sub-pay-btn').addEventListener('click', () => {
-    subscribe();
     overlay.remove();
+    createCheckoutSession();
   });
   document.getElementById('sub-close-btn').addEventListener('click', () => {
     overlay.remove();
@@ -57,11 +91,15 @@ function showAdBanner() {
   banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:500;background:rgba(10,10,26,0.95);border-top:1px solid rgba(0,255,65,0.2);padding:6px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;';
   banner.innerHTML = `
     <span style="color:#888;font-size:10px;">AD</span>
-    <span style="color:#0f0;flex:1;text-align:center;">[ Ad Space ] - Get Code Journey Pro for an ad-free experience</span>
+    <span style="color:#0f0;flex:1;text-align:center;">Support Code Journey - Upgrade to Pro for premium features!</span>
     <button id="ad-close-btn" style="background:transparent;border:1px solid #888;color:#888;font-family:inherit;font-size:10px;cursor:pointer;padding:2px 8px;border-radius:2px;">✕</button>
   `;
   document.body.appendChild(banner);
   document.getElementById('ad-close-btn').addEventListener('click', () => banner.remove());
+  document.getElementById('ad-banner').addEventListener('click', (e) => {
+    if (e.target.id !== 'ad-close-btn') showSubscribeUI();
+  });
+  banner.style.cursor = 'pointer';
 }
 
 function showRewardedAd(callback) {
@@ -91,7 +129,7 @@ function showRewardedAd(callback) {
 }
 
 function getRewardDescription() {
-  return 'Boost: 2x skill speed for 30 minutes';
+  return 'Boost: 2x speed for 30 minutes';
 }
 
 function applyAdBoost() {

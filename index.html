@@ -3,11 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Code Journey</title>
+<title>Code Journey - Programming Idle Game</title>
+<meta property="og:title" content="Code Journey - Programming Idle Game">
+<meta property="og:description" content="Learn to code with this idle programming game. Master Python, JavaScript, Go, TypeScript, and more!">
+<meta property="og:image" content="/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Learn to code with this idle programming idle game. Master languages, build projects, fix bugs, and level up your skills!">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="style.css?v=9">
-<meta name="google-adsense-account" content="ca-pub-1908159369479300">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1908159369479300" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
 
@@ -17,8 +20,19 @@
     <p>Start your programming adventure</p>
     <input type="text" id="login-input" placeholder="Username..." maxlength="20" autocomplete="off">
     <input type="password" id="pass-input" placeholder="Password..." maxlength="30" autocomplete="off">
-    <button id="login-btn">START CODING</button>
+    <button id="login-btn" class="login-btn">START CODING</button>
+    <div class="login-divider"><span>OR</span></div>
+    <button id="google-login-btn" class="google-btn">SIGN IN WITH GOOGLE</button>
     <div class="login-error" id="login-error">Invalid credentials</div>
+  </div>
+</div>
+
+<div id="character-select-overlay" style="display:none">
+  <div id="character-select-box">
+    <h1>SELECT YOUR CODING SQUAD</h1>
+    <p>Choose a character to play. Each can master a different path.</p>
+    <div id="character-grid"></div>
+    <button id="character-back-btn" class="logout-btn">LOGOUT</button>
   </div>
 </div>
 
@@ -36,7 +50,7 @@
     <div class="res res-darkmatter" title="Mastery - earned from fixing bugs, used for mastery reset"><span class="res-icon" data-res="darkMatter">&#9670;</span> <span class="res-label">Mastery</span> <span id="r-darkMatter">0</span></div>
     <div class="res res-np" title="KP (knowledge points) - earned over time, spend on learning concepts"><span class="res-icon" data-res="np">&#9889;</span> <span class="res-label">KP</span> <span id="np-display">0</span></div>
   </div>
-  <div id="user-info" style="display:flex;align-items:center;gap:8px;"><span id="user-label" style="color:#0ff"></span><span id="save-indicator" style="color:#666;font-size:10px;"></span><span id="cloud-indicator" style="color:#0ff;font-size:10px;"></span><button id="logout-btn" style="background:transparent;border:1px solid #f44;color:#f44;font-family:inherit;font-size:10px;cursor:pointer;border-radius:2px;padding:2px 6px;">LOGOUT</button></div>
+  <div id="user-info" style="display:flex;align-items:center;gap:8px;"><span id="user-label" style="color:#0ff"></span><span id="save-indicator" style="color:#666;font-size:10px;"></span><span id="cloud-indicator" style="color:#0ff;font-size:10px;"></span><button id="char-switch-btn" style="background:transparent;border:1px solid #0ff;color:#0ff;font-family:inherit;font-size:10px;cursor:pointer;border-radius:2px;padding:2px 6px;display:none;">SWITCH</button><button id="logout-btn" style="background:transparent;border:1px solid #f44;color:#f44;font-family:inherit;font-size:10px;cursor:pointer;border-radius:2px;padding:2px 6px;">LOGOUT</button></div>
 </div>
 
 <div id="road-map" class="road-map"></div>
@@ -83,7 +97,7 @@
     <div id="enemy-grid"></div>
       <div id="battle-area" style="display:none">
         <div id="enemy-display">
-          <div><div class="enemy-name" id="enemy-name">ICE Wall</div><div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemy-hp-fill"></div></div><div id="enemy-hp-text" style="font-size:12px;color:#888">HP: 50/50</div><div id="enemy-ability-indicator" style="font-size:10px;margin-top:2px;display:none;"></div></div>
+          <div><div class="enemy-name" id="enemy-name">Debug Target</div><div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemy-hp-fill"></div></div><div id="enemy-hp-text" style="font-size:12px;color:#888">HP: 50/50</div><div id="enemy-ability-indicator" style="font-size:10px;margin-top:2px;display:none;"></div></div>
         <div id="player-stats"><span>ATK: <span id="p-atk">10</span></span><span>DEF: <span id="p-def">5</span></span><span>HP: <span id="p-hp">100</span>/<span id="p-maxhp">100</span></span></div>
       </div>
       <div id="combat-actions" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;">
@@ -105,7 +119,7 @@
     <div id="upgrades-container" class="upgrades-grid"></div>
   </div>
   <div id="tab-contracts" class="tab-content">
-    <div class="section-title">[ CHALLENGES ] <span>// daily coding challenges</span></div>
+    <div class="section-title">[ CHALLENGES ] <span>// code challenges (daily refresh, up to 3 weekly bonus)</span></div>
     <div id="contracts-container" class="contracts-grid"></div>
   </div>
   <div id="tab-enhance" class="tab-content">
@@ -122,7 +136,7 @@
     <div class="section-title">[ ACHIEVES ] <span>// zones & milestones</span></div>
     <div id="sub-panel">
       <h3>CODE JOURNEY PRO</h3>
-      <p>Unlock offline progress, auto-debug, auto-build, speed boost & more</p>
+      <p>Unlock auto-debug, auto-build, speed boost & more</p>
       <span id="sub-status" style="color:#888;font-size:11px;display:block;margin-bottom:8px;">Free Tier</span>
       <button id="sub-cta-btn" class="sub-cta-btn">UPGRADE - $1/mo</button>
     </div>
@@ -150,26 +164,30 @@
   </div>
 </div>
 
+<div id="ad-container" style="display:none;margin:8px auto;text-align:center;"></div>
+
 <div id="minigame-event-modal" class="event-modal">
   <div class="event-modal-content">
     <button class="event-close-btn" onclick="closeMiniGameEvent()">✕</button>
-    <h2 class="event-title" style="color:#ff0;text-align:center;margin-bottom:12px;text-shadow:0 0 10px rgba(255,255,0,0.5);">⚠ CODE ANOMALY ⚠</h2>
+    <h2 class="event-title" style="color:#ff0;text-align:center;margin-bottom:12px;text-shadow:0 0 10px rgba(255,255,0,0.5);">⚠ CHALLENGE ⚠</h2>
     <div class="event-body"></div>
   </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="js/config.js?v=9"></script>
-<script src="js/util.js?v=9"></script>
-<script src="js/state.js?v=9"></script>
-<script src="js/analytics.js?v=9"></script>
-<script src="js/ads.js?v=9"></script>
-<script src="js/cloud.js?v=9"></script>
-<script src="js/game.js?v=9"></script>
-<script src="js/monetization.js?v=9"></script>
-<script src="js/minigames.js?v=9"></script>
-<script src="js/ui.js?v=9"></script>
-<script src="js/main.js?v=9"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="js/config.js?v=10"></script>
+<script src="js/util.js?v=10"></script>
+<script src="js/state.js?v=10"></script>
+<script src="js/analytics.js?v=10"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1908159369479300" crossorigin="anonymous"></script>
+  <script src="js/ads.js?v=10"></script>
+<script src="js/cloud.js?v=10"></script>
+<script src="js/game.js?v=10"></script>
+<script src="js/monetization.js?v=10"></script>
+<script src="js/minigames.js?v=10"></script>
+<script src="js/ui.js?v=10"></script>
+<script src="js/main.js?v=10"></script>
 </body>
 </html>

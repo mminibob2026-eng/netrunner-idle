@@ -82,7 +82,6 @@ function migrateState(d) {
     if (!d._nextMiniGameCooldown) d._nextMiniGameCooldown = 0;
   }
   if (d.ver < 8) {
-    // Rebuild branches for new language-based system (old saves have stale IDs)
     const branches = {};
     BRANCHES.forEach(b => {
       branches[b.id] = {};
@@ -90,11 +89,8 @@ function migrateState(d) {
       branches[b.id][b.nodes[0].id] = 1;
     });
     d.branches = branches;
-    // Reset upgrades (old saves have stale upgrade IDs)
     d.upgs = UPGRADES.map(u => ({ id:u.id, lvl:0 }));
-    // Reset inv to fresh state keys (old item IDs no longer valid)
     d.inv = { program:0, hardware:0, exploit:0, neuralLinks:0, turboChargers:0, qProgram:0, qHardware:0, qExploit:0, dataShard:0, fwShard:0, iceCore:0, aiMod:0, encKey:0, dnToken:0, coreFrag:0 };
-    // Clear stale quests
     d.quests = [];
     d._questProgress = {};
     d.neuralPoints = (d.neuralPoints || 0) + 20;
@@ -103,22 +99,137 @@ function migrateState(d) {
   return d;
 }
 
-function save() {
+// ===== ACCOUNT / MULTI-PROFILE SYSTEM =====
+let ACCOUNT = null; // { uid, authMethod, email, activeProfile, profiles: [{id, name, spec}] }
+const PROFILES_MAX = 4;
+
+function getAccountKey() { return 'cj_account_' + (ACCOUNT ? ACCOUNT.uid : USER); }
+function profileStateKey(pid) { return 'cj_state_' + ACCOUNT.uid + '_' + pid; }
+
+function freshProfileMeta(idx) {
+  const names = ['Alpha', 'Beta', 'Gamma', 'Delta'];
+  return { id:'char'+(idx+1), name: names[idx], spec: null };
+}
+
+function createAccount(uid, email, authMethod) {
+  ACCOUNT = {
+    uid: uid,
+    email: email || '',
+    authMethod: authMethod || 'legacy',
+    activeProfile: 0,
+    profiles: [],
+  };
+  for (let i = 0; i < PROFILES_MAX; i++) {
+    ACCOUNT.profiles.push(freshProfileMeta(i));
+  }
+}
+
+function saveAccount() {
+  if (!ACCOUNT) return;
   try {
-    G.lastSave = Date.now();
-    localStorage.setItem('nri_'+USER, JSON.stringify(G));
+    const data = {
+      uid: ACCOUNT.uid,
+      email: ACCOUNT.email,
+      authMethod: ACCOUNT.authMethod,
+      activeProfile: ACCOUNT.activeProfile,
+      profiles: ACCOUNT.profiles.map(p => ({ id:p.id, name:p.name, spec:p.spec })),
+    };
+    localStorage.setItem(getAccountKey(), JSON.stringify(data));
   } catch(e) {}
-  if (isSubActive()) {
-    cloudSave().then(ok => {
-      const ci = document.getElementById('cloud-indicator');
-      if (ci) ci.textContent = ok ? '☁' : '☁⚠';
-    });
+}
+
+function loadAccount(uid) {
+  try {
+    const raw = localStorage.getItem('cj_account_' + uid);
+    if (raw) {
+      const d = JSON.parse(raw);
+      ACCOUNT = {
+        uid: d.uid,
+        email: d.email || '',
+        authMethod: d.authMethod || 'google',
+        activeProfile: d.activeProfile || 0,
+        profiles: d.profiles || [],
+      };
+      while (ACCOUNT.profiles.length < PROFILES_MAX) {
+        ACCOUNT.profiles.push(freshProfileMeta(ACCOUNT.profiles.length));
+      }
+      return true;
+    }
+  } catch(e) { err('Load account error: '+e.message); }
+  return false;
+}
+
+function saveProfile() {
+  if (!ACCOUNT || !G) return;
+  try {
+    const profile = ACCOUNT.profiles[ACCOUNT.activeProfile];
+    if (!profile) return;
+    G.lastSave = Date.now();
+    localStorage.setItem(profileStateKey(profile.id), JSON.stringify(G));
+    saveAccount();
+  } catch(e) {}
+}
+
+function loadProfile(pid) {
+  try {
+    const raw = localStorage.getItem(profileStateKey(pid));
+    if (raw) {
+      const d = JSON.parse(raw);
+      migrateState(d);
+      G = Object.assign(freshState(), d);
+      while (G.upgs.length < UPGRADES.length) G.upgs.push({ id:UPGRADES[G.upgs.length].id, lvl:0 });
+      while (G.zones.length < ZONES.length) G.zones.push({ id:ZONES[G.zones.length].id, unlocked:false });
+      while (G.achievements.length < ACHIEVEMENTS.length) G.achievements.push({ id:ACHIEVEMENTS[G.achievements.length].id, unlocked:false });
+      return true;
+    }
+  } catch(e) { err('Load profile error: '+e.message); }
+  return false;
+}
+
+function switchProfile(idx) {
+  if (!ACCOUNT || idx === ACCOUNT.activeProfile) return;
+  saveProfile();
+  ACCOUNT.activeProfile = idx;
+  const profile = ACCOUNT.profiles[idx];
+  if (!loadProfile(profile.id)) {
+    G = freshState();
+    G._pw = ACCOUNT.uid;
+  }
+  rebuildUI();
+  updateUI();
+  toast('Switched to ' + profile.name, 'info');
+}
+
+function save() {
+  if (ACCOUNT) {
+    saveProfile();
+    if (isSubActive()) {
+      cloudSave().then(ok => {
+        const ci = document.getElementById('cloud-indicator');
+        if (ci) ci.textContent = ok ? '☁' : '☁⚠';
+      });
+    }
+  } else if (USER) {
+    try {
+      G.lastSave = Date.now();
+      localStorage.setItem('nri_'+USER, JSON.stringify(G));
+    } catch(e) {}
   }
   const si = document.getElementById('save-indicator');
   if (si) si.textContent = 'saved '+new Date().toLocaleTimeString();
 }
 
 function load() {
+  if (!USER) return false;
+  // Try account-based load first
+  if (loadAccount(USER)) {
+    const profile = ACCOUNT.profiles[ACCOUNT.activeProfile];
+    if (loadProfile(profile.id)) return true;
+    G = freshState();
+    G._pw = ACCOUNT.uid;
+    return true;
+  }
+  // Fallback to legacy single-profile save
   try {
     const raw = localStorage.getItem('nri_'+USER);
     if (raw) {
@@ -134,21 +245,46 @@ function load() {
   return false;
 }
 
+function migrateLegacySave() {
+  if (ACCOUNT) return;
+  if (!USER) return;
+  const raw = localStorage.getItem('nri_'+USER);
+  if (!raw) return;
+  try {
+    const d = JSON.parse(raw);
+    if (d && d.branches) {
+      createAccount(USER, '', 'legacy');
+      const profile = ACCOUNT.profiles[0];
+      profile.name = USER;
+      saveAccount();
+      migrateState(d);
+      G = Object.assign(freshState(), d);
+      while (G.upgs.length < UPGRADES.length) G.upgs.push({ id:UPGRADES[G.upgs.length].id, lvl:0 });
+      while (G.zones.length < ZONES.length) G.zones.push({ id:ZONES[G.zones.length].id, unlocked:false });
+      while (G.achievements.length < ACHIEVEMENTS.length) G.achievements.push({ id:ACHIEVEMENTS[G.achievements.length].id, unlocked:false });
+      saveProfile();
+      // Keep legacy save as backup
+      toast('Profile migrated to multi-character system!', 'info');
+    }
+  } catch(e) {}
+}
+
 function calcOfflineProgress() {
   const now = Date.now();
   const elapsed = (now - G.lastSave) / 1000;
   if (elapsed < 10) return;
-  let rate = isSubActive() ? 1 : 0.25;
-  let cap = isSubActive() ? 86400 : 21600;
+  let rate = isSubActive() ? 2 : 1;
+  let cap = 86400;
   const duration = Math.min(elapsed, cap);
   BRANCHES.forEach(branch => {
+    const langMult = getLangBonus(branch.id);
     branch.nodes.forEach(n => {
       const lvl = branchLevel(branch.id, n.id);
       if (lvl < 1) return;
       if (!n.gen) return;
       const gen = n.gen(lvl);
       Object.entries(gen).forEach(([res, amt]) => {
-        addRes(res, amt * duration * rate * branchProdMult());
+        addRes(res, amt * duration * rate * branchProdMult() * langMult);
       });
     });
   });

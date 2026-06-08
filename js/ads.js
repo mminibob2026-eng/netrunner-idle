@@ -12,14 +12,16 @@ const ADS_CONFIG = {
 
 function loadBannerAd(containerId) {
   if (!ADS_CONFIG.enabled) return;
+  if (typeof isSubActive === 'function' && isSubActive()) return; // Don't show ads to subscribers
   const container = document.getElementById(containerId);
   if (!container) return;
+  if (container.hasChildNodes()) return; // Already loaded
   container.innerHTML = '';
   const ins = document.createElement('ins');
   ins.className = 'adsbygoogle';
-  ins.style.cssText = 'display:block;width:320px;height:50px;';
+  ins.style.cssText = 'display:block;width:320px;height:50px;margin:0 auto;';
   ins.dataset.adClient = ADS_CONFIG.clientId;
-  ins.dataset.adSlot = '0000000000';
+  ins.dataset.adSlot = '0000000000'; // ← Replace with real ad unit ID from AdSense dashboard
   container.appendChild(ins);
   try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
 }

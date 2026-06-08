@@ -190,33 +190,60 @@ function buildAchievements() {
   });
 }
 
+const QUEST_TAB = {
+  qEarnXp:'skills', qEarnLoc:'skills', qDebug:'combat', qBuild:'crafting',
+  qLearn:'skills', qDeepFix:'combat', qMastery:'combat',
+};
+
 function buildContracts() {
   const c = document.getElementById('contracts-container'); if (!c) return;
   c.innerHTML = '';
   const quests = getActiveQuests();
   const weekStart = getWeekStart();
   if (G._questWeeklyDate !== weekStart) { G._questWeekly = 0; G._questWeeklyDate = weekStart; }
+
   const header = document.createElement('div');
   header.style.cssText = 'color:#888;font-size:11px;margin-bottom:8px;';
-  header.textContent = 'Weekly challenges completed: ' + (G._questWeekly || 0) + '/3';
+  header.textContent = 'Bonus progress: ' + (G._questWeekly || 0) + '/3 weekly';
   c.appendChild(header);
+
   quests.forEach((q, i) => {
     const done = G._questCompleted.includes(i);
     const progress = q.check(G);
+    const ready = !done && progress >= q.target;
     const pct = Math.min(100, Math.round((progress / q.target) * 100));
     const card = document.createElement('div');
-    card.className = 'contract-card' + (done ? ' completed' : '');
+    card.className = 'contract-card' + (done ? ' completed' : '') + (ready ? ' ready' : '');
+
+    const rewardStr = q.rewardNP + ' KP' + Object.entries(q.reward).map(([r,a]) => ' + ' + fmt(a) + ' ' + (RES[r]?RES[r].n:r)).join('');
     card.innerHTML =
-      '<div class="contract-name">' + (done ? '✓ ' : '') + q.desc + '</div>' +
+      '<div class="contract-name">' + q.desc + '</div>' +
       '<div class="contract-progress-bar"><div class="contract-progress-fill" style="width:' + pct + '%"></div></div>' +
       '<div class="contract-progress-text">' + progress + '/' + q.target + '</div>' +
-      '<div class="contract-reward">Reward: ' + q.rewardNP + ' KP' + Object.entries(q.reward).map(([r,a]) => ' + ' + fmt(a) + ' ' + (RES[r]?RES[r].n:r)).join('') + '</div>';
+      '<div class="contract-reward">' + rewardStr + '</div>' +
+      '<div style="margin-top:6px;">' +
+      (done ? '<span style="color:#0f0;font-size:10px;">✓ Claimed</span>' :
+       ready ? '<button class="claim-btn" data-i="' + i + '">CLAIM</button>' :
+       '<button class="goto-btn" data-i="' + i + '" style="background:transparent;border:1px solid #666;color:#888;font-family:inherit;font-size:9px;cursor:pointer;border-radius:2px;padding:2px 8px;">GO</button>') +
+      '</div>';
     c.appendChild(card);
+
+    card.querySelector('.claim-btn')?.addEventListener('click', e => {
+      e.stopPropagation();
+      claimQuest(parseInt(e.target.dataset.i));
+    });
+
+    card.querySelector('.goto-btn')?.addEventListener('click', e => {
+      e.stopPropagation();
+      const tab = QUEST_TAB[q.id] || 'branches';
+      switchTab(tab);
+    });
   });
+
   if ((G._questWeekly || 0) >= 3) {
     const weekly = document.createElement('div');
     weekly.style.cssText = 'color:#0f0;font-size:12px;margin-top:6px;';
-    weekly.textContent = 'Weekly bonus available! Complete more challenges to claim.';
+    weekly.textContent = 'Weekly bonus claimed! Complete 3 more for another bonus.';
     c.appendChild(weekly);
   }
 }
@@ -297,8 +324,8 @@ function buildDevPanel() {
       '<button onclick="devAddNp(1000)">+1K KP</button>' +
       '<button onclick="devSpeed(10)">x10 SPEED</button>' +
       '<button onclick="devSpeed(1)">x1 SPEED</button>' +
-      '<button onclick="subscribe()">SUB ON</button>' +
-      '<button onclick="unsubscribe()">SUB OFF</button>' +
+      '<button onclick="subscribe(true)">SUB ON</button>' +
+      '<button onclick="subscribe(false)">SUB OFF</button>' +
     '</div>';
 }
 
@@ -367,6 +394,26 @@ function buildLibraries() {
   });
 }
 
+function specLangStr(spec) {
+  if (!spec.langBonus) return '';
+  return Object.entries(spec.langBonus).map(([lid, mult]) => {
+    const b = BRANCHES.find(x => x.id === lid);
+    return (b ? b.name : lid) + ' ×' + mult;
+  }).join(' · ');
+}
+
+function specBonusStr(spec) {
+  if (!spec.bonus) return '';
+  const labels = {
+    projectSpeed:'Projects ×'+spec.bonus.projectSpeed,
+    capMult:'Caps ×'+spec.bonus.capMult,
+    defMult:'Def ×'+spec.bonus.defMult,
+    npRate:'KP ×'+spec.bonus.npRate,
+    autoAction:'Auto-pilot',
+  };
+  return Object.entries(spec.bonus).map(([k,v]) => labels[k] || (k+':'+v)).join(' · ');
+}
+
 function buildSpecializations() {
   const c = document.getElementById('specializations-container'); if (!c) return;
   c.innerHTML = '';
@@ -375,7 +422,8 @@ function buildSpecializations() {
     c.innerHTML = '<div class="spec-card" style="border-color:#0ff;">' +
       '<div class="spec-name" style="color:#0ff;">' + spec.name + '</div>' +
       '<div class="spec-desc">' + spec.desc + '</div>' +
-      '<div class="spec-bonus" style="color:#0f0;">' + Object.entries(spec.bonus).map(([k,v]) => fmtBonus(k,v)).join(', ') + '</div>' +
+      '<div style="color:#ff0;font-size:11px;margin:2px 0;">' + specLangStr(spec) + '</div>' +
+      '<div class="spec-bonus" style="color:#0f0;">' + specBonusStr(spec) + '</div>' +
       '<div style="color:#888;font-size:10px;margin-top:4px;">Enlightenment to respecialize</div></div>';
     return;
   }
@@ -383,10 +431,11 @@ function buildSpecializations() {
     const card = document.createElement('div');
     card.className = 'spec-card';
     card.innerHTML =
-      '<div class="spec-name">' + spec.name + '</div>' +
+      '<div class="spec-name" style="color:'+spec.color+'">' + spec.name + '</div>' +
       '<div class="spec-desc">' + spec.desc + '</div>' +
-      '<div class="spec-bonus">' + Object.entries(spec.bonus).map(([k,v]) => fmtBonus(k,v)).join(', ') + '</div>' +
-      '<button class="spec-btn" data-id="' + spec.id + '">CHOOSE</button>';
+      '<div style="color:#ff0;font-size:10px;margin:2px 0;">' + specLangStr(spec) + '</div>' +
+      '<div class="spec-bonus">' + specBonusStr(spec) + '</div>' +
+      '<button class="spec-btn" data-id="' + spec.id + '" style="border-color:'+spec.color+';color:'+spec.color+'">CHOOSE</button>';
     card.querySelector('.spec-btn').addEventListener('click', e => { e.stopPropagation(); selectSpecialization(spec.id); });
     c.appendChild(card);
   });
@@ -423,7 +472,18 @@ function updateUI() {
     el.textContent = max === 1/0 ? fmt(amt) : fmt(amt)+'/'+fmt(max);
   });
   const ul = document.getElementById('user-label');
-  if (ul) ul.textContent = USER+(isDev()?' [DEV]':'')+(isSubActive()?' [CODE JOURNEY PRO]':'');
+  if (ul) {
+    let label = '';
+    if (ACCOUNT) {
+      const p = ACCOUNT.profiles[ACCOUNT.activeProfile];
+      label = p ? p.name : 'Character';
+    } else {
+      label = USER || 'Player';
+    }
+    if (isDev()) label += ' [DEV]';
+    if (isSubActive()) label += ' [PRO]';
+    ul.textContent = label;
+  }
 
   // NP display
   const npEl = document.getElementById('np-display');
@@ -580,7 +640,7 @@ function updateUI() {
   if (tc) {
     const can = canTranscend();
     tc.disabled = !can;
-    tc.textContent = can ? 'ENLIGHTEN (cost: '+transcendCost()+' mastery levels)' : 'ENLIGHTEN (need '+(transcendCost()*2)+' mastery levels)';
+    tc.textContent = can ? 'ENLIGHTEN (pay '+transcendCost()+' levels)' : 'ENLIGHTEN (need '+(transcendCost()*2)+' levels, pay '+transcendCost()+')';
   }
   const tcl = document.getElementById('transcend-lvl');
   if (tcl) tcl.textContent = G.prest.transcendLvl;
@@ -589,14 +649,23 @@ function updateUI() {
   const tcc = document.getElementById('transcend-cost');
   if (tcc) tcc.textContent = transcendCost();
 
-  // Zones (rebuild on progression tab visible)
-  const progTab = document.getElementById('tab-progression');
-  if (progTab && progTab.classList.contains('active')) {
-    buildZones();
-    buildAchievements();
+  // Character switch button
+  const csBtn = document.getElementById('char-switch-btn');
+  if (csBtn) {
+    if (ACCOUNT && ACCOUNT.profiles.length > 1) {
+      csBtn.style.display = 'inline-block';
+      csBtn.onclick = () => {
+        saveProfile();
+        const game = document.getElementById('game');
+        if (game) game.style.display = 'none';
+        showCharacterSelect();
+      };
+    } else {
+      csBtn.style.display = 'none';
+    }
   }
 
-  // Subscription status
+  // Subscription status (lightweight, safe every frame)
   const subStatus = document.getElementById('sub-status');
   if (subStatus) {
     subStatus.textContent = isSubActive() ? 'Code Journey Pro Active' : 'Free Tier';
@@ -611,26 +680,15 @@ function updateUI() {
   const cw = document.getElementById('combat-pause-warning');
   if (cw) cw.style.display = G.cmbt.inCombat ? 'block' : 'none';
 
-  // Contracts (rebuild on contracts tab visible)
-  const contractsTab = document.getElementById('tab-contracts');
-  if (contractsTab && contractsTab.classList.contains('active')) {
-    buildContracts();
-  }
-
-  // Consumables/Enhance (rebuild on enhance tab visible)
-  const enhanceTab = document.getElementById('tab-enhance');
-  if (enhanceTab && enhanceTab.classList.contains('active')) {
-    buildConsumables();
-    buildEnhance();
-  }
-
-  // Projects/Sprints/Libraries (rebuild on build tab visible)
-  const buildTab = document.getElementById('tab-build');
-  if (buildTab && buildTab.classList.contains('active')) {
-    buildProjects();
-    buildSprints();
-    buildLibraries();
-    buildSpecializations();
+  // Only rebuild tab content when the active tab changes (not every 60fps frame)
+  const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+  if (activeTab && activeTab !== G._lastActiveTab) {
+    G._lastActiveTab = activeTab;
+    if (activeTab === 'progression') { buildZones(); buildAchievements(); }
+    if (activeTab === 'contracts') { buildContracts(); }
+    if (activeTab === 'enhance') { buildConsumables(); buildEnhance(); }
+    if (activeTab === 'crafting') { buildProjects(); buildSprints(); buildLibraries(); buildSpecializations(); }
+    if (activeTab === 'skills') { buildSpecializations(); }
   }
 
   // Update active project progress bars every tick
@@ -686,11 +744,12 @@ function initLogin() {
   const input = document.getElementById('login-input');
   const passInput = document.getElementById('pass-input');
   const loginBtn = document.getElementById('login-btn');
+  const googleBtn = document.getElementById('google-login-btn');
   const errEl = document.getElementById('login-error');
   const overlay = document.getElementById('login-overlay');
   const game = document.getElementById('game');
 
-  function doLogin() {
+  async function doLogin() {
     try {
       const name = input.value.trim();
       const pass = passInput.value.trim();
@@ -698,6 +757,31 @@ function initLogin() {
       if (pass.length < 4) { errEl.textContent='Password must be 4+ characters'; errEl.style.display='block'; return; }
       errEl.style.display='none';
 
+      const pHash = await hashPassword(pass);
+
+      // Try account-based load first
+      if (loadAccount(name)) {
+        const fProfile = ACCOUNT.profiles[0];
+        if (fProfile) {
+          loadProfile(fProfile.id);
+        } else {
+          G = freshState();
+        }
+        const storedPw = G && G._pw ? G._pw : '';
+        if (storedPw.length === 64) {
+          if (storedPw !== pHash) { errEl.textContent='Wrong password'; errEl.style.display='block'; ACCOUNT=null; G=null; return; }
+        } else if (storedPw && storedPw !== pass) { errEl.textContent='Wrong password'; errEl.style.display='block'; ACCOUNT=null; G=null; return; }
+        USER = name;
+        G._pw = pHash;
+        if (G._pw && G._pw.length !== 64) G._pw = pHash;
+        saveProfile();
+        saveAccount();
+        overlay.style.display='none';
+        showCharacterSelect();
+        return;
+      }
+
+      // Legacy single-profile save
       const raw = localStorage.getItem('nri_'+name);
       if (raw) {
         let d;
@@ -705,7 +789,8 @@ function initLogin() {
         if (!d || typeof d !== 'object') {
           localStorage.removeItem('nri_'+name);
           G = freshState();
-          G._pw = pass;
+          G._pw = pHash;
+          migrateLegacySave();
           USER = name;
           localStorage.setItem('nr_user', USER);
           overlay.style.display='none';
@@ -721,8 +806,224 @@ function initLogin() {
           save();
           return;
         }
-        if (d._pw && d._pw !== pass) { errEl.textContent='Wrong password'; errEl.style.display='block'; return; }
-        if (!d._pw) { d._pw = pass; toast('Password set for '+name, 'info'); }
+        const storedPw = d._pw || '';
+        if (storedPw.length === 64) {
+          if (storedPw !== pHash) { errEl.textContent='Wrong password'; errEl.style.display='block'; return; }
+        } else if (storedPw && storedPw !== pass) { errEl.textContent='Wrong password'; errEl.style.display='block'; return; }
+        if (!d._pw) { d._pw = pHash; toast('Password set for '+name, 'info'); }
+        if (d._pw && d._pw.length !== 64) { d._pw = pHash; }
+
+        // Migrate to multi-profile system
+        USER = name;
+        migrateLegacySave();
+        overlay.style.display='none';
+        showCharacterSelect();
+        return;
+      }
+
+      // New user — create account
+      G = freshState();
+      G._pw = pHash;
+      G._showTutorial = true;
+      USER = name;
+      createAccount(name, '', 'legacy');
+      G._pw = pHash;
+      saveProfile();
+      saveAccount();
+      localStorage.setItem('nr_user', USER);
+      startGameAfterLogin();
+    } catch(e) { err('Login: '+e.message); }
+  }
+
+  async function doGoogleLogin() {
+    try {
+      googleBtn.disabled = true;
+      googleBtn.textContent = 'SIGNING IN...';
+      if (typeof firebase === 'undefined' || !firebase.auth) {
+        errEl.textContent='Firebase Auth not loaded. Try again.';
+        errEl.style.display='block';
+        googleBtn.disabled = false;
+        googleBtn.textContent = 'SIGN IN WITH GOOGLE';
+        return;
+      }
+      if (!firebase.apps.length) {
+        initCloud();
+      }
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const result = await firebase.auth().signInWithPopup(provider);
+      const user = result.user;
+      if (!user) {
+        errEl.textContent='Google sign-in failed.';
+        errEl.style.display='block';
+        googleBtn.disabled = false;
+        googleBtn.textContent = 'SIGN IN WITH GOOGLE';
+        return;
+      }
+      const uid = user.uid;
+      const email = user.email || '';
+      USER = uid;
+      localStorage.setItem('nr_user', USER);
+
+      if (loadAccount(uid)) {
+        ACCOUNT.email = email;
+        saveAccount();
+        overlay.style.display='none';
+        showCharacterSelect();
+      } else {
+        createAccount(uid, email, 'google');
+        G = freshState();
+        G._pw = uid;
+        G._showTutorial = true;
+        saveProfile();
+        saveAccount();
+        startGameAfterLogin();
+      }
+    } catch(e) {
+      errEl.textContent='Google sign-in error: '+(e.message||'unknown');
+      errEl.style.display='block';
+      googleBtn.disabled = false;
+      googleBtn.textContent = 'SIGN IN WITH GOOGLE';
+    }
+  }
+
+  function startGameAfterLogin() {
+    const overlay = document.getElementById('login-overlay');
+    const game = document.getElementById('game');
+    overlay.style.display='none';
+    game.style.display='flex';
+    buildUI();
+    calcOfflineProgress();
+    initCloud();
+    syncCloud();
+    updateUI();
+    startLoop();
+    const adC = document.getElementById('ad-container');
+    if (adC) { adC.style.display = 'block'; loadBannerAd('ad-container'); }
+    verifySubscription();
+  }
+
+  function showCharacterSelect() {
+  const csOverlay = document.getElementById('character-select-overlay');
+  const grid = document.getElementById('character-grid');
+  const backBtn = document.getElementById('character-back-btn');
+  csOverlay.style.display = 'flex';
+
+  grid.innerHTML = '';
+  ACCOUNT.profiles.forEach((p, i) => {
+    const isActive = i === ACCOUNT.activeProfile;
+    const hasSpec = p.spec !== null;
+    const specData = hasSpec ? SPECIALIZATIONS.find(s => s.id === p.spec) : null;
+
+    // Load profile state to read stats
+    const profileRaw = localStorage.getItem(profileStateKey(p.id));
+    let stats = { lvl:0, enemies:0, projects:0 };
+    if (profileRaw) {
+      try {
+        const pd = JSON.parse(profileRaw);
+        stats.lvl = pd.prest?.lvl || 0;
+        stats.enemies = pd.stats?.enemiesDefeated || 0;
+        stats.projects = pd._totalProjectsBuilt || 0;
+      } catch(e) {}
+    }
+
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    if (isActive) {
+      card.style.borderColor = '#0f0';
+    } else if (specData) {
+      card.style.borderColor = specData.color;
+      card.style.borderWidth = '2px';
+    }
+
+    const specName = specData ? specData.name : 'Unspecialized';
+    const specColor = specData ? specData.color : '#666';
+    const langDesc = specData && specData.langBonus
+      ? Object.entries(specData.langBonus).map(([lid, mult]) => {
+          const b = BRANCHES.find(x => x.id === lid);
+          return (b ? b.name : lid) + ' ×' + mult;
+        }).join(', ')
+      : 'Pick a path to mastery';
+
+    card.innerHTML = `
+      <div class="char-name">${p.name}</div>
+      <div class="char-spec" style="color:${specColor}">${specName}</div>
+      <div style="font-size:9px;color:#888;margin-bottom:6px;">${langDesc}</div>
+      <div class="char-stats">Level ${stats.lvl} · ${stats.enemies} bugs fixed · ${stats.projects} projects built</div>
+      ${isActive ? '<div class="char-active-badge">▶ ACTIVE</div>' : ''}
+    `;
+
+    // For unspecialized characters, add a choose-path button
+    if (!hasSpec) {
+      const chooseDiv = document.createElement('div');
+      chooseDiv.style.marginTop = '8px';
+      chooseDiv.innerHTML = '<button class="spec-btn" style="font-size:9px;padding:2px 8px;">CHOOSE PATH</button>';
+      chooseDiv.querySelector('.spec-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        showSpecPicker(card, i);
+      });
+      card.appendChild(chooseDiv);
+    }
+
+    card.addEventListener('click', () => {
+      switchProfile(i);
+      csOverlay.style.display = 'none';
+      const game = document.getElementById('game');
+      game.style.display = 'flex';
+      buildUI();
+      calcOfflineProgress();
+      updateUI();
+      startLoop();
+      const adC = document.getElementById('ad-container');
+      if (adC) { adC.style.display = 'block'; loadBannerAd('ad-container'); }
+      verifySubscription();
+    });
+    grid.appendChild(card);
+  });
+
+  backBtn.onclick = () => {
+    saveProfile();
+    csOverlay.style.display = 'none';
+    const loginOverlay = document.getElementById('login-overlay');
+    loginOverlay.style.display = 'flex';
+    USER = null;
+    G = null;
+    _loopStarted = false;
+  };
+
+  document.getElementById('logout-btn')?.addEventListener('click', () => {
+    saveProfile();
+    csOverlay.style.display = 'none';
+    const loginOverlay = document.getElementById('login-overlay');
+    loginOverlay.style.display = 'flex';
+    USER = null;
+    G = null;
+    _loopStarted = false;
+  });
+}
+
+function logout() {
+  save();
+  try { localStorage.removeItem('nr_user'); } catch(e) {}
+  const game = document.getElementById('game');
+  const loginOverlay = document.getElementById('login-overlay');
+  const csOverlay = document.getElementById('character-select-overlay');
+  if (game) game.style.display = 'none';
+  if (csOverlay) csOverlay.style.display = 'none';
+  if (loginOverlay) loginOverlay.style.display = 'flex';
+  document.getElementById('login-input').value = '';
+  document.getElementById('login-input').focus();
+  USER = null;
+  G = null;
+  ACCOUNT = null;
+  _loopStarted = false;
+  toast('Logged out', 'info');
+}
+        const storedPw = d._pw || '';
+        if (storedPw.length === 64) {
+          if (storedPw !== pHash) { errEl.textContent='Wrong password'; errEl.style.display='block'; return; }
+        } else if (storedPw && storedPw !== pass) { errEl.textContent='Wrong password'; errEl.style.display='block'; return; }
+        if (!d._pw) { d._pw = pHash; toast('Password set for '+name, 'info'); }
+        if (d._pw && d._pw.length !== 64) { d._pw = pHash; } // migrate old plaintext
         G = Object.assign(freshState(), d);
         migrateState(G);
         while (G.upgs.length < UPGRADES.length) G.upgs.push({ id:UPGRADES[G.upgs.length].id, lvl:0 });
@@ -730,8 +1031,8 @@ function initLogin() {
         while (G.achievements.length < ACHIEVEMENTS.length) G.achievements.push({ id:ACHIEVEMENTS[G.achievements.length].id, unlocked:false });
       } else {
         G = freshState();
-        G._pw = pass;
-        toast('TIP: Spend your Knowledge Points (KP) on language concepts to start learning!', 'info');
+        G._pw = pHash;
+        G._showTutorial = true;
       }
       USER = name;
       localStorage.setItem('nr_user', USER);
@@ -743,19 +1044,17 @@ function initLogin() {
       syncCloud();
       updateUI();
       startLoop();
+      const adC = document.getElementById('ad-container');
+      if (adC) { adC.style.display = 'block'; loadBannerAd('ad-container'); }
+      verifySubscription();
       toast('Welcome, '+USER+'!', 'info');
+      if (G._showTutorial) {
+        G._showTutorial = false;
+        setTimeout(() => showTutorial(), 500);
+      }
       if (isDev()) toast('DEV MODE ACTIVE', 'loot');
       trackEvent('login', { username: USER });
       save();
-
-      const _unlockCheck = setInterval(() => {
-        if (!G) return;
-        if (!G.cmbt.unlocked && G.neuralPoints >= 25) {
-          G.cmbt.unlocked = true;
-          toast('Debug unlocked! Fix bugs to earn rewards.', 'loot');
-          clearInterval(_unlockCheck);
-        }
-      }, 3000);
     } catch(e) { err('Login: '+e.message); }
   }
 
@@ -785,19 +1084,21 @@ function logout() {
 }
 
 // Tab switching
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+  if (btn) btn.classList.add('active');
+  const tab = document.getElementById('tab-' + tabName);
+  if (tab) tab.classList.add('active');
+  const devPanel = document.getElementById('dev-panel');
+  if (devPanel) {
+    devPanel.style.display = tabName === 'skills' && isDev() ? 'block' : 'none';
+  }
+}
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-    this.classList.add('active');
-    const tab = document.getElementById('tab-'+this.dataset.tab);
-    if (tab) tab.classList.add('active');
-    const devPanel = document.getElementById('dev-panel');
-    if (devPanel) {
-      const isSkillsTab = this.dataset.tab === 'skills';
-      devPanel.style.display = isSkillsTab && isDev() ? 'block' : 'none';
-    }
-  });
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 });
 
 // ========== ROAD MAP ==========
@@ -908,7 +1209,7 @@ function getNextMilestones() {
 
   // 3. Specialization / Sprint / Prestige
   if (!G._specialization) {
-    ms.push({ label: 'Choose Specialization', extra: 'Frontend/Backend/Systems/Data', ready: true });
+    ms.push({ label: 'Choose Specialization', extra: 'Python/Web/Systems/Go', ready: true });
   } else {
     const s = getActiveSprint();
     if (s && canPay(s.req)) {
@@ -960,16 +1261,21 @@ function updateVisualizer() {
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
 
-  // Build nodes & edges
+  // Count total learned nodes for circle layout
+  let nodeCount = 0;
+  BRANCHES.forEach(b => { b.nodes.forEach(n => { if (branchLevel(b.id, n.id) > 0) nodeCount++; }); });
   _visNodes = [];
   _visEdges = [];
+  let nodeIdx = 0;
   BRANCHES.forEach(b => {
     let prev = null;
     b.nodes.forEach(n => {
       const lvl = branchLevel(b.id, n.id);
       if (lvl > 0) {
-        const node = { name:n.name, branch:b.name, color:b.color, lvl, x:Math.random()*W, y:Math.random()*H, vx:0, vy:0, r:8+lvl*1.5 };
-        _visNodes.push(node);
+        const angle = (nodeIdx / Math.max(1, nodeCount)) * Math.PI * 2;
+        const radius = Math.min(W, H) * 0.35;
+        const node = { name:n.name, branch:b.name, color:b.color, lvl, x:W/2+Math.cos(angle)*radius, y:H/2+Math.sin(angle)*radius, vx:0, vy:0, r:8+lvl*1.5 };
+        _visNodes.push(node); nodeIdx++;
         if (prev) _visEdges.push({ from:prev, to:node, color:b.color });
         prev = node;
       }
@@ -980,6 +1286,11 @@ function updateVisualizer() {
     for (let j = i+1; j < _visNodes.length; j++)
       if (_visNodes[i].branch !== _visNodes[j].branch)
         _visEdges.push({ from:_visNodes[i], to:_visNodes[j], color:'rgba(255,255,255,0.12)' });
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    _visAnimId = null;
+    return;
+  }
 
   function step() {
     if (visDiv.style.display === 'none') { _visAnimId = null; return; }
@@ -1017,4 +1328,48 @@ function updateVisualizer() {
     _visAnimId = requestAnimationFrame(step);
   }
   _visAnimId = requestAnimationFrame(step);
+}
+
+// ===== ONBOARDING TUTORIAL =====
+const TUTORIAL_STEPS = [
+  { title: 'WELCOME TO CODE JOURNEY', msg: 'Learn programming languages, build projects, fix bugs, and level up your skills. Everything starts with Knowledge Points (KP).' },
+  { title: 'LEARN CONCEPTS', msg: 'Click the LEARN tab. Spend KP to learn language concepts like Variables, Functions, and Classes. Each level gives you resources.' },
+  { title: 'BUILD PROJECTS', msg: 'In the BUILD tab, turn XP and LOC into projects. Complete daily sprints for bonus rewards.' },
+  { title: 'FIX BUGS', msg: 'Once you have 25 KP, the DEBUG tab unlocks. Fight bugs to earn Mastery and rare item drops.' },
+  { title: 'MASTERY RESET', msg: 'When you have enough Mastery, reset for permanent power. Each level gives 1.5x to everything!' },
+];
+
+function showTutorial() {
+  let step = 0;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#0a0a1a;border:2px solid #0f0;border-radius:12px;padding:32px;max-width:480px;width:90%;text-align:center;">
+      <div id="tut-title" style="color:#0ff;font-size:16px;letter-spacing:2px;margin-bottom:12px;"></div>
+      <div id="tut-msg" style="color:#c0c0c0;font-size:13px;line-height:1.5;margin-bottom:20px;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span id="tut-counter" style="color:#666;font-size:11px;"></span>
+        <button id="tut-next" style="padding:8px 24px;background:transparent;border:2px solid #0f0;color:#0f0;font-family:inherit;font-size:13px;cursor:pointer;border-radius:4px;">NEXT</button>
+      </div>
+      <div style="margin-top:12px;"><button id="tut-skip" style="background:transparent;border:none;color:#888;font-size:11px;cursor:pointer;padding:4px;">Skip tutorial</button></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  function render() {
+    const t = TUTORIAL_STEPS[step];
+    document.getElementById('tut-title').textContent = t.title;
+    document.getElementById('tut-msg').textContent = t.msg;
+    document.getElementById('tut-counter').textContent = (step+1) + '/' + TUTORIAL_STEPS.length;
+    document.getElementById('tut-next').textContent = step < TUTORIAL_STEPS.length - 1 ? 'NEXT' : 'START CODING';
+  }
+
+  document.getElementById('tut-next').addEventListener('click', () => {
+    step++;
+    if (step >= TUTORIAL_STEPS.length) { overlay.remove(); }
+    else { render(); }
+  });
+  document.getElementById('tut-skip').addEventListener('click', () => overlay.remove());
+
+  render();
 }

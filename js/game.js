@@ -15,6 +15,7 @@ function clickBranchNode(branchId, nodeId) {
   G.branches[branchId][nodeId] = (G.branches[branchId][nodeId] || 0) + 1;
   trackQuestProgress('spentNp', cost);
     toast(n.name + ' Lv.' + G.branches[branchId][nodeId] + ' learned!', 'loot');
+    activityFeedback('+' + G.branches[branchId][nodeId], '#0ff', 'np');
   checkAchievements();
 }
 
@@ -45,6 +46,7 @@ function clickCraft(id) {
     G.stats.itemsCrafted = (G.stats.itemsCrafted||0) + 1;
     G.neuralPoints += 2;
     trackQuestProgress('crafted', 1);
+    activityFeedback('Built ' + c.name, '#ff0', 'credits');
     toast('Built '+c.name+' +2 KP', 'loot');
   }
   checkAchievements();
@@ -144,6 +146,7 @@ function combatWin() {
   if (totalDm > 0) trackQuestProgress('dmEarned', totalDm);
   logCombat('FIXED '+e.name+'! Rewards: '+Object.entries(tm.reward).map(([r,a])=>fmt(a)+' '+(RES[r]?RES[r].n:r)).join(', ')+' +1 KP');
   toast(e.name+' fixed!', 'loot');
+  activityFeedback('BUG FIXED! +' + Object.values(tm.reward)[0] + ' ' + Object.keys(tm.reward)[0], '#0f0', 'darkMatter');
   G.cmbt.hp = ENEMIES[G.cmbt.idx].hp;
   G.cmbt._bonus = 0;
   G.cmbt._tierDrops = false;
@@ -307,23 +310,27 @@ function getActiveQuests() {
 function trackQuestProgress(key, amt) {
   if (!G._questProgress) G._questProgress = {};
   G._questProgress[key] = (G._questProgress[key] || 0) + amt;
-  G._quests.forEach((q, i) => {
-    if (G._questCompleted.includes(i)) return;
-    if (q.check(G) >= q.target) {
-      G._questCompleted.push(i);
-      G.neuralPoints += q.rewardNP;
-      Object.entries(q.reward).forEach(([r, a]) => addRes(r, a));
-      toast('Quest complete: ' + q.desc + '! +' + q.rewardNP + ' KP', 'loot');
-      G._questWeekly = (G._questWeekly || 0) + 1;
-      const weekStart = getWeekStart();
-      if (G._questWeeklyDate !== weekStart) { G._questWeekly = 1; G._questWeeklyDate = weekStart; }
-      if (G._questWeekly >= 3) {
-        addRes('darkMatter', 5);
-        G._questWeekly = 0;
-        toast('Weekly challenge bonus: +5 Mastery!', 'loot');
-      }
-    }
-  });
+  // Quest is now completed — user must manually claim via UI
+}
+
+function claimQuest(index) {
+  const q = G._quests[index];
+  if (!q) return;
+  if (G._questCompleted.includes(index)) { toast('Already claimed!', 'info'); return; }
+  if (q.check(G) < q.target) { toast('Not yet complete!', 'error'); return; }
+  G._questCompleted.push(index);
+  G.neuralPoints += q.rewardNP;
+  Object.entries(q.reward).forEach(([r, a]) => addRes(r, a));
+  toast('Claimed: ' + q.desc + '! +' + q.rewardNP + ' KP', 'loot');
+  G._questWeekly = (G._questWeekly || 0) + 1;
+  const weekStart = getWeekStart();
+  if (G._questWeeklyDate !== weekStart) { G._questWeekly = 1; G._questWeeklyDate = weekStart; }
+  if (G._questWeekly >= 3) {
+    addRes('darkMatter', 5);
+    G._questWeekly = 0;
+    toast('Weekly bonus: +5 Mastery!', 'loot');
+  }
+  rebuildUI();
 }
 function getWeekStart() {
   const d = new Date();
@@ -449,8 +456,9 @@ function startProject(id) {
   toast('Started building ' + p.name + '!', 'loot');
 }
 function tickProjects(dt) {
+  const projSpeed = getSpecProjectSpeed();
   Object.entries(G._projects).forEach(([id, prog]) => {
-    prog.timeLeft -= dt;
+    prog.timeLeft -= dt * projSpeed;
     prog.timeLeft = Math.max(0, prog.timeLeft);
     if (prog.timeLeft <= 0 && !prog.done) {
       prog.done = true;
@@ -518,5 +526,10 @@ function selectSpecialization(id) {
   if (G._specialization) { toast('Already specialized! Enlightenment can reset.', 'info'); return; }
   if (!confirm('Choose ' + spec.name + '? This cannot be undone without Enlightenment.')) return;
   G._specialization = id;
+  if (ACCOUNT && ACCOUNT.profiles[ACCOUNT.activeProfile]) {
+    ACCOUNT.profiles[ACCOUNT.activeProfile].spec = id;
+    saveAccount();
+  }
+  saveProfile();
   toast('Specialized as ' + spec.name + '!', 'loot');
 }
